@@ -2,17 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-class Card extends StatefulWidget {
-  @override
-  _CardState createState() => _CardState();
-}
+import '../widgets/playing_card.dart';
 
-enum rotationX {
-  face,
-  back,
-}
-
-enum rotationY {
+enum rotation {
   face,
   back,
 }
@@ -24,17 +16,31 @@ enum angle {
   down,
 }
 
-class _CardState extends State<Card> with SingleTickerProviderStateMixin {
-  double currentRotationX;
-  double currentRotationY;
-  double currentRotationZ;
+class CardMoveExtension {
+  // rotation
+  double currentRotationX = 0;
+  double currentRotationY = 0;
+  double currentRotationZ = 0;
+
+  // position
+  double currentRight;
+  double currentLeft;
+  double currentTop;
+  double currentBottom;
+  Duration moveDuration = Duration(milliseconds: 5000);
 
   // e is for end and s is for start
 
-  Future<void> twist(rotation sRotation, rotation eRotation, angle sAngle,
-      angle eAngle, Duration duration, Axis axis) async {
+  Future<void> rotate(
+      rotation sRotation,
+      rotation eRotation,
+      angle sAngle,
+      angle eAngle,
+      Duration duration,
+      Axis axis,
+      void Function(void Function()) setState) async {
     final animationController = AnimationController(
-      vsync: this,
+      vsync: PlayingCardState(),
       duration: duration,
     );
     final Animation<double> rotationAnimation = Tween<double>(
@@ -66,9 +72,33 @@ class _CardState extends State<Card> with SingleTickerProviderStateMixin {
       ),
     );
     angleAnimation.addListener(() {
-      currentRotationZ = angleAnimation.value;
+      setState(() {
+        currentRotationZ = angleAnimation.value;
+      });
     });
-    rotationAnimation.addListener(() {});
+    rotationAnimation.addListener(() {
+      setState(() {
+        axis == Axis.horizontal
+            ? currentRotationX = rotationAnimation.value
+            : currentRotationY = rotationAnimation.value;
+      });
+    });
+    await animationController.forward().then((value) {
+      rotationAnimation.removeListener(() {});
+      angleAnimation.removeListener(() {});
+    });
+  }
+
+  Future<void> move(Duration duration, void Function(void Function()) setState,
+      {double eBottom, double eTop, double eRight, double eLeft}) async {
+    setState(() {
+      moveDuration = duration;
+      currentTop = eTop;
+      currentBottom = eBottom;
+      currentRight = eRight;
+      currentLeft = eLeft;
+    });
+    await Future.delayed(duration);
   }
 
   Future<void> moveAndTwist(
@@ -76,23 +106,12 @@ class _CardState extends State<Card> with SingleTickerProviderStateMixin {
       double sTop,
       double sRight,
       double sLeft,
-      rotation startR,
       double eBottom,
       double eTop,
       double eRight,
       double eLeft,
+      rotation startR,
       rotation eRotation,
       angle sAngle,
       angle eAngle}) async {}
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.15,
-        height: MediaQuery.of(context).size.width * 0.15 * 23 / 16,
-        child: Text('this is the container'),
-      ),
-    );
-  }
 }
