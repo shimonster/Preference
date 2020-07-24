@@ -1,25 +1,26 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 
 import '../widgets/playing_card.dart';
 
 enum ranks {
-  seven,
-  eight,
-  nin,
-  ten,
-  jack,
-  queen,
-  king,
-  ace,
+  rank7,
+  rank8,
+  rank9,
+  rank10,
+  rank11,
+  rank12,
+  rank13,
+  rank14,
 }
 
 enum suits {
-  heart,
-  diamond,
-  spade,
-  club,
+  suit1,
+  suit2,
+  suit3,
+  suit4,
 }
 
 enum places {
@@ -58,6 +59,8 @@ class Cards extends ChangeNotifier {
     }
   }
 
+  double width;
+  double height;
   List<Card> _cards = [];
 
   List<Card> get cards {
@@ -68,57 +71,103 @@ class Cards extends ChangeNotifier {
     _cards.shuffle(Random());
     _cards.forEach((element) {
       final elemId = _cards.indexOf(element);
-      _cards[elemId].place = elemId > 30
+      _cards[elemId].place = elemId >= 30
           ? places.widow
-          : elemId > 20
+          : elemId >= 20
               ? places.player3
-              : elemId > 10 ? places.player2 : places.player1;
+              : elemId >= 10 ? places.player2 : places.player1;
     });
     print(_cards.map((e) => e.place).toList());
 //    notifyListeners();
   }
 
-  List<PlayingCard> get p1Cards {
+  List<PlayingCard> _getLocationCards(
+      places place, double bottom, double top, double right, double left) {
+    var thisCards = [
+      ..._cards.where((element) => element.place == place).toList()
+    ];
+    final double increment = 50;
     double i = -1;
-    return _cards
-        .where((element) => element.place == places.player1)
-        .toList()
-        .map((e) {
+    final List<Card> sortedCards = [];
+    if (place == places.player1) {
+      thisCards.sort((a, b) {
+        if (int.parse(a.suit.toString()[10]) >
+            int.parse(b.suit.toString()[10])) {
+          return -1;
+        } else {
+          return 1;
+        }
+      });
+      for (var i = 0; i < 4; i++) {
+        final int start =
+            thisCards.indexWhere((element) => element.suit == suits.values[i]);
+        final int end = thisCards
+            .lastIndexWhere((element) => element.suit == suits.values[i]);
+        final List<Card> list =
+            start == -1 ? [] : thisCards.sublist(start, end + 1)
+              ..sort((a, b) {
+                if (int.parse(a.number.toString()[10]) >
+                    int.parse(b.number.toString()[10])) {
+                  return -1;
+                } else {
+                  return 1;
+                }
+              });
+        sortedCards.addAll(list);
+      }
+      thisCards = sortedCards;
+    }
+    return thisCards.map((e) {
       i++;
-      return PlayingCard(e.suit, e.number, bottom: 30, right: i * 20 + 10.5);
+      return PlayingCard(
+        e.suit,
+        e.number,
+        e.place,
+        top: top == 0
+            ? ((height / 2) -
+                    (((thisCards.length * increment) +
+                            width * PlayingCardState().multiplySizeHeight) /
+                        2)) +
+                (i * increment)
+            : top,
+        bottom: bottom == 0
+            ? ((height / 2) -
+                    (((thisCards.length * increment) +
+                            width * PlayingCardState().multiplySizeHeight) /
+                        2)) +
+                (i * increment)
+            : bottom,
+        right: right == 0
+            ? ((width / 2) -
+                    (((thisCards.length * increment) +
+                            width * PlayingCardState().multiplySizeWidth) /
+                        2)) +
+                (i * increment)
+            : right,
+        left: left == 0
+            ? ((width / 2) -
+                    (((thisCards.length * increment) +
+                            width * PlayingCardState().multiplySizeWidth) /
+                        2)) +
+                (i * increment)
+            : left,
+      );
     }).toList();
+  }
+
+  List<PlayingCard> get p1Cards {
+    return _getLocationCards(places.player1, 30, null, 0, null);
   }
 
   List<PlayingCard> get p2Cards {
-    double i = -1;
-    return _cards
-        .where((element) => element.place == places.player2)
-        .toList()
-        .map((e) {
-      i++;
-      return PlayingCard(e.suit, e.number, left: 30, top: i * 20 + 10.5);
-    }).toList();
+    return _getLocationCards(places.player2, null, 0, null, 30);
   }
 
   List<PlayingCard> get p3Cards {
-    double i = -1;
-    return _cards
-        .where((element) => element.place == places.player3)
-        .toList()
-        .map((e) {
-      i++;
-      return PlayingCard(e.suit, e.number, right: 30, top: i * 20 + 10.5);
-    }).toList();
+    return _getLocationCards(places.player3, null, 0, 30, null);
   }
 
   List<PlayingCard> get widows {
-    double i = -1;
-    return _cards
-        .where((element) => element.place == places.widow)
-        .toList()
-        .map((e) {
-      i++;
-      return PlayingCard(e.suit, e.number, top: 30, right: i * 20 + 10.5);
-    }).toList();
+    return _getLocationCards(places.widow, null, 30, null, 0);
   }
 }

@@ -21,13 +21,14 @@ class CardMoveExtension {
   double currentRotationX = 0;
   double currentRotationY = 0;
   double currentRotationZ = 0;
+  bool isFace = false;
 
   // position
   double currentRight;
   double currentLeft;
   double currentTop;
   double currentBottom;
-  Duration moveDuration = Duration(milliseconds: 5000);
+  Duration moveDuration;
 
   // e is for end and s is for start
 
@@ -47,7 +48,7 @@ class CardMoveExtension {
             begin: sRotation == rotation.face ? 0 : pi,
             end: eRotation == rotation.face
                 ? 2 * pi
-                : sRotation == rotation.face ? pi : 3 * pi)
+                : sRotation == rotation.face ? 0 : pi)
         .animate(
       CurvedAnimation(
         curve: Curves.linear,
@@ -71,18 +72,28 @@ class CardMoveExtension {
         parent: animationController,
       ),
     );
-    angleAnimation.addListener(() {
-      setState(() {
-        currentRotationZ = angleAnimation.value;
+    if (sAngle != null && eAngle != null) {
+      angleAnimation.addListener(() {
+        setState(() {
+          currentRotationZ = angleAnimation.value;
+        });
       });
-    });
-    rotationAnimation.addListener(() {
-      setState(() {
-        axis == Axis.horizontal
-            ? currentRotationX = rotationAnimation.value
-            : currentRotationY = rotationAnimation.value;
+    }
+    if (sRotation != null && eRotation != null) {
+      rotationAnimation.addListener(() {
+        if (rotationAnimation.value < pi * 1 / 2 ||
+            rotationAnimation.value > pi * 3 / 2) {
+          isFace = true;
+        } else {
+          isFace = false;
+        }
+        setState(() {
+          axis == Axis.horizontal
+              ? currentRotationX = rotationAnimation.value
+              : currentRotationY = rotationAnimation.value;
+        });
       });
-    });
+    }
     await animationController.forward().then((value) {
       rotationAnimation.removeListener(() {});
       angleAnimation.removeListener(() {});
@@ -102,16 +113,19 @@ class CardMoveExtension {
   }
 
   Future<void> moveAndTwist(
-      {double sBottom,
-      double sTop,
-      double sRight,
-      double sLeft,
-      double eBottom,
+      Duration duration, void Function(void Function()) setState,
+      {double eBottom,
       double eTop,
       double eRight,
       double eLeft,
-      rotation startR,
+      rotation sRotation,
       rotation eRotation,
       angle sAngle,
-      angle eAngle}) async {}
+      angle eAngle,
+      Axis axis}) async {
+    move(duration, setState,
+        eTop: eTop, eBottom: eBottom, eRight: eRight, eLeft: eLeft);
+    rotate(sRotation, eRotation, sAngle, eAngle, duration, axis, setState);
+    await Future.delayed(duration);
+  }
 }

@@ -11,15 +11,15 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: Cards(),
-      child: MaterialApp(
-        title: 'Preference',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        home: PreferenceScreen(),
+    return MaterialApp(
+      title: 'Preference',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: ChangeNotifierProvider.value(
+        value: Cards(),
+        child: PreferenceScreen(),
       ),
     );
   }
