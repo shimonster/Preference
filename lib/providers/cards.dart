@@ -67,7 +67,7 @@ class Cards extends ChangeNotifier {
     return [..._cards];
   }
 
-  void randomize() {
+  Future<void> randomize() async {
     _cards.shuffle(Random());
     _cards.forEach((element) {
       final elemId = _cards.indexOf(element);
@@ -106,8 +106,10 @@ class Cards extends ChangeNotifier {
         final List<Card> list =
             start == -1 ? [] : thisCards.sublist(start, end + 1)
               ..sort((a, b) {
-                if (int.parse(a.number.toString()[10]) >
-                    int.parse(b.number.toString()[10])) {
+                if (int.parse(
+                        '${a.number.toString()[10]}${a.number.toString().length > 11 ? a.number.toString()[11] : ''}') >
+                    int.parse(
+                        '${b.number.toString()[10]}${b.number.toString().length > 11 ? b.number.toString()[11] : ''}')) {
                   return -1;
                 } else {
                   return 1;

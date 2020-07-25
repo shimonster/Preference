@@ -9,6 +9,8 @@ class PreferenceScreen extends StatefulWidget {
 }
 
 class _PreferenceScreenState extends State<PreferenceScreen> {
+  bool _isPlaying = false;
+
   @override
   void initState() {
     super.initState();
@@ -26,15 +28,21 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         decoration: BoxDecoration(
           border: Border.all(width: 10),
         ),
-        child: Stack(
-          fit: StackFit.loose,
-          children: [
-            ...cards.p2Cards,
-            ...cards.p1Cards,
-            ...cards.p3Cards,
-            ...cards.widows,
-          ],
-        ),
+        child: Stack(fit: StackFit.loose, children: [
+          if (_isPlaying) ...cards.p2Cards,
+          if (_isPlaying) ...cards.p1Cards,
+          if (_isPlaying) ...cards.p3Cards,
+          if (_isPlaying) ...cards.widows,
+          if (!_isPlaying)
+            RaisedButton(
+              onPressed: () {
+                setState(() {
+                  _isPlaying = true;
+                });
+              },
+              child: Text('start'),
+            ),
+        ]),
       ),
     );
   }

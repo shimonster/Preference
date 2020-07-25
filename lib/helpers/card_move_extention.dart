@@ -65,7 +65,7 @@ class CardMoveExtension {
           ? 0
           : eAngle == angle.right
               ? pi * 1 / 2
-              : eAngle == angle.down ? pi : pi * 3 / 2,
+              : eAngle == angle.down ? pi : -pi * 1 / 2,
     ).animate(
       CurvedAnimation(
         curve: Curves.linear,

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "593045052364",
+    "firebase_url": "https://preference-1cc9d.firebaseio.com",
+    "project_id": "preference-1cc9d",
+    "storage_bucket": "preference-1cc9d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:593045052364:android:673baba764b5537c4e1b69",
+        "android_client_info": {
+          "package_name": "com.shimonster.preference"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "593045052364-ka0p0omd2hhh42jbucjk3c4a859s9f5r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8EeZMnhuX7f2I2vWZf-PcWKhOgDdCd7Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "593045052364-ka0p0omd2hhh42jbucjk3c4a859s9f5r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
