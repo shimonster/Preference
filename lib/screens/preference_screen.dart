@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../providers/cards.dart';
 
 class PreferenceScreen extends StatefulWidget {
+  static const routeName = '/PreferenceScreen';
+
   @override
   _PreferenceScreenState createState() => _PreferenceScreenState();
 }

@@ -1,5 +1,4 @@
-import 'dart:math';
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class AuthCard extends StatefulWidget {
@@ -10,43 +9,104 @@ class AuthCard extends StatefulWidget {
 
 class _AuthCardState extends State<AuthCard> {
   final controller = ScrollController();
-  int currentOption;
+  String email;
+  String password;
+  String nickName;
 
-  @override
-  void initState() {
-    super.initState();
-    currentOption =
-        (controller.offset / MediaQuery.of(context).size.width * 1 / 3).round();
-  }
+  int currentOption = 0;
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width * 1 / 3;
+
+    Widget _buildForm(bool isCreating) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: SizedBox(
+          width: width - 16,
+          child: Form(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 10,
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Nickname',
+                      border: OutlineInputBorder(),
+                    ),
+                    onSaved: (input) {
+                      nickName = input.trim();
+                    },
+                    validator: (input) {
+                      if (input.isEmpty) {
+                        return 'Please enter a nickname';
+                      }
+                      return null;
+                    },
+                  ),
+                  if (!isCreating)
+                    SizedBox(
+                      height: 10,
+                    ),
+                  if (!isCreating)
+                    TextFormField(
+                      decoration: InputDecoration(
+                        labelText: 'Game code',
+                        border: OutlineInputBorder(),
+                      ),
+                      onSaved: (input) {
+                        nickName = input.trim();
+                      },
+                      validator: (input) {
+                        if (input.isEmpty) {
+                          return 'Please enter a nickname';
+                        }
+                        return null;
+                      },
+                    ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  RaisedButton(
+                    child: Text('Play'),
+                    onPressed: () {},
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
       child: Column(
         children: [
           BottomNavigationBar(
             onTap: (i) => setState(() {
-              controller.animateTo(
-                  (MediaQuery.of(context).size.width * 1 / 3) * i,
+              controller.animateTo((width) * i,
                   duration: Duration(
                     milliseconds: 300,
                   ),
                   curve: Curves.easeOutExpo);
-              currentOption = i;
             }),
             currentIndex: currentOption,
+            type: BottomNavigationBarType.shifting,
+            selectedItemColor: Theme.of(context).primaryColor,
+            unselectedItemColor: Theme.of(context).primaryColor,
             items: [
               BottomNavigationBarItem(
-                title: Text('Sign in'),
-                icon: Icon(Icons.person),
+                title: Text('Join game'),
+                icon: Icon(Icons.input),
               ),
               BottomNavigationBarItem(
-                title: Text('Create an account'),
-                icon: Icon(Icons.person_add),
-              ),
-              BottomNavigationBarItem(
-                title: Text('Play anounomously'),
-                icon: Icon(Icons.person_outline),
+                title: Text('Create game'),
+                icon: Icon(Icons.create),
               ),
             ],
           ),
@@ -54,46 +114,23 @@ class _AuthCardState extends State<AuthCard> {
             height: 10,
           ),
           Container(
-            width: MediaQuery.of(context).size.width * 1 / 3,
+            width: width,
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 2 / 3,
+              maxHeight: MediaQuery.of(context).size.height * 0.5,
             ),
             child: SingleChildScrollView(
               physics: PageScrollPhysics(),
-              controller: controller,
+              controller: controller
+                ..addListener(() {
+                  setState(() {
+                    currentOption = (controller.offset / (width)).round();
+                  });
+                }),
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 1 / 3,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Text('sign in'),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 1 / 3,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Text('create acount'),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 1 / 3,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Text('sign up'),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildForm(false),
+                  _buildForm(true),
                 ],
               ),
             ),
