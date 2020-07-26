@@ -11,8 +11,13 @@ void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  final game = Game();
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Widget home = AuthScreen();
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +27,10 @@ class MyApp extends StatelessWidget {
           value: Cards(),
         ),
         ChangeNotifierProvider(
-          create: (
-            ctx,
-          ) =>
-              game,
-        )
+            create: (
+          ctx,
+        ) =>
+                Game())
       ],
       child: MaterialApp(
         title: 'Preference',
@@ -36,11 +40,7 @@ class MyApp extends StatelessWidget {
           primaryColorLight: Color.fromRGBO(56, 214, 45, 1),
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: StreamBuilder(
-          stream: game.gameStream,
-          builder: (ctx, snapshot) =>
-              snapshot.data == null ? AuthScreen() : PreferenceScreen(),
-        ),
+        home: home,
         routes: {
           AuthCard.routeName: (ctx) => AuthCard(),
           PreferenceScreen.routeName: (ctx) => PreferenceScreen(),

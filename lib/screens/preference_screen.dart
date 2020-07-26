@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/cards.dart';
+import '../providers/game.dart';
 
 class PreferenceScreen extends StatefulWidget {
   static const routeName = '/PreferenceScreen';
@@ -30,21 +31,28 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         decoration: BoxDecoration(
           border: Border.all(width: 10),
         ),
-        child: Stack(fit: StackFit.loose, children: [
-          if (_isPlaying) ...cards.p2Cards,
-          if (_isPlaying) ...cards.p1Cards,
-          if (_isPlaying) ...cards.p3Cards,
-          if (_isPlaying) ...cards.widows,
-          if (!_isPlaying)
-            RaisedButton(
-              onPressed: () {
-                setState(() {
-                  _isPlaying = true;
-                });
-              },
-              child: Text('start'),
+        child: Stack(
+          fit: StackFit.loose,
+          children: [
+            Center(
+              child: Text(Provider.of<Game>(context).gameId),
             ),
-        ]),
+//          if (_isPlaying) ...cards.p2Cards,
+//          if (_isPlaying) ...cards.p1Cards,
+//          if (_isPlaying) ...cards.p3Cards,
+//          if (_isPlaying) ...cards.widows,
+//          if (!_isPlaying)
+//            RaisedButton(
+//              onPressed: () {
+//                setState(() {
+//                  _isPlaying = true;
+//                });
+//              },
+//              child: Text('start'),
+//            ),
+//        ]),
+          ],
+        ),
       ),
     );
   }

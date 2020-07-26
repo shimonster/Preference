@@ -7,22 +7,24 @@ class Game extends ChangeNotifier {
   String gameId;
   int playerNumber;
   bool isDealer;
-  final alphabet = 'abcdefghijklmnopqrstABCDEFGHIJKLMNOPQRST' * 2;
 
   var client = http.Client();
   String project = 'https://preference-1cc9d.firebaseio.com';
 
-  Stream<String> get gameStream {
-    return Stream.value(gameId);
-  }
-
   Future<void> createGame(String nickname) async {
     final name = UniqueKey().toString();
-    await http.post(
-      '$project/games/$name',
-      body: json.encode({'Player 1': nickname}),
+//    final authResponse = await client.post(
+//        'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyDpQioFovwZvuPZMzlkK6xoJFM1uj5EkAg');
+//    print(json.decode(authResponse.body)['idToken']);
+    final response = await client.get(
+//      'https://preference-1cc9d.firebaseio.com/games.json?access_token=${json.decode(authResponse.body)['idToken']}',
+      'https://preference-1cc9d.firebaseio.com/games.json',
+//      body: json.encode({'Player1': nickname}),
     );
+    print(response.body);
     gameId = name;
+    playerNumber = 1;
+    notifyListeners();
   }
 
   Future<void> joinGame(String name, String nickname) async {
@@ -35,10 +37,12 @@ class Game extends ChangeNotifier {
     );
     playerNumber = number;
     gameId = name;
+    notifyListeners();
   }
 
   Future<void> leaveGame() async {
-    await client.delete('$project/games/$gameId/Player $playerNumber');
+    await client.delete(
+        'https://preference-1cc9d.firebaseio.com/games/$gameId/Player $playerNumber');
     gameId = null;
     playerNumber = null;
     isDealer = null;

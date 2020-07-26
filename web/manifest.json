@@ -1,6 +1,6 @@
 {
-    "name": "preference",
-    "short_name": "preference",
+    "name": "Preference",
+    "short_name": "Preference",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
