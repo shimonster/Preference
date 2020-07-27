@@ -6,6 +6,7 @@ import './screens/preference_screen.dart';
 import './widgets/auth_card.dart';
 import './screens/auth_screen.dart';
 import './providers/cards.dart';
+import './providers/auth.dart';
 
 void main() {
   runApp(MyApp());
@@ -17,20 +18,20 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Widget home = AuthScreen();
-
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(
-          value: Cards(),
+          value: Auth(),
+        ),
+        ChangeNotifierProxyProvider<Auth, Cards>(
+          create: (ctx) => Cards([]),
+          update: (ctx, auth, prev) => Cards(prev.cards, auth.token, auth.uid),
         ),
         ChangeNotifierProvider(
-            create: (
-          ctx,
-        ) =>
-                Game())
+          create: (ctx) => Game(Provider.of<Auth>(ctx, listen: false)),
+        )
       ],
       child: MaterialApp(
         title: 'Preference',
@@ -40,7 +41,10 @@ class _MyAppState extends State<MyApp> {
           primaryColorLight: Color.fromRGBO(56, 214, 45, 1),
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: home,
+        home: Consumer<Game>(
+          builder: (ctx, game, _) =>
+              game.gameId == null ? AuthScreen() : PreferenceScreen(),
+        ),
         routes: {
           AuthCard.routeName: (ctx) => AuthCard(),
           PreferenceScreen.routeName: (ctx) => PreferenceScreen(),

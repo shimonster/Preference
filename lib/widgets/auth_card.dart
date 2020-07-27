@@ -95,7 +95,6 @@ class _AuthCardState extends State<AuthCard> {
                           setState(() {
                             _isLoading = false;
                           });
-                          print('button error: $error');
                           throw error;
                         }
                       }

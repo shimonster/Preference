@@ -3,7 +3,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import './auth.dart';
+import '../helpers/game_id.dart';
+
 class Game extends ChangeNotifier {
+  Game(this.auth);
+
+  final Auth auth;
   String gameId;
   int playerNumber;
   bool isDealer;
@@ -12,37 +18,41 @@ class Game extends ChangeNotifier {
   String project = 'https://preference-1cc9d.firebaseio.com';
 
   Future<void> createGame(String nickname) async {
-    final name = UniqueKey().toString();
-//    final authResponse = await client.post(
-//        'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyDpQioFovwZvuPZMzlkK6xoJFM1uj5EkAg');
-//    print(json.decode(authResponse.body)['idToken']);
-    final response = await client.get(
-//      'https://preference-1cc9d.firebaseio.com/games.json?access_token=${json.decode(authResponse.body)['idToken']}',
-      'https://preference-1cc9d.firebaseio.com/games.json',
-//      body: json.encode({'Player1': nickname}),
+    final authResponse = await auth.createAccount();
+    final response = await client.post(
+      '$project/games.json?auth=${authResponse['idToken']}',
+      body: json.encode({
+        'players': {
+          '0': {'nickname': nickname, 'uid': authResponse['localId']}
+        }
+      }),
     );
-    print(response.body);
-    gameId = name;
-    playerNumber = 1;
+    gameId = json.decode(response.body)['name'];
+    playerNumber = 0;
     notifyListeners();
   }
 
   Future<void> joinGame(String name, String nickname) async {
-    final gamesJson = await client.get('$project/games');
-    final games = json.decode(gamesJson.body);
-    final number = games[name].length + 1;
-    await client.post(
-      '$project/games/$name',
-      body: json.encode({'Player $number': nickname}),
+    final authResponse = await auth.createAccount();
+    final gameJson = await client
+        .get('$project/games/$name.json?auth=${authResponse['idToken']}');
+    final game = json.decode(gameJson.body);
+    await client.patch(
+      '$project/games/$name.json?auth=${authResponse['idToken']}',
+      body: json.encode({
+        'players': [
+          ...game['players'],
+          {'nickname': nickname, 'uid': authResponse['localId']}
+        ]
+      }),
     );
-    playerNumber = number;
+    playerNumber = game['players'].length;
     gameId = name;
     notifyListeners();
   }
 
   Future<void> leaveGame() async {
-    await client.delete(
-        'https://preference-1cc9d.firebaseio.com/games/$gameId/Player $playerNumber');
+    await client.delete('$project/games/$gameId/$playerNumber.json');
     gameId = null;
     playerNumber = null;
     isDealer = null;

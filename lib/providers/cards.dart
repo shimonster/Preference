@@ -47,7 +47,7 @@ class Card {
 }
 
 class Cards extends ChangeNotifier {
-  Cards() {
+  Cards(this._cards, [this.token, this.uid]) {
     for (var i = 0; i < 32; i++) {
       _cards.add(
         Card(
@@ -59,6 +59,8 @@ class Cards extends ChangeNotifier {
     }
   }
 
+  final String token;
+  final String uid;
   double width;
   double height;
   List<Card> _cards = [];
