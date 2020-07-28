@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../lib/providers/game.dart';
 import '../lib/providers/auth.dart';
+import '../lib/providers/cards.dart';
 
 void main() async {
   await http.delete('https://preference-1cc9d.firebaseio.com/games.json');

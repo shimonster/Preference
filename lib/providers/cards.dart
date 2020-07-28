@@ -1,14 +1,15 @@
 import 'dart:math';
+import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 import '../widgets/playing_card.dart';
 
 enum ranks {
-  rank7,
-  rank8,
-  rank9,
+  rank07,
+  rank08,
+  rank09,
   rank10,
   rank11,
   rank12,
@@ -35,7 +36,6 @@ enum places {
   trick1,
   trick2,
   trick3,
-  tbd,
 }
 
 class Card {
@@ -47,40 +47,139 @@ class Card {
 }
 
 class Cards extends ChangeNotifier {
-  Cards(this._cards, [this.token, this.uid]) {
-    for (var i = 0; i < 32; i++) {
-      _cards.add(
-        Card(
-          ranks.values[i % 8],
-          suits.values[(i / 8).floor()],
-          places.tbd,
-        ),
-      );
+  Cards(this._cards,
+      {this.token, this.uid, this.gameId, this.playerNumber, this.client}) {
+    print('constructor');
+    if (token != null && gameId != null) {
+      dealer = 0;
+      if (isDealer) {
+        print('creating cards');
+        List<Card> addCard = [];
+        for (var i = 0; i < 32; i++) {
+          print((i / 8).floor());
+          addCard.add(
+            Card(
+              ranks.values[i % 8],
+              suits.values[(i / 8).floor()],
+              null,
+            ),
+          );
+        }
+        _cards = addCard;
+        print(_cards);
+        //places
+//          assert(_cards
+//                  .where((element) => element.place == places.player1)
+//                  .length ==
+//              10);
+//          assert(_cards
+//                  .where((element) => element.place == places.player2)
+//                  .length ==
+//              10);
+//          assert(_cards
+//                  .where((element) => element.place == places.player3)
+//                  .length ==
+//              10);
+//          assert(
+//              _cards.where((element) => element.place == places.widow).length ==
+//                  2);
+//          //suits
+        assert(
+            _cards.where((element) => element.suit == suits.suit1).length == 8);
+        assert(
+            _cards.where((element) => element.suit == suits.suit2).length == 8);
+        assert(
+            _cards.where((element) => element.suit == suits.suit3).length == 8);
+        assert(
+            _cards.where((element) => element.suit == suits.suit4).length == 8);
+        //ranks
+        assert(
+            _cards.where((element) => element.number == ranks.rank07).length ==
+                4);
+        assert(
+            _cards.where((element) => element.number == ranks.rank08).length ==
+                4);
+        assert(
+            _cards.where((element) => element.number == ranks.rank09).length ==
+                4);
+        assert(
+            _cards.where((element) => element.number == ranks.rank10).length ==
+                4);
+        assert(
+            _cards.where((element) => element.number == ranks.rank11).length ==
+                4);
+        assert(
+            _cards.where((element) => element.number == ranks.rank12).length ==
+                4);
+        assert(
+            _cards.where((element) => element.number == ranks.rank13).length ==
+                4);
+        assert(
+            _cards.where((element) => element.number == ranks.rank14).length ==
+                4);
+        randomize();
+      }
     }
   }
 
   final String token;
   final String uid;
+  final String gameId;
+  final int playerNumber;
+  final http.Client client;
+  int dealer;
   double width;
   double height;
+  static const project = 'https://preference-1cc9d.firebaseio.com';
   List<Card> _cards = [];
 
   List<Card> get cards {
     return [..._cards];
   }
 
+  bool get isDealer {
+    return dealer == playerNumber && dealer != null;
+  }
+
+  Future<void> setUpStream() async {
+    print('stream');
+    final response = await client.get(
+      '$project/games/$gameId/cards.json?auth=$token',
+      headers: {
+        'Accept': 'text/event-stream',
+      },
+    );
+    print('after stream');
+    print(response.persistentConnection);
+    print(json.decode(response.body));
+  }
+
   Future<void> randomize() async {
-    _cards.shuffle(Random());
-    _cards.forEach((element) {
-      final elemId = _cards.indexOf(element);
-      _cards[elemId].place = elemId >= 30
-          ? places.widow
-          : elemId >= 20
-              ? places.player3
-              : elemId >= 10 ? places.player2 : places.player1;
-    });
-    print(_cards.map((e) => e.place).toList());
-//    notifyListeners();
+    if (isDealer) {
+      print('setting cards');
+      _cards.shuffle(Random());
+      _cards.forEach((element) {
+        final elemId = _cards.indexOf(element);
+        _cards[elemId].place = elemId >= 30
+            ? places.widow
+            : elemId >= 20
+                ? places.player3
+                : elemId >= 10 ? places.player2 : places.player1;
+      });
+      final response = await client.post(
+        '$project/games/-$gameId/cards.json?auth=$token',
+        body: json.encode(
+          _cards.asMap().map(
+                (i, e) => MapEntry(i.toString(), {
+                  'rankI': e.place.index.toString(),
+                  'suitI': e.suit.index.toString(),
+                  'placeI': e.place.index.toString()
+                }),
+              ),
+        ),
+      );
+      print(response.body);
+    }
   }
 
   List<PlayingCard> _getLocationCards(

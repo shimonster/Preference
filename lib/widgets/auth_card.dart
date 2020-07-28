@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../screens/preference_screen.dart';
 import '../providers/game.dart';
 
 class AuthCard extends StatefulWidget {
@@ -91,6 +92,31 @@ class _AuthCardState extends State<AuthCard> {
                           setState(() {
                             _isLoading = false;
                           });
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pushReplacementNamed(
+                            PreferenceScreen.routeName,
+                          );
+                          showDialog(
+                              context: context,
+                              builder: (ctx) {
+                                final _idController =
+                                    TextEditingController(text: game.gameId);
+                                return AlertDialog(
+                                  title: Center(
+                                    child: Text('This is your game code'),
+                                  ),
+                                  content: TextField(
+                                    textAlign: TextAlign.center,
+                                    controller: _idController,
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                    ),
+                                    onChanged: (_) {
+                                      _idController.text = game.gameId;
+                                    },
+                                  ),
+                                );
+                              });
                         } catch (error) {
                           setState(() {
                             _isLoading = false;

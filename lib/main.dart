@@ -12,12 +12,7 @@ void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -25,13 +20,18 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(
           value: Auth(),
         ),
-        ChangeNotifierProxyProvider<Auth, Cards>(
-          create: (ctx) => Cards([]),
-          update: (ctx, auth, prev) => Cards(prev.cards, auth.token, auth.uid),
-        ),
         ChangeNotifierProvider(
           create: (ctx) => Game(Provider.of<Auth>(ctx, listen: false)),
-        )
+        ),
+        ChangeNotifierProxyProvider2<Auth, Game, Cards>(
+          create: (ctx) => Cards([]),
+          update: (ctx, auth, game, prev) => Cards(prev.cards,
+              token: auth.token,
+              uid: auth.uid,
+              gameId: game.gameId,
+              playerNumber: game.playerNumber,
+              client: game.client),
+        ),
       ],
       child: MaterialApp(
         title: 'Preference',
@@ -41,10 +41,7 @@ class _MyAppState extends State<MyApp> {
           primaryColorLight: Color.fromRGBO(56, 214, 45, 1),
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: Consumer<Game>(
-          builder: (ctx, game, _) =>
-              game.gameId == null ? AuthScreen() : PreferenceScreen(),
-        ),
+        home: AuthScreen(),
         routes: {
           AuthCard.routeName: (ctx) => AuthCard(),
           PreferenceScreen.routeName: (ctx) => PreferenceScreen(),
