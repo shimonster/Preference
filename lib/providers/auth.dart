@@ -3,12 +3,20 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Auth extends ChangeNotifier {
   String uid;
   String token;
   Timer timer;
   static const _apiKey = 'AIzaSyDpQioFovwZvuPZMzlkK6xoJFM1uj5EkAg';
+
+  Future<void> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey('token')) {
+      token = prefs.getString('token');
+    }
+  }
 
   Future<Map> createAccount() async {
     print('start auth');
@@ -21,6 +29,8 @@ class Auth extends ChangeNotifier {
     uid = body['localId'];
     token = body['idToken'];
     print(body['expiresIn']);
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('token', token);
     timer = Timer.periodic(Duration(seconds: int.parse(body['expiresIn']) - 10),
         (_) async {
       print('timer');
@@ -36,6 +46,7 @@ class Auth extends ChangeNotifier {
       token = body['idToken'];
     });
     print('finish auth');
+    prefs.setString('token', token);
     return json.decode(authResponse.body);
   }
 

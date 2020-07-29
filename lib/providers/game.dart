@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import './auth.dart';
+import './cards.dart' as c;
 
 class Game extends ChangeNotifier {
   Game(this.auth);
@@ -12,6 +13,15 @@ class Game extends ChangeNotifier {
   final Auth auth;
   String gameId;
   int playerNumber;
+
+  c.Cards get cards {
+    return c.Cards(
+        token: auth.token,
+        uid: auth.uid,
+        gameId: gameId,
+        playerNumber: playerNumber,
+        client: client);
+  }
 
   var client = http.Client();
   static const project = 'https://preference-1cc9d.firebaseio.com';
@@ -24,7 +34,8 @@ class Game extends ChangeNotifier {
         'dealer': 0,
         'players': {
           '0': {'nickname': nickname, 'uid': authResponse['localId']}
-        }
+        },
+        'cards': cards.randomize(),
       }),
     );
     final String id = json.decode(response.body)['name'].replaceFirst('-', '');
@@ -39,7 +50,7 @@ class Game extends ChangeNotifier {
   Future<void> joinGame(String name, String nickname) async {
     final authResponse = await auth.createAccount();
     final gameRoute =
-        '$project/games/$name.json?auth=${authResponse['idToken']}';
+        '$project/games/-$name.json?auth=${authResponse['idToken']}';
     final gameJson = await client.get(gameRoute);
     final game = json.decode(gameJson.body);
     await client.patch(
@@ -71,14 +82,13 @@ class Game extends ChangeNotifier {
   }
 
   Future<void> leaveGame() async {
+    final players = await client
+        .get('$project/games/-$gameId/players.json?auth=${auth.token}');
+    await client.delete(
+        '$project/games/-$gameId${json.decode(players.body).length != 1 ? '/players/$playerNumber' : ''}.json?auth=${auth.token}');
+    await auth.deleteAccount();
     gameId = null;
     playerNumber = null;
-    final players = json.decode((await client
-            .get('$project/games/$gameId/players.json?auth=${auth.token}'))
-        .body);
-    await client.delete(
-        '$project/games/$gameId${players.length != 1 ? '/players/$playerNumber' : ''}.json?auth=${auth.token}');
-    await auth.deleteAccount();
   }
 
   @override

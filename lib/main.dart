@@ -23,15 +23,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (ctx) => Game(Provider.of<Auth>(ctx, listen: false)),
         ),
-        ChangeNotifierProxyProvider2<Auth, Game, Cards>(
-          create: (ctx) => Cards([]),
-          update: (ctx, auth, game, prev) => Cards(prev.cards,
-              token: auth.token,
-              uid: auth.uid,
-              gameId: game.gameId,
-              playerNumber: game.playerNumber,
-              client: game.client),
-        ),
       ],
       child: MaterialApp(
         title: 'Preference',

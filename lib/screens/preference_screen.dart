@@ -1,12 +1,13 @@
 // ignore: avoid_web_libraries_in_flutter
-import 'dart:async';
 import 'dart:html' as html;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/cards.dart' as c;
+import '../providers/auth.dart';
 import '../providers/game.dart';
 
 class PreferenceScreen extends StatefulWidget {
@@ -20,21 +21,29 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   bool _isPlaying = false;
   bool _showInfo = false;
   bool _isLoading = true;
+  bool hasPopped = false;
   StreamSubscription sub;
   @override
   void initState() {
     super.initState();
     Provider.of<Game>(context, listen: false).getCurrentGame().then((_) async {
-//      await Provider.of<c.Cards>(context, listen: false).setUpStream();
+      await Provider.of<Auth>(context, listen: false).getToken();
+      await Provider.of<Game>(context, listen: false).cards.setUpStream();
     }).then(
       (_) => setState(() {
         _isLoading = false;
       }),
     );
     sub = html.window.onPopState.listen((event) async {
-      print(event.type);
-      await Provider.of<Game>(context, listen: false).leaveGame();
-      Navigator.of(context).pushReplacementNamed('/');
+      if (!hasPopped) {
+        setState(() {
+          _isLoading = true;
+        });
+        hasPopped = true;
+        print('event: ${event.type}');
+        await Provider.of<Game>(context, listen: false).leaveGame();
+        Navigator.of(context).pushReplacementNamed('/');
+      }
     });
   }
 
@@ -46,8 +55,8 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cards = Provider.of<c.Cards>(context);
     final game = Provider.of<Game>(context, listen: false);
+    final cards = game.cards;
     cards.width = html.window.innerHeight.toDouble();
     cards.height = html.window.innerWidth.toDouble();
     final _idController = TextEditingController(text: game.gameId);
@@ -91,6 +100,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
             setState(() {
               _showInfo = true;
             });
+            Provider.of<Game>(context, listen: false).cards.changeDealer();
           },
           onExit: (_) {
             setState(() {

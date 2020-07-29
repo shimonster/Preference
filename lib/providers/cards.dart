@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'dart:math';
-import 'dart:convert';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import '../widgets/playing_card.dart';
 
@@ -47,85 +51,12 @@ class Card {
 }
 
 class Cards extends ChangeNotifier {
-  Cards(this._cards,
-      {this.token, this.uid, this.gameId, this.playerNumber, this.client}) {
-    print('constructor');
-    if (token != null && gameId != null) {
-      dealer = 0;
-      if (isDealer) {
-        print('creating cards');
-        List<Card> addCard = [];
-        for (var i = 0; i < 32; i++) {
-          print((i / 8).floor());
-          addCard.add(
-            Card(
-              ranks.values[i % 8],
-              suits.values[(i / 8).floor()],
-              null,
-            ),
-          );
-        }
-        _cards = addCard;
-        print(_cards);
-        //places
-//          assert(_cards
-//                  .where((element) => element.place == places.player1)
-//                  .length ==
-//              10);
-//          assert(_cards
-//                  .where((element) => element.place == places.player2)
-//                  .length ==
-//              10);
-//          assert(_cards
-//                  .where((element) => element.place == places.player3)
-//                  .length ==
-//              10);
-//          assert(
-//              _cards.where((element) => element.place == places.widow).length ==
-//                  2);
-//          //suits
-        assert(
-            _cards.where((element) => element.suit == suits.suit1).length == 8);
-        assert(
-            _cards.where((element) => element.suit == suits.suit2).length == 8);
-        assert(
-            _cards.where((element) => element.suit == suits.suit3).length == 8);
-        assert(
-            _cards.where((element) => element.suit == suits.suit4).length == 8);
-        //ranks
-        assert(
-            _cards.where((element) => element.number == ranks.rank07).length ==
-                4);
-        assert(
-            _cards.where((element) => element.number == ranks.rank08).length ==
-                4);
-        assert(
-            _cards.where((element) => element.number == ranks.rank09).length ==
-                4);
-        assert(
-            _cards.where((element) => element.number == ranks.rank10).length ==
-                4);
-        assert(
-            _cards.where((element) => element.number == ranks.rank11).length ==
-                4);
-        assert(
-            _cards.where((element) => element.number == ranks.rank12).length ==
-                4);
-        assert(
-            _cards.where((element) => element.number == ranks.rank13).length ==
-                4);
-        assert(
-            _cards.where((element) => element.number == ranks.rank14).length ==
-                4);
-        randomize();
-      }
-    }
-  }
+  Cards({this.token, this.uid, this.gameId, this.playerNumber, this.client});
 
   final String token;
   final String uid;
   final String gameId;
-  final int playerNumber;
+  /*final*/ int playerNumber;
   final http.Client client;
   int dealer;
   double width;
@@ -142,44 +73,74 @@ class Cards extends ChangeNotifier {
   }
 
   Future<void> setUpStream() async {
+//    final db = FirebaseDatabase(
+//      databaseURL: project,
+//    );
     print('stream');
+//    final ref = FirebaseDatabase.instance
+//        .reference()
+//        .child('$project/games/-$gameId/cards.json?auth=$token');
+//    ref.onChildChanged.listen((event) {
+//      print(event);
+//    });
+
     final response = await client.get(
-      '$project/games/$gameId/cards.json?auth=$token',
+      Uri.parse('$project/games/-$gameId/dealer.json?auth=$token'),
       headers: {
-        'Accept': 'text/event-stream',
+        HttpHeaders.acceptHeader: 'text/event-stream',
       },
-    );
+    ).asStream();
+
+//    print(response.body);
+    response.listen((event) {
+      print('stream listener');
+      print(event.headers);
+    });
     print('after stream');
-    print(response.persistentConnection);
-    print(json.decode(response.body));
   }
 
-  Future<void> randomize() async {
-    if (isDealer) {
-      print('setting cards');
-      _cards.shuffle(Random());
-      _cards.forEach((element) {
-        final elemId = _cards.indexOf(element);
-        _cards[elemId].place = elemId >= 30
-            ? places.widow
-            : elemId >= 20
-                ? places.player3
-                : elemId >= 10 ? places.player2 : places.player1;
-      });
-      final response = await client.post(
-        '$project/games/-$gameId/cards.json?auth=$token',
-        body: json.encode(
-          _cards.asMap().map(
-                (i, e) => MapEntry(i.toString(), {
-                  'rankI': e.place.index.toString(),
-                  'suitI': e.suit.index.toString(),
-                  'placeI': e.place.index.toString()
-                }),
-              ),
+  Future<void> changeDealer() async {
+    await client.put(
+      Uri.parse('$project/games/-$gameId/dealer.json?auth=$token'),
+      body: '1',
+    );
+    await client.put(
+      Uri.parse('$project/games/-$gameId/dealer.json?auth=$token'),
+      body: '0',
+    );
+  }
+
+  Map<String, Map<String, String>> randomize() {
+    dealer = 0;
+    List<Card> addCard = [];
+    for (var i = 0; i < 32; i++) {
+      addCard.add(
+        Card(
+          ranks.values[i % 8],
+          suits.values[(i / 8).floor()],
+          null,
         ),
       );
-      print(response.body);
     }
+    _cards = addCard;
+    _cards.shuffle(Random());
+    _cards.forEach((element) {
+      final elemId = _cards.indexOf(element);
+      _cards[elemId].place = elemId >= 30
+          ? places.widow
+          : elemId >= 20
+              ? places.player3
+              : elemId >= 10 ? places.player2 : places.player1;
+    });
+    final newCards = _cards.asMap().map(
+          (i, e) => MapEntry(i.toString(), {
+            'rankI': e.number.index.toString(),
+            'suitI': e.suit.index.toString(),
+            'placeI': e.place.index.toString()
+          }),
+        );
+    print(newCards);
+    return newCards;
   }
 
   List<PlayingCard> _getLocationCards(
