@@ -83,19 +83,22 @@ class Cards extends ChangeNotifier {
 //    ref.onChildChanged.listen((event) {
 //      print(event);
 //    });
+    void listen() {
+      print('listened');
+    }
 
     final response = await client.get(
-      Uri.parse('$project/games/-$gameId/dealer.json?auth=$token'),
+      '$project/games/-$gameId/dealer.json?auth=$token&callback=listen',
       headers: {
-        HttpHeaders.acceptHeader: 'text/event-stream',
+        HttpHeaders.acceptHeader: "text/event-stream",
       },
-    ).asStream();
+    );
 
-//    print(response.body);
-    response.listen((event) {
-      print('stream listener');
-      print(event.headers);
-    });
+    print(response.body);
+//    response.listen((event) {
+//      print('stream listener');
+//      print(event);
+//    });
     print('after stream');
   }
 
