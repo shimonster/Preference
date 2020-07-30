@@ -1,12 +1,8 @@
-import 'dart:io';
 import 'dart:math';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 import '../widgets/playing_card.dart';
 
@@ -72,34 +68,10 @@ class Cards extends ChangeNotifier {
     return dealer == playerNumber && dealer != null;
   }
 
-  Future<void> setUpStream() async {
-//    final db = FirebaseDatabase(
-//      databaseURL: project,
-//    );
+  Stream<Event> setUpStream() {
     print('stream');
-//    final ref = FirebaseDatabase.instance
-//        .reference()
-//        .child('$project/games/-$gameId/cards.json?auth=$token');
-//    ref.onChildChanged.listen((event) {
-//      print(event);
-//    });
-    void listen() {
-      print('listened');
-    }
-
-    final response = await client.get(
-      '$project/games/-$gameId/dealer.json?auth=$token&callback=listen',
-      headers: {
-        HttpHeaders.acceptHeader: "text/event-stream",
-      },
-    );
-
-    print(response.body);
-//    response.listen((event) {
-//      print('stream listener');
-//      print(event);
-//    });
-    print('after stream');
+    final database = FirebaseDatabase(app: FirebaseDatabase.instance.app);
+    return database.reference().child('games').onChildChanged;
   }
 
   Future<void> changeDealer() async {

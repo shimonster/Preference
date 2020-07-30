@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 import '../providers/cards.dart' as c;
 import '../providers/auth.dart';
@@ -28,7 +29,6 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
     super.initState();
     Provider.of<Game>(context, listen: false).getCurrentGame().then((_) async {
       await Provider.of<Auth>(context, listen: false).getToken();
-      await Provider.of<Game>(context, listen: false).cards.setUpStream();
     }).then(
       (_) => setState(() {
         _isLoading = false;
@@ -66,13 +66,21 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         decoration: BoxDecoration(
           border: Border.all(width: 10),
         ),
-        child: _isLoading
-            ? Center(
-                child: CircularProgressIndicator(),
-              )
-            : Stack(
-                fit: StackFit.loose,
-                children: [
+        child: StreamBuilder(
+            stream: cards.setUpStream()
+              ..listen((event) {
+                print('from stream: $event');
+              }),
+            builder: (context, snapshot) {
+              print(snapshot.data);
+              return _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : Stack(
+                      fit: StackFit.loose,
+                      children: [
+                        Text(snapshot.hasData ? snapshot.data : 'none'),
 //          if (_isPlaying) ...cards.p2Cards,
 //          if (_isPlaying) ...cards.p1Cards,
 //          if (_isPlaying) ...cards.p3Cards,
@@ -87,8 +95,9 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
 //              child: Text('start'),
 //            ),
 //        ]),
-                ],
-              ),
+                      ],
+                    );
+            }),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
       floatingActionButton: Container(
@@ -97,15 +106,15 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         width: _showInfo ? game.gameId.length * 12.0 + 20 : 35,
         child: MouseRegion(
           onEnter: (_) {
-            setState(() {
-              _showInfo = true;
-            });
+//            setState(() {
+//              _showInfo = true;
+//            });
             Provider.of<Game>(context, listen: false).cards.changeDealer();
           },
           onExit: (_) {
-            setState(() {
-              _showInfo = false;
-            });
+//            setState(() {
+//              _showInfo = false;
+//            });
           },
           child: Stack(
             overflow: Overflow.visible,
