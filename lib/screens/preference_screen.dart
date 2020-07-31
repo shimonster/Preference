@@ -67,21 +67,21 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
           border: Border.all(width: 10),
         ),
         child: StreamBuilder(
-            stream: cards.setUpStream()
-              ..listen((event) {
-                print('from stream: $event');
-              }),
+//            stream: cards.setUpStream()
+//              ..listen((event) {
+//                print('from stream: $event');
+//              }),
             builder: (context, snapshot) {
-              print(snapshot.data);
-              return _isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  : Stack(
-                      fit: StackFit.loose,
-                      children: [
-                        Text(snapshot.hasData ? snapshot.data : 'none'),
-//          if (_isPlaying) ...cards.p2Cards,
+          print(snapshot.data);
+          return _isLoading
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Stack(
+                  fit: StackFit.loose,
+                  children: [
+//                        Text(snapshot.hasData ? snapshot.data : 'none'),
+////          if (_isPlaying) ...cards.p2Cards,
 //          if (_isPlaying) ...cards.p1Cards,
 //          if (_isPlaying) ...cards.p3Cards,
 //          if (_isPlaying) ...cards.widows,
@@ -95,9 +95,9 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
 //              child: Text('start'),
 //            ),
 //        ]),
-                      ],
-                    );
-            }),
+                  ],
+                );
+        }),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
       floatingActionButton: Container(
@@ -105,6 +105,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         height: _showInfo ? 50 : 35,
         width: _showInfo ? game.gameId.length * 12.0 + 20 : 35,
         child: MouseRegion(
+          cursor: MouseCursor.defer,
           onEnter: (_) {
 //            setState(() {
 //              _showInfo = true;

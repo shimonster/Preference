@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -68,21 +69,22 @@ class Cards extends ChangeNotifier {
     return dealer == playerNumber && dealer != null;
   }
 
-  Stream<Event> setUpStream() {
-    print('stream');
-    final database = FirebaseDatabase(app: FirebaseDatabase.instance.app);
-    return database.reference().child('games').onChildChanged;
-  }
+//  Stream<Event> setUpStream() {
+//    print('stream');
+//    final database = FirebaseDatabase(app: FirebaseDatabase.instance.app);
+//    return database.reference().child('games').onChildChanged;
+//  }
 
   Future<void> changeDealer() async {
-    await client.put(
-      Uri.parse('$project/games/-$gameId/dealer.json?auth=$token'),
-      body: '1',
+    await http.patch(
+      '$project/games/-$gameId.json?auth=$token',
+      body: json.encode({'dealer': 1}),
     );
-    await client.put(
-      Uri.parse('$project/games/-$gameId/dealer.json?auth=$token'),
-      body: '0',
+    final response = await http.patch(
+      '$project/games/-$gameId.json?auth=$token',
+      body: json.encode({'dealer': 0}),
     );
+    print(response.body);
   }
 
   Map<String, Map<String, String>> randomize() {
