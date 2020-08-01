@@ -10,40 +10,48 @@ const functions = require('firebase-functions');
 // });
 let gameId = '';
 let uid = '';
+let nickname = '';
 
-exports.getGame = functions.database.ref('/games/' + (gameId === '' ? '{gameId}' : gameId) + '/players').onCreate((snapshot, context) => {
+exports.getGame = functions.database.ref('/games/'/*  + (gameId === '') ? '{gameId}' : gameId + '/players' */).onCreate((snapshot, context) => {
+    console.log('get game was run');
+    snapshot.forEach((e) => {
+        console.log(e.val());
+    })
     snapshot.val().values.forEach((e) => {
-        if(e.uid === context.auth.uid && gameId !== '') {
+        if(e.uid === context.auth.uid && gameId === '') {
             gameId = context.params.gameId;
+            uid = context.auth.uid;
+            nickname = e.nickname;
         }
     })
+    console.log('game id:', gameId, 'uid:', uid, 'nickname:', nickname)
     if(e.uid !== context.auth.uid && gameId !== '') {
-        let joinName = snapshot.child(snapshot.numChildren - 1).nickname;
-        admin.messaging().sendToTopic(gameId, {notification: {title: joinName, body: '${joinName} joined the game!', }})
+        const joinName = snapshot.child(snapshot.numChildren - 1).nickname;
+        return admin.messaging().sendToTopic(gameId, {notification: {title: joinName, body: joinName + ' joined the game!', }})
+    } else {
+        return Promise.resolve();
     }
 })
 
-exports.notifyLocationChange = functions.database.ref('/games/' + (gameId === '' ? '{gameId}' : gameId)).onUpdate((snapshot, context) => {
-    // if(gameId === '') {
-    //     uid = context.auth.uid;
-    //     const db = snapshot.after.ref.root;
-    //     const gameIdx = db.child('/games').ref.toJSON().values().findIndex((game) => {
-    //         return game.players.values.findIndex((e) => {
-    //             return e.uid === uid;
-    //         }) !== -1;
-    //     })
-    //     gameId = db.child('/games').data().ref().keys()[gameIdx];
-    //     console.log('game id set');
-    // }
-    gameId = context.params.gameId;
-    uid = context.auth.uid;
-    console.log('game id:', gameId);
-    // console.log('players:', snapshot.after.child('/players').val());
-    //     snapshot.after.child('/players').val().forEach((snap) => {
-    //         console.log('snap', snap.uid);
-    //         if(snap.uid === context.auth.uid) {
-    //             isGame = true;
-    //         }
-    //     })
-    return;
+exports.notifyCardLocationChange = functions.database.ref('/games/' + gameId + '/cards/{cardNum}').onUpdate((snapshot, context) => {
+    const rankI = snapshot.after.val().rankI;
+    const suitI = snapshot.after.val().suitI;
+    const placeI = snapshot.after.val().placeI;
+    const prevPlaceI = snapshot.before.val().placeI;
+    let message = '';
+    const suit = ['hearts', 'diamonds', 'clubs', 'spades'][suitI];
+    const rank = ['7', '8', '9', '10', 'jack', 'queen', 'king'][rankI];
+    if(placeI >= 5 && placeI <= 7) {
+        message = nickname + ' placed the ' + rank + ' of ' + suit + '.'
+    } else if(prevPlaceI === 3 && placeI <= 2) {
+        message = nickname + ' collected the widow.';
+    } else if(prevPlaceI >= 5 && prevPlaceI <= 7 && placeI >= 8 && placeI <= 10) {
+        message = nickname + ' collected the trick.'
+    }
+
+    if(message !== '') {
+        return admin.messaging().sendToTopic(gameId, {notification: {title: nickname, body: message}});
+    } else {
+        return Promise.resolve();
+    }
 })

@@ -27,21 +27,23 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<Game>(context, listen: false).getCurrentGame().then((_) async {
-      await Provider.of<Auth>(context, listen: false).getToken();
+    Provider.of<Auth>(context, listen: false).getToken().then((_) async {
+      await Provider.of<Game>(context, listen: false).getCurrentGame();
+      Provider.of<Game>(context, listen: false).setUpStream().listen((event) {
+        print(event.snapshot.value);
+      });
     }).then(
       (_) => setState(() {
         _isLoading = false;
       }),
     );
-    sub = html.window.onPopState.listen((event) async {
+    sub = html.window.onPopState.listen((event) {
       if (!hasPopped) {
         setState(() {
           _isLoading = true;
         });
         hasPopped = true;
         print('event: ${event.type}');
-        await Provider.of<Game>(context, listen: false).leaveGame();
         Navigator.of(context).pushReplacementNamed('/');
       }
     });
@@ -51,6 +53,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   void dispose() {
     super.dispose();
     sub.cancel();
+    Provider.of<Game>(context, listen: false).leaveGame();
   }
 
   @override

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_database/firebase_database.dart' as fb;
 
 import './auth.dart';
 import './cards.dart' as c;
@@ -27,9 +27,28 @@ class Game extends ChangeNotifier {
   var client = http.Client();
   static const project = 'https://preference-1cc9d.firebaseio.com';
 
-  void configureMessages() {
-    final fbm = FirebaseMessaging();
-    fbm.configure(onResume: (data) {});
+//  void configureMessages() {
+//    final fbm = FirebaseMessaging();
+//    fbm.configure(
+//      onResume: (data) {
+//        print('on resume: $data');
+//        return;
+//      },
+//      onMessage: (data) {
+//        print('on messabe $data');
+//        return;
+//      },
+//    );
+//    fbm.subscribeToTopic(gameId);
+//  }
+
+  Stream<fb.Event> setUpStream() {
+    final database = fb.FirebaseDatabase.instance.reference();
+    final stream = database.child('games/-$gameId').onValue;
+    database.once().then((value) => print('from stream get: ${value.value}'));
+    print('function');
+    return stream;
+    return Stream.empty();
   }
 
   Future<void> createGame(String nickname) async {
@@ -50,6 +69,7 @@ class Game extends ChangeNotifier {
     await prefs.setInt('currentPlayer', 0);
     gameId = id;
     playerNumber = 0;
+//    configureMessages();
     notifyListeners();
   }
 
@@ -73,6 +93,7 @@ class Game extends ChangeNotifier {
     await prefs.setInt('currentPlayer', game['players'].length);
     playerNumber = game['players'].length;
     gameId = name;
+//    configureMessages();
     notifyListeners();
   }
 

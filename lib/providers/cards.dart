@@ -76,11 +76,11 @@ class Cards extends ChangeNotifier {
 //  }
 
   Future<void> changeDealer() async {
-    await http.patch(
+    final response = await http.patch(
       '$project/games/-$gameId.json?auth=$token',
       body: json.encode({'dealer': 1}),
     );
-    final response = await http.patch(
+    await http.patch(
       '$project/games/-$gameId.json?auth=$token',
       body: json.encode({'dealer': 0}),
     );
