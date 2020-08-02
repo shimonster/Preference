@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'providers/game.dart';
 import './screens/preference_screen.dart';
+import 'package:firebase_database/firebase_database.dart';
 import './widgets/auth_card.dart';
 import './screens/auth_screen.dart';
 import './providers/cards.dart';

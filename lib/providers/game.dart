@@ -40,13 +40,13 @@ class Game extends ChangeNotifier {
 //      },
 //    );
 //    fbm.subscribeToTopic(gameId);
-//  }
 
   Stream<fb.Event> setUpStream() {
     final database = fb.FirebaseDatabase.instance.reference();
     final stream = database.child('games/-$gameId').onValue;
     database.once().then((value) => print('from stream get: ${value.value}'));
     print('function');
+    fb.FirebaseDatabase.instance
     return stream;
     return Stream.empty();
   }

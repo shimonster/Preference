@@ -24,13 +24,16 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   bool _isLoading = true;
   bool hasPopped = false;
   StreamSubscription sub;
+  StreamSubscription stream;
   @override
   void initState() {
     super.initState();
     Provider.of<Auth>(context, listen: false).getToken().then((_) async {
       await Provider.of<Game>(context, listen: false).getCurrentGame();
-      Provider.of<Game>(context, listen: false).setUpStream().listen((event) {
-        print(event.snapshot.value);
+      stream = Provider.of<Game>(context, listen: false)
+          .setUpStream()
+          .listen((event) {
+        print('from database listener: ${event.snapshot.value}');
       });
     }).then(
       (_) => setState(() {
@@ -53,6 +56,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   void dispose() {
     super.dispose();
     sub.cancel();
+    stream.cancel();
     Provider.of<Game>(context, listen: false).leaveGame();
   }
 
