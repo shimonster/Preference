@@ -85,9 +85,9 @@ class _AuthCardState extends State<AuthCard> {
                         });
                         try {
                           if (isCreating) {
-                            await game.createGame(_nickname);
+//                            await game.createGame(_nickname);
                           } else {
-                            await game.joinGame(_gameCode, _nickname);
+//                            await game.joinGame(_gameCode, _nickname);
                           }
                           setState(() {
                             _isLoading = false;

@@ -30,11 +30,6 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
     super.initState();
     Provider.of<Auth>(context, listen: false).getToken().then((_) async {
       await Provider.of<Game>(context, listen: false).getCurrentGame();
-      stream = Provider.of<Game>(context, listen: false)
-          .setUpStream()
-          .listen((event) {
-        print('from database listener: ${event.snapshot.value}');
-      });
     }).then(
       (_) => setState(() {
         _isLoading = false;

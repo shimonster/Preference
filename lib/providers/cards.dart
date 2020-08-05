@@ -75,17 +75,17 @@ class Cards extends ChangeNotifier {
 //    return database.reference().child('games').onChildChanged;
 //  }
 
-  Future<void> changeDealer() async {
-    final response = await http.patch(
-      '$project/games/-$gameId.json?auth=$token',
-      body: json.encode({'dealer': 1}),
-    );
-    await http.patch(
-      '$project/games/-$gameId.json?auth=$token',
-      body: json.encode({'dealer': 0}),
-    );
-    print(response.body);
-  }
+//  Future<void> changeDealer() async {
+//    final response = await http.patch(
+//      '$project/games/-$gameId.json?auth=$token',
+//      body: json.encode({'dealer': 1}),
+//    );
+//    await http.patch(
+//      '$project/games/-$gameId.json?auth=$token',
+//      body: json.encode({'dealer': 0}),
+//    );
+//    print(response.body);
+//  }
 
   Map<String, Map<String, String>> randomize() {
     dealer = 0;
