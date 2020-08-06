@@ -9,17 +9,19 @@ void main() {
 }
 
 class Server {
-  Server(this.port);
+  Server(this.port) {
+    cardsController = CardsManagement(sendMessage);
+  }
 
   final int port;
 
-  final cardsController = CardsManagement();
+  CardsManagement cardsController;
   final gameController = GameManagement();
   Map<String, WebSocket> clientSockets = {};
 
   void startServer() {
     print('server started');
-    HttpServer.bind('localhost', 1234).then(
+    HttpServer.bind('localhost', port).then(
       (server) {
         print('after threads');
         server.listen((request) {
@@ -40,22 +42,39 @@ class Server {
                   if (event['method'] == SPMP.acceptPlay) {
                     if (gameController.acceptPlay(event['uid'])) {
                       final cards = cardsController.randomize();
-                      sendMessage(
-                          {'method': SPMP.startPlaying, 'cards': cards});
+                      sendMessage({
+                        'method': SPMP.startPlaying,
+                        'cards': cards,
+                        'players': gameController.players
+                      });
                     }
                   }
                   if (event['method'] == SPMP.bid) {
                     if (gameController.placeBid(
                         event['rank'], event['suit'], event['uid'])) {
                       sendMessage({
-                        'method': SPMP.setBid,
+                        'method': SPMP.bid,
                         'rank': event['rank'],
                         'suit': event['suit'],
                         'uid': event['uid'],
                       });
                     }
                   }
-                  if (event['method'] == SPMP.place) {}
+                  if (event['method'] == SPMP.place) {
+                    cardsController.move(
+                        event['rank'],
+                        event['suit'],
+                        gameController.players.keys
+                            .toList()
+                            .indexOf(event['uid']));
+                    sendMessage({
+                      'method': SPMP.playing,
+                      'rank': event['rank'],
+                      'suit': event['suit'],
+                      'uid': event['uid'],
+                      'turn': cardsController.turn,
+                    }, event['uid']);
+                  }
                 },
                 onDone: () {
                   print('listening to seb socket finished');
@@ -85,7 +104,19 @@ class Server {
 }
 
 class CardsManagement {
+  CardsManagement(this.sendMessage);
+
+  final void Function(Map<String, dynamic> message, [String exclude])
+      sendMessage;
   List<Map<String, int>> _cards;
+  int turn = 0;
+  int player1Cards = 0;
+  int player2Cards = 0;
+  int player3Cards = 0;
+  int player1Tricks = 0;
+  int player2Tricks = 0;
+  int player3Tricks = 0;
+
   List<Map<String, int>> randomize() {
     List<Map<String, int>> addCard = [];
     for (var i = 0; i < 32; i++) {
@@ -100,12 +131,60 @@ class CardsManagement {
     _cards.asMap().forEach((elemId, element) {
       _cards[elemId]['place'] = (elemId / 10).floor();
     });
+    player1Cards = 10;
+    player2Cards = 10;
+    player3Cards = 10;
     return _cards;
   }
 
-  void move(int rank, int suit, int place) {
+  void move(int rank, int suit, int place, [String uid]) {
+    bool didPlace = false;
     _cards.firstWhere((element) =>
         element['rank'] == rank && element['suit'] == suit)['place'] = place;
+    // placing a card
+    if (place == SPMP.center1) {
+      didPlace = true;
+      player1Cards -= 1;
+      turn = (turn + 1) % 3;
+    } else if (place == SPMP.center2) {
+      didPlace = true;
+      player2Cards -= 1;
+      turn = (turn + 1) % 3;
+    } else if (place == SPMP.center3) {
+      didPlace = true;
+      player3Cards -= 1;
+      turn = (turn + 1) % 3;
+    }
+    if (didPlace) {
+      if (player1Cards == player2Cards && player2Cards == player3Cards) {
+        sendMessage({
+          'method': SPMP.trickCollected,
+          'uid': uid,
+        });
+      }
+    }
+    // collecting widow
+    if (place == SPMP.player1) {
+      player1Cards += 1;
+    } else if (place == SPMP.player2) {
+      player2Cards += 1;
+    } else if (place == SPMP.player3) {
+      player3Cards += 1;
+    }
+    // disposed cards
+    if (place == SPMP.disposed) {
+      player1Cards = 10;
+      player2Cards = 10;
+      player3Cards = 10;
+    }
+    // collected trick
+    if (place == SPMP.trick1) {
+      player1Tricks += 1;
+    } else if (place == SPMP.trick2) {
+      player2Tricks += 1;
+    } else if (place == SPMP.trick3) {
+      player3Tricks += 1;
+    }
   }
 }
 
@@ -115,6 +194,7 @@ class GameManagement {
   Map<String, Map<String, dynamic>> players = {};
   int dealer = 0;
   bool isPlaying = false;
+  String gameState = SPMP.notStarted;
 
   bool placeBid(int num, int suit, String uid) {
     if (bid['suit'] > suit && bid['rank'] > num) {
@@ -127,6 +207,9 @@ class GameManagement {
           players[key]['hasBid'] = false;
         }
       });
+      if (players.values.every((element) => element['hasBid'])) {
+        gameState = SPMP.playing;
+      }
       return true;
     }
     return false;
@@ -136,6 +219,7 @@ class GameManagement {
     players[uid]['isPlaying'] = true;
     if (players.values.every((element) => element['isPlaying'])) {
       isPlaying = true;
+      gameState = SPMP.bidding;
     }
     return isPlaying;
   }

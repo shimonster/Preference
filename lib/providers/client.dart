@@ -4,21 +4,23 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../SPMP.dart';
 
 class Client extends ChangeNotifier {
-  Client(this.username, this.port, this.uid);
+  Client();
 
-  final String username;
-  final int port;
-  final String uid;
+  String username;
+  int port;
+  String uid;
   WebSocket ws;
 
-  void startClient() {
+  void startClient(int portNumber, String nickname, String id) {
+    port = portNumber;
+    nickname = nickname;
+    uid = id;
     print('client started');
-    final address = 'ws://localhost:1234/$uid/$username';
+    final address = 'ws://localhost:$port/$uid/$username';
     ws = WebSocket(address);
     print('client connected to ws');
     if (ws.readyState != WebSocket.CLOSED ||

@@ -5,10 +5,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 
 import '../providers/cards.dart' as c;
-import '../providers/auth.dart';
 import '../providers/game.dart';
 
 class PreferenceScreen extends StatefulWidget {
@@ -28,13 +26,11 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<Auth>(context, listen: false).getToken().then((_) async {
-      await Provider.of<Game>(context, listen: false).getCurrentGame();
-    }).then(
-      (_) => setState(() {
-        _isLoading = false;
-      }),
-    );
+    Provider.of<Game>(context, listen: false).getCurrentGame().then(
+          (_) => setState(() {
+            _isLoading = false;
+          }),
+        );
     sub = html.window.onPopState.listen((event) {
       if (!hasPopped) {
         setState(() {
@@ -52,7 +48,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
     super.dispose();
     sub.cancel();
     stream.cancel();
-    Provider.of<Game>(context, listen: false).leaveGame();
+//    Provider.of<Game>(context, listen: false).leaveGame();
   }
 
   @override
@@ -109,15 +105,15 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         child: MouseRegion(
           cursor: MouseCursor.defer,
           onEnter: (_) {
-//            setState(() {
-//              _showInfo = true;
-//            });
-            Provider.of<Game>(context, listen: false).cards.changeDealer();
+            setState(() {
+              _showInfo = true;
+            });
+//            Provider.of<Game>(context, listen: false).cards.changeDealer();
           },
           onExit: (_) {
-//            setState(() {
-//              _showInfo = false;
-//            });
+            setState(() {
+              _showInfo = false;
+            });
           },
           child: Stack(
             overflow: Overflow.visible,

@@ -5,7 +5,7 @@ import 'providers/game.dart';
 import './screens/preference_screen.dart';
 import './widgets/auth_card.dart';
 import './screens/auth_screen.dart';
-import './providers/auth.dart';
+import './providers/client.dart';
 
 void main() {
   runApp(MyApp());
@@ -16,11 +16,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(
-          value: Auth(),
-        ),
+        ChangeNotifierProvider.value(value: Client()),
         ChangeNotifierProvider(
-          create: (ctx) => Game(Provider.of<Auth>(ctx, listen: false)),
+          create: (ctx) => Game(Provider.of<Client>(ctx, listen: false)),
         ),
       ],
       child: MaterialApp(

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 
 import '../widgets/playing_card.dart';
 
@@ -47,17 +46,15 @@ class Card {
 }
 
 class Cards extends ChangeNotifier {
-  Cards({this.token, this.uid, this.gameId, this.playerNumber, this.client});
+  Cards({this.gameId, this.playerNumber});
 
-  final String token;
-  final String uid;
-  final String gameId;
-  /*final*/ int playerNumber;
-  final http.Client client;
+  String token;
+  String uid;
+  final int gameId;
+  final int playerNumber;
   int dealer;
   double width;
   double height;
-  static const project = 'https://preference-1cc9d.firebaseio.com';
   List<Card> _cards = [];
 
   List<Card> get cards {

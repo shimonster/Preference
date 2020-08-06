@@ -1,23 +1,21 @@
 class SPMP {
-  // client methods
+  // methods
   static const bid = 'BID';
   static const place = 'PLACE';
   static const dispose = 'DISPOSE';
   static const collectWidow = 'COLLECTWIDOW';
   static const acceptPlay = 'ACCEPTPLAY';
-
-  // server methods
   static const startPlaying = 'STARTPLAYING';
   static const playerJoin = 'PLAYERJOIN';
   static const playerLeave = 'PLAYERLEAVE';
-  static const setBid = 'SETBID';
+  static const trickCollected = 'TRICKCOLLECTED';
 
   // cards
-  static const noSuit = -1;
   static const spade = 0;
   static const clubs = 1;
   static const diamonds = 2;
   static const hearts = 3;
+  static const noSuit = 4;
 
   static const seven = 0;
   static const eight = 1;
@@ -39,4 +37,9 @@ class SPMP {
   static const trick1 = 9;
   static const trick2 = 10;
   static const trick3 = 11;
+
+  // game stages
+  static const bidding = 'BIDDING';
+  static const playing = 'PLAYING';
+  static const notStarted = 'NOTSTARTED';
 }
