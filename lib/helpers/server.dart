@@ -1,40 +1,61 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:math';
+
+import '../SPMP.dart';
 
 void main() {
-  Server('bob', 1234).startServer();
+  Server(1234).startServer();
 }
 
 class Server {
-  Server(this.username, this.port);
+  Server(this.port);
 
-  final String username;
   final int port;
-  List<Map<String, String>> messages = [];
+
+  final cardsController = CardsManagement();
+  final gameController = GameManagement();
   Map<String, WebSocket> clientSockets = {};
 
   void startServer() {
     print('server started');
-    HttpServer.bind('localhost', 1234).then((server) {
-      print('after threads');
-      server.listen((request) {
-        final uid = request.uri.pathSegments[0];
-        WebSocketTransformer.upgrade(request).then(
-          (ws) {
+    HttpServer.bind('localhost', 1234).then(
+      (server) {
+        print('after threads');
+        server.listen((request) {
+          final uid = request.uri.pathSegments[0];
+          final nickname = request.uri.pathSegments[1];
+          WebSocketTransformer.upgrade(request).then((ws) {
             print('a client connected to ws');
             clientSockets.putIfAbsent(uid, () => ws);
+            gameController.joinGame(uid, nickname);
+            sendMessage(
+                {'method': SPMP.playerJoin, 'players': gameController.players});
             if (ws.readyState == WebSocket.open) {
               ws.listen(
-                (event) {
-                  print('$event');
-                  messages.add(Map<String, String>.from(json.decode(event)));
-                  clientSockets.forEach((key, value) {
-                    print('from outside if $key');
-                    if (key != uid) {
-                      print(key);
-                      value.add(event);
+                (jsonEvent) {
+                  final event =
+                      Map<String, dynamic>.from(json.decode(jsonEvent));
+
+                  if (event['method'] == SPMP.acceptPlay) {
+                    if (gameController.acceptPlay(event['uid'])) {
+                      final cards = cardsController.randomize();
+                      sendMessage(
+                          {'method': SPMP.startPlaying, 'cards': cards});
                     }
-                  });
+                  }
+                  if (event['method'] == SPMP.bid) {
+                    if (gameController.placeBid(
+                        event['rank'], event['suit'], event['uid'])) {
+                      sendMessage({
+                        'method': SPMP.setBid,
+                        'rank': event['rank'],
+                        'suit': event['suit'],
+                        'uid': event['uid'],
+                      });
+                    }
+                  }
+                  if (event['method'] == SPMP.place) {}
                 },
                 onDone: () {
                   print('listening to seb socket finished');
@@ -47,21 +68,80 @@ class Server {
                 cancelOnError: true,
               );
             }
-          },
-          onError: (error) =>
-              print('client error contacing web socker: $error'),
-        );
-      });
-    });
+          });
+        });
+      },
+      onError: (error) => print('client error contacing web socker: $error'),
+    );
   }
 
-// void sendMessage(String message) {
-//   print('sending message from server');
-//   final map = {'message': message, 'name': username, 'uid': uid};
-//   messages.add(map);
-//   clientSockets.forEach((uid, ws) {
-//     ws.add(json.encode(map));
-//   });
-//   notifyListeners();
-// }
+  void sendMessage(Map<String, dynamic> message, [String exclude]) {
+    clientSockets.forEach((key, value) {
+      if (key != exclude) {
+        value.add(message);
+      }
+    });
+  }
+}
+
+class CardsManagement {
+  List<Map<String, int>> _cards;
+  List<Map<String, int>> randomize() {
+    List<Map<String, int>> addCard = [];
+    for (var i = 0; i < 32; i++) {
+      addCard.add({
+        'rank': i % 8,
+        'suit': (i / 8).floor(),
+        'place': null,
+      });
+    }
+    _cards = addCard;
+    _cards.shuffle(Random());
+    _cards.asMap().forEach((elemId, element) {
+      _cards[elemId]['place'] = (elemId / 10).floor();
+    });
+    return _cards;
+  }
+
+  void move(int rank, int suit, int place) {
+    _cards.firstWhere((element) =>
+        element['rank'] == rank && element['suit'] == suit)['place'] = place;
+  }
+}
+
+class GameManagement {
+  Map<String, int> bid;
+  String bidderId;
+  Map<String, Map<String, dynamic>> players = {};
+  int dealer = 0;
+  bool isPlaying = false;
+
+  bool placeBid(int num, int suit, String uid) {
+    if (bid['suit'] > suit && bid['rank'] > num) {
+      bid = {'suit': suit, 'rank': num};
+      bidderId = uid;
+      players.forEach((key, value) {
+        if (key == uid) {
+          players[uid]['hasBid'] = true;
+        } else {
+          players[key]['hasBid'] = false;
+        }
+      });
+      return true;
+    }
+    return false;
+  }
+
+  bool acceptPlay(String uid) {
+    players[uid]['isPlaying'] = true;
+    if (players.values.every((element) => element['isPlaying'])) {
+      isPlaying = true;
+    }
+    return isPlaying;
+  }
+
+  void joinGame(String uid, String nickname) {
+    players.putIfAbsent(
+        uid, () => {'nickname': nickname, 'isPlaying': false, 'hasBid': false});
+  }
 }

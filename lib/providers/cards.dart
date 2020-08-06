@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_database/firebase_database.dart';
 
 import '../widgets/playing_card.dart';
 
@@ -68,24 +67,6 @@ class Cards extends ChangeNotifier {
   bool get isDealer {
     return dealer == playerNumber && dealer != null;
   }
-
-//  Stream<Event> setUpStream() {
-//    print('stream');
-//    final database = FirebaseDatabase(app: FirebaseDatabase.instance.app);
-//    return database.reference().child('games').onChildChanged;
-//  }
-
-//  Future<void> changeDealer() async {
-//    final response = await http.patch(
-//      '$project/games/-$gameId.json?auth=$token',
-//      body: json.encode({'dealer': 1}),
-//    );
-//    await http.patch(
-//      '$project/games/-$gameId.json?auth=$token',
-//      body: json.encode({'dealer': 0}),
-//    );
-//    print(response.body);
-//  }
 
   Map<String, Map<String, String>> randomize() {
     dealer = 0;
