@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/cards.dart' as c;
 import '../providers/game.dart';
+import '../providers/client.dart';
 
 class PreferenceScreen extends StatefulWidget {
   static const routeName = '/preference';
@@ -26,7 +27,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<Game>(context, listen: false).getCurrentGame().then(
+    Provider.of<Client>(context, listen: false).game.getCurrentGame().then(
           (_) => setState(() {
             _isLoading = false;
           }),
@@ -53,11 +54,12 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final game = Provider.of<Game>(context, listen: false);
-    final cards = game.cards;
+    final client = Provider.of<Client>(context, listen: false);
+    final cards = client.game.cards;
     cards.width = html.window.innerHeight.toDouble();
     cards.height = html.window.innerWidth.toDouble();
-    final _idController = TextEditingController(text: game.gameId);
+    final _idController =
+        TextEditingController(text: client.game.gameId.toString());
     return Scaffold(
       backgroundColor: Color.fromRGBO(28, 91, 11, 1),
       body: Container(
@@ -101,7 +103,8 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
       floatingActionButton: Container(
         margin: EdgeInsets.only(top: 15),
         height: _showInfo ? 50 : 35,
-        width: _showInfo ? game.gameId.length * 12.0 + 20 : 35,
+        width:
+            _showInfo ? client.game.gameId.toString().length * 12.0 + 20 : 35,
         child: MouseRegion(
           cursor: MouseCursor.defer,
           onEnter: (_) {
@@ -127,7 +130,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                   child: Card(
                     child: SizedBox(
                       height: 50,
-                      width: game.gameId.length * 12.0,
+                      width: client.game.gameId.toString().length * 12.0,
                       child: TextField(
                         textAlign: TextAlign.center,
                         controller: _idController,
@@ -135,7 +138,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                           border: InputBorder.none,
                         ),
                         onChanged: (_) {
-                          _idController.text = game.gameId;
+                          _idController.text = client.game.gameId.toString();
                         },
                       ),
                     ),

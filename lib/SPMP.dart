@@ -6,6 +6,7 @@ class SPMP {
   static const collectWidow = 'COLLECTWIDOW';
   static const acceptPlay = 'ACCEPTPLAY';
   static const startPlaying = 'STARTPLAYING';
+  static const finishBidding = 'FINNISHBIDDING';
   static const playerJoin = 'PLAYERJOIN';
   static const playerLeave = 'PLAYERLEAVE';
   static const trickCollected = 'TRICKCOLLECTED';

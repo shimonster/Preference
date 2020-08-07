@@ -39,16 +39,6 @@ class Server {
                   final event =
                       Map<String, dynamic>.from(json.decode(jsonEvent));
 
-                  if (event['method'] == SPMP.acceptPlay) {
-                    if (gameController.acceptPlay(event['uid'])) {
-                      final cards = cardsController.randomize();
-                      sendMessage({
-                        'method': SPMP.startPlaying,
-                        'cards': cards,
-                        'players': gameController.players
-                      });
-                    }
-                  }
                   if (event['method'] == SPMP.bid) {
                     if (gameController.placeBid(
                         event['rank'], event['suit'], event['uid'])) {
@@ -60,6 +50,16 @@ class Server {
                       });
                     }
                   }
+                  if (event['method'] == SPMP.acceptPlay) {
+                    if (gameController.acceptPlay(event['uid'])) {
+                      final cards = cardsController.randomize();
+                      sendMessage({
+                        'method': SPMP.startPlaying,
+                        'cards': cards,
+                        'players': gameController.players
+                      });
+                    }
+                  }
                   if (event['method'] == SPMP.place) {
                     cardsController.move(
                         event['rank'],
@@ -68,7 +68,7 @@ class Server {
                             .toList()
                             .indexOf(event['uid']));
                     sendMessage({
-                      'method': SPMP.playing,
+                      'method': SPMP.place,
                       'rank': event['rank'],
                       'suit': event['suit'],
                       'uid': event['uid'],
@@ -159,6 +159,7 @@ class CardsManagement {
       if (player1Cards == player2Cards && player2Cards == player3Cards) {
         sendMessage({
           'method': SPMP.trickCollected,
+          'turn': turn,
           'uid': uid,
         });
       }

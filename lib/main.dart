@@ -17,9 +17,6 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: Client()),
-        ChangeNotifierProvider(
-          create: (ctx) => Game(Provider.of<Client>(ctx, listen: false)),
-        ),
       ],
       child: MaterialApp(
         title: 'Preference',

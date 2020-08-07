@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import '../widgets/playing_card.dart';
+import '../SPMP.dart';
+import '../providers/client.dart';
 
 enum ranks {
   rank07,
@@ -46,10 +48,12 @@ class Card {
 }
 
 class Cards extends ChangeNotifier {
-  Cards({this.gameId, this.playerNumber});
+  Cards({this.gameId, this.playerNumber, this.client});
 
   String token;
   String uid;
+  int turn;
+  final Client client;
   final int gameId;
   final int playerNumber;
   int dealer;
@@ -97,6 +101,41 @@ class Cards extends ChangeNotifier {
     print(newCards);
     return newCards;
   }
+
+  void move(
+      int rank, int suit, int place, String method, bool isMe, String uid) {
+    _cards
+        .firstWhere((element) =>
+            element.number.index == rank && element.suit.index == suit)
+        .place = places.values[place];
+    if (isMe) {
+      if (place < 3) {
+        client.sendMessage({
+          'method': SPMP.place,
+          'rank': rank,
+          'suit': suit,
+          'uid': uid,
+        });
+      }
+    }
+  }
+
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
 
   List<PlayingCard> _getLocationCards(
       places place, double bottom, double top, double right, double left) {

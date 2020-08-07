@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../screens/preference_screen.dart';
 import '../providers/game.dart';
+import '../providers/client.dart';
 
 class AuthCard extends StatefulWidget {
   static const routeName = '/AuthCard';
@@ -79,7 +80,8 @@ class _AuthCardState extends State<AuthCard> {
                     onPressed: () async {
                       if (form.currentState.validate()) {
                         form.currentState.save();
-                        final game = Provider.of<Game>(context, listen: false);
+                        final client =
+                            Provider.of<Client>(context, listen: false);
                         setState(() {
                           _isLoading = true;
                         });
@@ -99,8 +101,8 @@ class _AuthCardState extends State<AuthCard> {
                           showDialog(
                               context: context,
                               builder: (ctx) {
-                                final _idController =
-                                    TextEditingController(text: game.gameId);
+                                final _idController = TextEditingController(
+                                    text: client.game.gameId.toString());
                                 return AlertDialog(
                                   title: Center(
                                     child: Text('This is your game code'),
@@ -112,7 +114,8 @@ class _AuthCardState extends State<AuthCard> {
                                       border: InputBorder.none,
                                     ),
                                     onChanged: (_) {
-                                      _idController.text = game.gameId;
+                                      _idController.text =
+                                          client.game.gameId.toString();
                                     },
                                   ),
                                 );
