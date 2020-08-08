@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../screens/preference_screen.dart';
@@ -14,8 +15,9 @@ class AuthCard extends StatefulWidget {
 class _AuthCardState extends State<AuthCard> {
   final controller = ScrollController();
   String _nickname;
-  String _gameCode;
+  int _gameCode;
   var _isLoading = false;
+  var _isError = false;
 
   int currentOption = 0;
 
@@ -62,8 +64,11 @@ class _AuthCardState extends State<AuthCard> {
                         labelText: 'Game code',
                         border: OutlineInputBorder(),
                       ),
+                      inputFormatters: [
+                        WhitelistingTextInputFormatter.digitsOnly,
+                      ],
                       onSaved: (input) {
-                        _gameCode = input.trim();
+                        _gameCode = int.parse(input.trim());
                       },
                       validator: (input) {
                         if (input.isEmpty) {
@@ -85,11 +90,12 @@ class _AuthCardState extends State<AuthCard> {
                         setState(() {
                           _isLoading = true;
                         });
+                        client.init();
                         try {
                           if (isCreating) {
-//                            await game.createGame(_nickname);
+                            await client.game.createGame(_nickname);
                           } else {
-//                            await game.joinGame(_gameCode, _nickname);
+                            await client.game.joinGame(_gameCode, _nickname);
                           }
                           setState(() {
                             _isLoading = false;
@@ -123,6 +129,7 @@ class _AuthCardState extends State<AuthCard> {
                         } catch (error) {
                           setState(() {
                             _isLoading = false;
+                            _isError = true;
                           });
                           throw error;
                         }
@@ -174,6 +181,14 @@ class _AuthCardState extends State<AuthCard> {
           SizedBox(
             height: 10,
           ),
+          if (_isError)
+            Text(
+              'Error getting into game.',
+              style: TextStyle(
+                color: Theme.of(context).errorColor,
+                fontSize: 20,
+              ),
+            ),
           Container(
             width: width,
             constraints: BoxConstraints(

@@ -4,10 +4,11 @@ import 'dart:convert';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+//import 'package:flutter/material.dart' as m;
 
 import '../SPMP.dart';
 import './game.dart';
+import './cards.dart';
 
 class Client extends ChangeNotifier {
   String username;
@@ -18,22 +19,25 @@ class Client extends ChangeNotifier {
   final socketStreamController = StreamController.broadcast();
   Stream socketStream;
 
-  void startClient(int portNumber, String nickname, String id) {
+  void init() {
     game = Game(this);
+  }
+
+  void startClient(int portNumber, String nickname, String id) {
     port = portNumber;
-    nickname = nickname;
+    username = nickname;
     uid = id;
     socketStream = socketStreamController.stream;
-    print('client started');
     final address = 'ws://localhost:$port/$uid/$username';
     ws = WebSocket(address);
-    print('client connected to ws');
     if (ws.readyState != WebSocket.CLOSED ||
         ws.readyState != WebSocket.CLOSING) {
-      print('after threads');
+      print('socket open');
       ws.onMessage.listen(
         (jsonEvent) {
-          final event = Map<String, dynamic>.from(json.decode(jsonEvent.data));
+          final eventMap = json.decode(jsonEvent.data) as Map;
+          final Map<String, dynamic> event =
+              eventMap.map((key, value) => MapEntry(key, value));
           print('${DateTime.now()}, $event');
           if (event['method'] == SPMP.bid) {
             game.placeBid(event['rank'], event['suit'], event['uid']);
@@ -67,13 +71,18 @@ class Client extends ChangeNotifier {
           if (event['method'] == SPMP.startPlaying) {
             game.isPlaying = true;
             game.gameState = SPMP.bidding;
+            game.cards.privateCards = List<Map>.from(event['cards'])
+                .map<Card>((e) => Card(
+                    ranks.values[e['rank']], suits.values[e['suit']], null))
+                .toList();
           }
           if (event['method'] == SPMP.finishBidding) {
             game.gameState = SPMP.playing;
           }
           if (event['method'] == SPMP.playerJoin ||
               event['method'] == SPMP.playerLeave) {
-            game.players = event['players'];
+            game.players =
+                Map<String, Map<String, dynamic>>.from(event['players']);
           }
           if (event['method'] == SPMP.trickCollected) {
             for (var i = 0; i < 3; i++) {
@@ -82,13 +91,16 @@ class Client extends ChangeNotifier {
                   event['suit'][i],
                   game.players.keys.toList().indexOf(event['uid']) + 9,
                   event['method'],
-                  event['uid'] == uid,
+                  false,
                   event['uid']);
             }
           }
           socketStreamController.add(event);
         },
-        onDone: () => socketStreamController.close(),
+        onDone: () {
+          sendMessage({'method': SPMP.playerLeave, 'uid': uid});
+          socketStreamController.close();
+        },
         onError: (error) =>
             print('client error listening to web socket: $error'),
         cancelOnError: true,
@@ -98,26 +110,9 @@ class Client extends ChangeNotifier {
 
   void sendMessage(Map<String, dynamic> message) {
     print('sending message from client');
+    socketStreamController.add(message);
     ws.send(json.encode(message));
     notifyListeners();
-  }
-
-  void placeCard(int suit, int rank) {
-    sendMessage({
-      'method': SPMP.place,
-      'suit': suit,
-      'rank': rank,
-      'uid': uid,
-    });
-  }
-
-  void placeBid(int amount, int suit) {
-    sendMessage({
-      'method': SPMP.bid,
-      'suit': suit,
-      'amount': amount,
-      'uid': uid,
-    });
   }
 
   void play() {

@@ -49,7 +49,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
     super.dispose();
     sub.cancel();
     stream.cancel();
-//    Provider.of<Game>(context, listen: false).leaveGame();
+    Provider.of<Client>(context, listen: false).game.leaveGame();
   }
 
   @override
@@ -67,37 +67,38 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
           border: Border.all(width: 10),
         ),
         child: StreamBuilder(
-//            stream: cards.setUpStream()
-//              ..listen((event) {
-//                print('from stream: $event');
-//              }),
-            builder: (context, snapshot) {
-          print(snapshot.data);
-          return _isLoading
-              ? Center(
-                  child: CircularProgressIndicator(),
-                )
-              : Stack(
-                  fit: StackFit.loose,
-                  children: [
-//                        Text(snapshot.hasData ? snapshot.data : 'none'),
-////          if (_isPlaying) ...cards.p2Cards,
-//          if (_isPlaying) ...cards.p1Cards,
-//          if (_isPlaying) ...cards.p3Cards,
-//          if (_isPlaying) ...cards.widows,
-//          if (!_isPlaying)
-//            RaisedButton(
-//              onPressed: () {
-//                setState(() {
-//                  _isPlaying = true;
-//                });
-//              },
-//              child: Text('start'),
-//            ),
-//        ]),
-                  ],
-                );
-        }),
+          stream: client.socketStream,
+          builder: (context, snapshot) {
+            return _isLoading
+                ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : Stack(
+                    fit: StackFit.loose,
+                    children: [
+                      if (_isPlaying) ...cards.p2Cards,
+                      if (_isPlaying) ...cards.p1Cards,
+                      if (_isPlaying) ...cards.p3Cards,
+                      if (_isPlaying) ...cards.widows,
+                      if (!_isPlaying)
+                        Positioned(
+                          bottom: 30,
+                          child: RaisedButton(
+                            onPressed: () {
+                              setState(() {
+                                print(cards.cards);
+                                client.play();
+                                _isPlaying = true;
+                                cards.cards.forEach((element) {});
+                              });
+                            },
+                            child: Text('start'),
+                          ),
+                        ),
+                    ],
+                  );
+          },
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
       floatingActionButton: Container(
@@ -111,7 +112,6 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
             setState(() {
               _showInfo = true;
             });
-//            Provider.of<Game>(context, listen: false).cards.changeDealer();
           },
           onExit: (_) {
             setState(() {

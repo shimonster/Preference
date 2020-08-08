@@ -59,64 +59,62 @@ class Cards extends ChangeNotifier {
   int dealer;
   double width;
   double height;
-  List<Card> _cards = [];
+  List<Card> privateCards = [];
 
   List<Card> get cards {
-    return [..._cards];
+    return [...privateCards];
   }
 
   bool get isDealer {
     return dealer == playerNumber && dealer != null;
   }
 
-  Map<String, Map<String, String>> randomize() {
-    dealer = 0;
-    List<Card> addCard = [];
-    for (var i = 0; i < 32; i++) {
-      addCard.add(
-        Card(
-          ranks.values[i % 8],
-          suits.values[(i / 8).floor()],
-          null,
-        ),
-      );
-    }
-    _cards = addCard;
-    _cards.shuffle(Random());
-    _cards.forEach((element) {
-      final elemId = _cards.indexOf(element);
-      _cards[elemId].place = elemId >= 30
-          ? places.widow
-          : elemId >= 20
-              ? places.player3
-              : elemId >= 10 ? places.player2 : places.player1;
-    });
-    final newCards = _cards.asMap().map(
-          (i, e) => MapEntry(i.toString(), {
-            'rankI': e.number.index.toString(),
-            'suitI': e.suit.index.toString(),
-            'placeI': e.place.index.toString()
-          }),
-        );
-    print(newCards);
-    return newCards;
-  }
+//  Map<String, Map<String, String>> randomize() {
+//    dealer = 0;
+//    List<Card> addCard = [];
+//    for (var i = 0; i < 32; i++) {
+//      addCard.add(
+//        Card(
+//          ranks.values[i % 8],
+//          suits.values[(i / 8).floor()],
+//          null,
+//        ),
+//      );
+//    }
+//    _cards = addCard;
+//    _cards.shuffle(Random());
+//    _cards.forEach((element) {
+//      final elemId = _cards.indexOf(element);
+//      _cards[elemId].place = elemId >= 30
+//          ? places.widow
+//          : elemId >= 20
+//              ? places.player3
+//              : elemId >= 10 ? places.player2 : places.player1;
+//    });
+//    final newCards = _cards.asMap().map(
+//          (i, e) => MapEntry(i.toString(), {
+//            'rankI': e.number.index.toString(),
+//            'suitI': e.suit.index.toString(),
+//            'placeI': e.place.index.toString()
+//          }),
+//        );
+//    print(newCards);
+//    return newCards;
+//  }
 
   void move(
       int rank, int suit, int place, String method, bool isMe, String uid) {
-    _cards
+    privateCards
         .firstWhere((element) =>
             element.number.index == rank && element.suit.index == suit)
         .place = places.values[place];
     if (isMe) {
-      if (place < 3) {
-        client.sendMessage({
-          'method': SPMP.place,
-          'rank': rank,
-          'suit': suit,
-          'uid': uid,
-        });
-      }
+      client.sendMessage({
+        'method': method,
+        'rank': rank,
+        'suit': suit,
+        'uid': uid,
+      });
     }
   }
 
@@ -140,7 +138,7 @@ class Cards extends ChangeNotifier {
   List<PlayingCard> _getLocationCards(
       places place, double bottom, double top, double right, double left) {
     var thisCards = [
-      ..._cards.where((element) => element.place == place).toList()
+      ...privateCards.where((element) => element.place == place).toList()
     ];
     final double increment = 50;
     double i = -1;

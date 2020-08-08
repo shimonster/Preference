@@ -47,6 +47,11 @@ class Game extends ChangeNotifier {
   Future<void> joinGame(int gId, String nickname) async {
     final uid = Uid().toString();
     client.startClient(gId, nickname, uid);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('currentGame', gId);
+    await prefs.setInt('currentPlayer', 0);
+    gameId = gId;
+    playerNumber = 0;
     notifyListeners();
   }
 
@@ -81,7 +86,15 @@ class Game extends ChangeNotifier {
     return false;
   }
 
-  Future<void> leaveGame() async {}
+  Future<void> leaveGame() async {
+    client.sendMessage({'method': SPMP.playerLeave, 'uid': client.uid});
+    final prefs = await SharedPreferences.getInstance();
+//    await prefs.setInt('currentGame', null);
+//    await prefs.setInt('currentPlayer', null);
+    gameId = null;
+    playerNumber = null;
+    notifyListeners();
+  }
 
   @override
   void dispose() {
