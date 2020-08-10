@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -29,17 +30,12 @@ class CardMoveExtension {
   double currentTop;
   double currentBottom;
   Duration moveDuration;
+  final positionStream = StreamController();
 
   // e is for end and s is for start
 
-  Future<void> rotate(
-      rotation sRotation,
-      rotation eRotation,
-      angle sAngle,
-      angle eAngle,
-      Duration duration,
-      Axis axis,
-      void Function(void Function()) setState) async {
+  Future<void> rotate(rotation sRotation, rotation eRotation, angle sAngle,
+      angle eAngle, Duration duration, Axis axis) async {
     final animationController = AnimationController(
       vsync: PlayingCardState(),
       duration: duration,
@@ -74,9 +70,8 @@ class CardMoveExtension {
     );
     if (sAngle != null && eAngle != null) {
       angleAnimation.addListener(() {
-        setState(() {
-          currentRotationZ = angleAnimation.value;
-        });
+        currentRotationZ = angleAnimation.value;
+        positionStream.add('rotation');
       });
     }
     if (sRotation != null && eRotation != null) {
@@ -87,11 +82,10 @@ class CardMoveExtension {
         } else {
           isFace = false;
         }
-        setState(() {
-          axis == Axis.horizontal
-              ? currentRotationX = rotationAnimation.value
-              : currentRotationY = rotationAnimation.value;
-        });
+        axis == Axis.horizontal
+            ? currentRotationX = rotationAnimation.value
+            : currentRotationY = rotationAnimation.value;
+        positionStream.add('rotation');
       });
     }
     await animationController.forward().then((value) {
@@ -100,20 +94,18 @@ class CardMoveExtension {
     });
   }
 
-  Future<void> move(Duration duration, void Function(void Function()) setState,
+  Future<void> move(Duration duration,
       {double eBottom, double eTop, double eRight, double eLeft}) async {
-    setState(() {
-      moveDuration = duration;
-      currentTop = eTop;
-      currentBottom = eBottom;
-      currentRight = eRight;
-      currentLeft = eLeft;
-    });
+    moveDuration = duration;
+    currentTop = eTop;
+    currentBottom = eBottom;
+    currentRight = eRight;
+    currentLeft = eLeft;
+    positionStream.add('position');
     await Future.delayed(duration);
   }
 
-  Future<void> moveAndTwist(
-      Duration duration, void Function(void Function()) setState,
+  Future<void> moveAndTwist(Duration duration,
       {double eBottom,
       double eTop,
       double eRight,
@@ -123,9 +115,9 @@ class CardMoveExtension {
       angle sAngle,
       angle eAngle,
       Axis axis}) async {
-    move(duration, setState,
-        eTop: eTop, eBottom: eBottom, eRight: eRight, eLeft: eLeft);
-    rotate(sRotation, eRotation, sAngle, eAngle, duration, axis, setState);
+    moveDuration = duration;
+    move(duration, eTop: eTop, eBottom: eBottom, eRight: eRight, eLeft: eLeft);
+    rotate(sRotation, eRotation, sAngle, eAngle, duration, axis);
     await Future.delayed(duration);
   }
 }

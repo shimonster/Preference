@@ -1,10 +1,9 @@
-import 'dart:convert';
-import 'dart:math';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 import 'package:flutter/foundation.dart';
 
 import '../widgets/playing_card.dart';
-import '../SPMP.dart';
 import '../providers/client.dart';
 
 enum ranks {
@@ -48,7 +47,9 @@ class Card {
 }
 
 class Cards extends ChangeNotifier {
-  Cards({this.gameId, this.playerNumber, this.client});
+  Cards({this.gameId, this.playerNumber, this.client}) {
+    print('created new cards');
+  }
 
   String token;
   String uid;
@@ -57,54 +58,34 @@ class Cards extends ChangeNotifier {
   final int gameId;
   final int playerNumber;
   int dealer;
-  double width;
-  double height;
-  List<Card> privateCards = [];
+  double width = html.window.innerWidth.toDouble();
+  double height = html.window.innerHeight.toDouble();
+
+  List<Card> _cards = [];
+  List<PlayingCard> p1Cards = [];
+  List<PlayingCard> p2Cards = [];
+  List<PlayingCard> p3Cards = [];
+  List<PlayingCard> widows = [];
 
   List<Card> get cards {
-    return [...privateCards];
+    return [..._cards];
   }
 
   bool get isDealer {
     return dealer == playerNumber && dealer != null;
   }
 
-//  Map<String, Map<String, String>> randomize() {
-//    dealer = 0;
-//    List<Card> addCard = [];
-//    for (var i = 0; i < 32; i++) {
-//      addCard.add(
-//        Card(
-//          ranks.values[i % 8],
-//          suits.values[(i / 8).floor()],
-//          null,
-//        ),
-//      );
-//    }
-//    _cards = addCard;
-//    _cards.shuffle(Random());
-//    _cards.forEach((element) {
-//      final elemId = _cards.indexOf(element);
-//      _cards[elemId].place = elemId >= 30
-//          ? places.widow
-//          : elemId >= 20
-//              ? places.player3
-//              : elemId >= 10 ? places.player2 : places.player1;
-//    });
-//    final newCards = _cards.asMap().map(
-//          (i, e) => MapEntry(i.toString(), {
-//            'rankI': e.number.index.toString(),
-//            'suitI': e.suit.index.toString(),
-//            'placeI': e.place.index.toString()
-//          }),
-//        );
-//    print(newCards);
-//    return newCards;
-//  }
+  void setCards(List<Card> newCards) {
+    _cards = newCards;
+    p1Cards = _getLocationCards(places.player1, 30, null, 0, null);
+    p2Cards = _getLocationCards(places.player2, null, 0, null, 30);
+    p3Cards = _getLocationCards(places.player3, null, 0, 30, null);
+    widows = _getLocationCards(places.widow, null, 30, null, 0);
+  }
 
   void move(
       int rank, int suit, int place, String method, bool isMe, String uid) {
-    privateCards
+    _cards
         .firstWhere((element) =>
             element.number.index == rank && element.suit.index == suit)
         .place = places.values[place];
@@ -118,27 +99,10 @@ class Cards extends ChangeNotifier {
     }
   }
 
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-
   List<PlayingCard> _getLocationCards(
       places place, double bottom, double top, double right, double left) {
     var thisCards = [
-      ...privateCards.where((element) => element.place == place).toList()
+      ..._cards.where((element) => element.place == place).toList()
     ];
     final double increment = 50;
     double i = -1;
@@ -209,21 +173,5 @@ class Cards extends ChangeNotifier {
             : left,
       );
     }).toList();
-  }
-
-  List<PlayingCard> get p1Cards {
-    return _getLocationCards(places.player1, 30, null, 0, null);
-  }
-
-  List<PlayingCard> get p2Cards {
-    return _getLocationCards(places.player2, null, 0, null, 30);
-  }
-
-  List<PlayingCard> get p3Cards {
-    return _getLocationCards(places.player3, null, 0, 30, null);
-  }
-
-  List<PlayingCard> get widows {
-    return _getLocationCards(places.widow, null, 30, null, 0);
   }
 }

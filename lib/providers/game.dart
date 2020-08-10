@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,10 +25,7 @@ class Game extends ChangeNotifier {
   int playerNumber;
   Map<String, Map<String, dynamic>> players;
   final Client client;
-
-  c.Cards get cards {
-    return c.Cards(gameId: gameId, playerNumber: playerNumber, client: client);
-  }
+  c.Cards cards;
 
   Future<void> createGame(String nickname) async {
     final gId = 1234;
@@ -41,6 +36,7 @@ class Game extends ChangeNotifier {
     await prefs.setInt('currentPlayer', 0);
     gameId = gId;
     playerNumber = 0;
+    cards = c.Cards(gameId: gameId, playerNumber: playerNumber, client: client);
     notifyListeners();
   }
 
@@ -52,6 +48,7 @@ class Game extends ChangeNotifier {
     await prefs.setInt('currentPlayer', 0);
     gameId = gId;
     playerNumber = 0;
+    cards = c.Cards(gameId: gameId, playerNumber: playerNumber, client: client);
     notifyListeners();
   }
 

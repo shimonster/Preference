@@ -48,6 +48,7 @@ class Server {
                         'rank': event['rank'],
                         'suit': event['suit'],
                         'uid': event['uid'],
+                        'turn': cardsController.turn,
                       });
                     }
                   }
@@ -95,7 +96,7 @@ class Server {
                     gameController.joinGame(event['uid'], event['nickname']);
                     sendMessage({
                       'method': SPMP.playerJoin,
-                      'players': gameController.players
+                      'players': gameController.players.
                     }, event['uid']);
                   }
                   if (event['method'] == SPMP.playerLeave) {

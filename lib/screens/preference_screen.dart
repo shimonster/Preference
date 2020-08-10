@@ -4,10 +4,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:preference/widgets/playing_card.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/cards.dart' as c;
-import '../providers/game.dart';
+import '../helpers/card_move_extention.dart';
+import '../providers/cards.dart' show places;
+import '../SPMP.dart';
 import '../providers/client.dart';
 
 class PreferenceScreen extends StatefulWidget {
@@ -56,8 +58,6 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   Widget build(BuildContext context) {
     final client = Provider.of<Client>(context, listen: false);
     final cards = client.game.cards;
-    cards.width = html.window.innerHeight.toDouble();
-    cards.height = html.window.innerWidth.toDouble();
     final _idController =
         TextEditingController(text: client.game.gameId.toString());
     return Scaffold(
@@ -69,6 +69,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         child: StreamBuilder(
           stream: client.socketStream,
           builder: (context, snapshot) {
+            print('builder was run');
             return _isLoading
                 ? Center(
                     child: CircularProgressIndicator(),
@@ -84,12 +85,63 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                         Positioned(
                           bottom: 30,
                           child: RaisedButton(
-                            onPressed: () {
-                              setState(() {
-                                print(cards.cards);
-                                client.play();
-                                _isPlaying = true;
-                                cards.cards.forEach((element) {});
+                            onPressed: () async {
+                              client.play();
+                              _isPlaying = true;
+                              client.socketStream.listen((event) async {
+                                if (event['method'] == SPMP.startPlaying) {
+                                  await Future.delayed(
+                                      Duration(milliseconds: 50));
+                                  Future.forEach(
+                                    [
+                                      cards.p2Cards,
+                                      cards.p1Cards,
+                                      cards.p3Cards,
+                                      cards.widows
+                                    ],
+                                    (element) => Future.forEach(element,
+                                        (PlayingCard playingCard) async {
+                                      print('future started');
+                                      playingCard.move(
+                                        Duration(),
+                                        eTop: -100,
+                                        eRight:
+                                            MediaQuery.of(context).size.width /
+                                                2,
+                                      );
+                                      playingCard.moveAndTwist(
+                                        Duration(milliseconds: 1000),
+                                        eTop: playingCard.top,
+                                        eRight: playingCard.right,
+                                        eLeft: playingCard.left,
+                                        eBottom: playingCard.bottom,
+                                        sRotation: rotation.back,
+                                        eRotation:
+                                            playingCard.place == places.player1
+                                                ? rotation.face
+                                                : rotation.back,
+                                        sAngle: playingCard.place ==
+                                                    places.player1 ||
+                                                playingCard.place ==
+                                                    places.widow
+                                            ? null
+                                            : angle.up,
+                                        eAngle: playingCard.place ==
+                                                    places.player1 ||
+                                                playingCard.place ==
+                                                    places.widow
+                                            ? null
+                                            : playingCard.place ==
+                                                    places.player2
+                                                ? angle.right
+                                                : angle.left,
+                                        axis: Axis.vertical,
+                                      );
+                                      await Future.delayed(
+                                          Duration(milliseconds: 100));
+                                    }),
+                                  );
+                                }
                               });
                             },
                             child: Text('start'),
