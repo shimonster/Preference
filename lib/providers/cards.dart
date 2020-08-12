@@ -47,16 +47,15 @@ class Card {
 }
 
 class Cards extends ChangeNotifier {
-  Cards({this.gameId, this.playerNumber, this.client}) {
+  Cards({this.gameId, this.client}) {
     print('created new cards');
   }
 
   String token;
   String uid;
-  int turn;
+  String turn;
   final Client client;
   final int gameId;
-  final int playerNumber;
   int dealer;
   double width = html.window.innerWidth.toDouble();
   double height = html.window.innerHeight.toDouble();
@@ -69,10 +68,6 @@ class Cards extends ChangeNotifier {
 
   List<Card> get cards {
     return [..._cards];
-  }
-
-  bool get isDealer {
-    return dealer == playerNumber && dealer != null;
   }
 
   void setCards(List<Card> newCards) {

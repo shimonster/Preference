@@ -4,9 +4,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:preference/widgets/playing_card.dart';
 import 'package:provider/provider.dart';
 
+import '../widgets/bidding_buttons.dart';
+import '../widgets/playing_card.dart';
 import '../helpers/card_move_extention.dart';
 import '../providers/cards.dart' show places;
 import '../SPMP.dart';
@@ -21,6 +22,7 @@ class PreferenceScreen extends StatefulWidget {
 
 class _PreferenceScreenState extends State<PreferenceScreen> {
   bool _isPlaying = false;
+  bool _hasAccepted = false;
   bool _showInfo = false;
   bool _isLoading = true;
   bool hasPopped = false;
@@ -81,67 +83,83 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                       if (_isPlaying) ...cards.p1Cards,
                       if (_isPlaying) ...cards.p3Cards,
                       if (_isPlaying) ...cards.widows,
-                      if (!_isPlaying)
+                      StreamBuilder(
+                        builder: (ctx, snap) => client.game.gameState ==
+                                    SPMP.bidding &&
+                                client.game.biddingId == client.uid
+                            ? Positioned(
+                                bottom:
+                                    MediaQuery.of(context).size.height * 0.3,
+                                right: MediaQuery.of(context).size.width * 0.5 -
+                                    50,
+                                child: BiddingButtons(),
+                              )
+                            : Container(),
+                      ),
+                      if (_hasAccepted && !_isPlaying)
+                        Center(
+                          child: Text(
+                            'Get Ready!',
+                            style: TextStyle(
+                              fontSize: 30,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      if (_isPlaying)
+                        Center(
+                          child: Text(client.uid),
+                        ),
+                      if (!_hasAccepted)
                         Positioned(
                           bottom: 30,
                           child: RaisedButton(
                             onPressed: () async {
                               client.play();
-                              _isPlaying = true;
-                              client.socketStream.listen((event) async {
-                                if (event['method'] == SPMP.startPlaying) {
-                                  await Future.delayed(
-                                      Duration(milliseconds: 50));
-                                  Future.forEach(
-                                    [
-                                      cards.p2Cards,
-                                      cards.p1Cards,
-                                      cards.p3Cards,
-                                      cards.widows
-                                    ],
-                                    (element) => Future.forEach(element,
-                                        (PlayingCard playingCard) async {
-                                      print('future started');
-                                      playingCard.move(
-                                        Duration(),
-                                        eTop: -100,
-                                        eRight:
-                                            MediaQuery.of(context).size.width /
-                                                2,
-                                      );
-                                      playingCard.moveAndTwist(
-                                        Duration(milliseconds: 1000),
-                                        eTop: playingCard.top,
-                                        eRight: playingCard.right,
-                                        eLeft: playingCard.left,
-                                        eBottom: playingCard.bottom,
-                                        sRotation: rotation.back,
-                                        eRotation:
-                                            playingCard.place == places.player1
-                                                ? rotation.face
-                                                : rotation.back,
-                                        sAngle: playingCard.place ==
-                                                    places.player1 ||
-                                                playingCard.place ==
-                                                    places.widow
-                                            ? null
-                                            : angle.up,
-                                        eAngle: playingCard.place ==
-                                                    places.player1 ||
-                                                playingCard.place ==
-                                                    places.widow
-                                            ? null
-                                            : playingCard.place ==
-                                                    places.player2
-                                                ? angle.right
-                                                : angle.left,
-                                        axis: Axis.vertical,
-                                      );
-                                      await Future.delayed(
-                                          Duration(milliseconds: 100));
-                                    }),
+                              setState(() {
+                                _hasAccepted = true;
+                              });
+                              client.startGameStream.stream.listen((_) async {
+                                _isPlaying = true;
+                                await Future.delayed(
+                                    Duration(milliseconds: 50));
+                                Future.forEach([
+                                  ...cards.p2Cards,
+                                  ...cards.p1Cards,
+                                  ...cards.p3Cards,
+                                  ...cards.widows
+                                ], (PlayingCard playingCard) async {
+                                  playingCard.move(
+                                    Duration(),
+                                    eTop: -100,
+                                    eRight:
+                                        MediaQuery.of(context).size.width / 2,
                                   );
-                                }
+                                  playingCard.moveAndTwist(
+                                    Duration(milliseconds: 1000),
+                                    eTop: playingCard.top,
+                                    eRight: playingCard.right,
+                                    eLeft: playingCard.left,
+                                    eBottom: playingCard.bottom,
+                                    sRotation: rotation.back,
+                                    eRotation:
+                                        playingCard.place == places.player1
+                                            ? rotation.face
+                                            : rotation.back,
+                                    sAngle: angle.up,
+                                    eAngle: playingCard.place ==
+                                                places.player1 ||
+                                            playingCard.place == places.widow
+                                        ? angle.up
+                                        : playingCard.place == places.player2
+                                            ? angle.right
+                                            : angle.left,
+                                    axis: Axis.vertical,
+                                  );
+                                  await Future.delayed(
+                                      Duration(milliseconds: 100));
+                                });
+                                client.startGameStream.close();
                               });
                             },
                             child: Text('start'),

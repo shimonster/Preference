@@ -17,12 +17,12 @@ class Game extends ChangeNotifier {
   Game(this.client);
 
   Map<String, int> bid;
-  String bidderId;
+  String bidId;
+  String biddingId;
   int dealer = 0;
   bool isPlaying = false;
   String gameState = SPMP.notStarted;
   int gameId;
-  int playerNumber;
   Map<String, Map<String, dynamic>> players;
   final Client client;
   c.Cards cards;
@@ -35,8 +35,7 @@ class Game extends ChangeNotifier {
     await prefs.setInt('currentGame', gId);
     await prefs.setInt('currentPlayer', 0);
     gameId = gId;
-    playerNumber = 0;
-    cards = c.Cards(gameId: gameId, playerNumber: playerNumber, client: client);
+    cards = c.Cards(gameId: gameId, client: client);
     notifyListeners();
   }
 
@@ -47,8 +46,7 @@ class Game extends ChangeNotifier {
     await prefs.setInt('currentGame', gId);
     await prefs.setInt('currentPlayer', 0);
     gameId = gId;
-    playerNumber = 0;
-    cards = c.Cards(gameId: gameId, playerNumber: playerNumber, client: client);
+    cards = c.Cards(gameId: gameId, client: client);
     notifyListeners();
   }
 
@@ -56,25 +54,42 @@ class Game extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.containsKey('currentGame')) {
       final id = prefs.getInt('currentGame');
-      final number = prefs.getInt('currentPlayer');
       gameId = id;
-      playerNumber = number;
     }
     print('prefs: $gameId');
   }
 
-  bool placeBid(int num, int suit, String bidId) {
-    if (bid['suit'] > suit && bid['rank'] > num) {
+  bool placeBid(int num, int suit, String id) {
+    print('placed bid: $id');
+    if (bid == null) {
       bid = {'suit': suit, 'rank': num};
-      bidderId = bidId;
+      bidId = id;
       players.forEach((key, value) {
         if (key == bidId) {
           players[bidId]['hasBid'] = true;
         } else {
-          players[key]['hasBid'] = false;
+          if (num != -1) {
+            players[key]['hasBid'] = false;
+          }
         }
       });
-      if (bidId == client.uid) {
+      if (id == client.uid) {
+        client.sendMessage(
+            {'method': SPMP.bid, 'rank': num, 'suit': suit, 'uid': client.uid});
+      }
+    } else if (bid['suit'] > suit && bid['rank'] > num) {
+      bid = {'suit': suit, 'rank': num};
+      bidId = id;
+      players.forEach((key, value) {
+        if (key == bidId) {
+          players[bidId]['hasBid'] = true;
+        } else {
+          if (num != -1) {
+            players[key]['hasBid'] = false;
+          }
+        }
+      });
+      if (id == client.uid) {
         client.sendMessage(
             {'method': SPMP.bid, 'rank': num, 'suit': suit, 'uid': client.uid});
       }
@@ -89,7 +104,6 @@ class Game extends ChangeNotifier {
 //    await prefs.setInt('currentGame', null);
 //    await prefs.setInt('currentPlayer', null);
     gameId = null;
-    playerNumber = null;
     notifyListeners();
   }
 

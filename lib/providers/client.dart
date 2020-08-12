@@ -18,6 +18,8 @@ class Client extends ChangeNotifier {
   Game game;
   final socketStreamController = StreamController.broadcast();
   Stream socketStream;
+  final startGameStream = StreamController.broadcast();
+  final bidStream = StreamController.broadcast();
 
   void init() {
     game = Game(this);
@@ -39,9 +41,11 @@ class Client extends ChangeNotifier {
           final Map<String, dynamic> event =
               eventMap.map((key, value) => MapEntry(key, value));
           print('${DateTime.now()}, $event');
+
           if (event['method'] == SPMP.bid) {
-            game.cards.turn = event['turn'];
+            game.biddingId = event['turn'];
             game.placeBid(event['rank'], event['suit'], event['uid']);
+            bidStream.add(event);
           }
           if (event['method'] == SPMP.place) {
             game.cards.turn = event['turn'];
@@ -72,11 +76,21 @@ class Client extends ChangeNotifier {
           }
           if (event['method'] == SPMP.startPlaying) {
             game.isPlaying = true;
+            game.biddingId = event['biddingId'];
             game.gameState = SPMP.bidding;
+            startGameStream.add(true);
+            game.players =
+                Map<String, Map<String, dynamic>>.from(event['players']);
             game.cards.setCards(List<Map>.from(event['cards'])
-                .map<Card>((e) => Card(ranks.values[e['rank']],
-                    suits.values[e['suit']], places.values[e['place']]))
+                .map<Card>((e) => Card(
+                    ranks.values[e['rank']],
+                    suits.values[e['suit']],
+                    e['uid'] == 'widow'
+                        ? places.widow
+                        : places.values[
+                            game.players.keys.toList().indexOf(e['uid'])]))
                 .toList());
+            print(game.players);
           }
           if (event['method'] == SPMP.finishBidding) {
             game.gameState = SPMP.playing;

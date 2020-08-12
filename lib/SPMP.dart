@@ -1,6 +1,7 @@
 class SPMP {
   // methods
   static const bid = 'BID';
+  static const pass = 'PASS';
   static const place = 'PLACE';
   static const dispose = 'DISPOSE';
   static const collectWidow = 'COLLECTWIDOW';

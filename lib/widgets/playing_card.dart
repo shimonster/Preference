@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../helpers/card_move_extention.dart';
 import '../providers/cards.dart';
 import '../providers/client.dart';
+import '../SPMP.dart';
 
 // ignore: must_be_immutable
 class PlayingCard extends StatefulWidget with CardMoveExtension {
@@ -26,7 +27,6 @@ class PlayingCardState extends State<PlayingCard>
     with SingleTickerProviderStateMixin {
   double multiplySizeWidth = 0.06;
   double multiplySizeHeight = 0.06 * 23 / 16;
-  Widget card;
   bool isInit = false;
   void Function(void Function()) setCardState;
 
@@ -34,38 +34,9 @@ class PlayingCardState extends State<PlayingCard>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!isInit) {
-      final cardModel = AbsorbPointer(
-        absorbing: Provider.of<Client>(context, listen: false)
-                    .game
-                    .cards
-                    .turn ==
-                Provider.of<Client>(context, listen: false).game.playerNumber ||
-            widget.place != places.player1,
-        child: Transform(
-          transform: Matrix4.rotationY(widget.currentRotationY)
-            ..rotateX(widget.currentRotationX)
-            ..rotateZ(widget.currentRotationZ),
-          alignment: Alignment.center,
-          child: Container(
-            width: MediaQuery.of(context).size.width * multiplySizeWidth,
-            height: MediaQuery.of(context).size.width * multiplySizeHeight,
-            decoration: BoxDecoration(
-              color: widget.isFace ? Colors.orange : Colors.blue,
-              border: Border.all(width: 5),
-            ),
-            child: Center(
-              child: Text('${widget.suit}   ${widget.rank}'),
-            ),
-          ),
-        ),
-      );
-      card = cardModel;
       widget.positionStream.stream.listen((event) {
-        setCardState(() {
-          card = cardModel;
-        });
+        setCardState(() {});
         if (event == 'position') {
-          print(event);
           setState(() {});
         }
       });
@@ -81,6 +52,7 @@ class PlayingCardState extends State<PlayingCard>
 
   @override
   Widget build(BuildContext context) {
+    final client = Provider.of<Client>(context, listen: false);
     return AnimatedPositioned(
       duration: Duration(seconds: 1),
       curve: Curves.easeInOut,
@@ -90,7 +62,28 @@ class PlayingCardState extends State<PlayingCard>
       left: widget.currentLeft,
       child: StatefulBuilder(builder: (context, rebuild) {
         setCardState = rebuild;
-        return widget.place == places.player1
+        final card = Transform(
+          transform: Matrix4.rotationY(widget.currentRotationY)
+            ..rotateX(widget.currentRotationX)
+            ..rotateZ(widget.currentRotationZ),
+          alignment: Alignment.center,
+          child: Container(
+            width: MediaQuery.of(context).size.width * multiplySizeWidth,
+            height: MediaQuery.of(context).size.width * multiplySizeHeight,
+            decoration: BoxDecoration(
+              color: widget.isFace ? Colors.orange : Colors.blue,
+              border: Border.all(width: 5),
+            ),
+            child: Center(
+              child: Text('${widget.suit}   ${widget.rank}'),
+            ),
+          ),
+        );
+        return widget.place == places.player1 &&
+                (client.game.gameState == SPMP.playing ||
+                    client.game.gameState == SPMP.discarding) &&
+                (client.game.cards.turn == client.uid ||
+                    client.game.biddingId == client.uid)
             ? Draggable(
                 feedback: card,
                 childWhenDragging: Container(),
