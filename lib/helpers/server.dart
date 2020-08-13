@@ -44,17 +44,18 @@ class Server {
                       Map<String, dynamic>.from(json.decode(jsonEvent));
                   print(event['method']);
 
-                  if (event['method'] == SPMP.bid) {
-                    if (gameController.placeBid(
-                        event['rank'], event['suit'], event['uid'])) {
-                      sendMessage({
-                        'method': event['suit'] == -1 ? SPMP.pass : SPMP.bid,
-                        'rank': event['rank'],
-                        'suit': event['suit'],
-                        'uid': event['uid'],
-                        'turn': gameController.biddingId,
-                      }, event['uid']);
-                    }
+                  if (event['method'] == SPMP.bid ||
+                      event['method'] == SPMP.pass) {
+                    print('player tried to place bid');
+                    gameController.placeBid(
+                        event['rank'], event['suit'], event['uid']);
+                    sendMessage({
+                      'method': event['suit'] == -1 ? SPMP.pass : SPMP.bid,
+                      'rank': event['rank'],
+                      'suit': event['suit'],
+                      'uid': event['uid'],
+                      'turn': gameController.biddingId,
+                    }, event['uid']);
                   }
                   if (event['method'] == SPMP.place) {
                     cardsController.move(
@@ -193,7 +194,7 @@ class CardsManagement {
       if (elemId < 30) {
         _cards[elemId]['uid'] = players.keys.toList()[(elemId / 10).floor()];
       } else {
-        _cards[elemId]['uid'] = 'widow';
+        _cards[elemId]['uid'] = SPMP.widow;
       }
     });
     player1Cards = 10;
@@ -270,44 +271,49 @@ class GameManagement {
   bool isPlaying = false;
   String gameState = SPMP.notStarted;
 
-  bool placeBid(int num, int suit, String uid) {
+  void placeBid(int num, int suit, String uid) {
+    print('place bid was run');
     if (num == -1) {
+      print('plater passed');
       players[uid]['hasBid'] = true;
       biddingId =
           players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
-      return true;
+    } else {
+      final pBid = () {
+        print('a bid was plaed');
+        bid = {'suit': suit, 'rank': num};
+        bidId = uid;
+        biddingId =
+            players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
+        players.forEach((key, value) {
+          if (key == uid) {
+            players[uid]['hasBid'] = true;
+          } else {
+            players[key]['hasBid'] = false;
+          }
+        });
+      };
+      if (bid == null) {
+        print('no bids so far');
+        pBid();
+      } else if (bid['suit'] > suit && bid['rank'] > num) {
+        print('there was already a bid');
+        pBid();
+      }
     }
-    final pBid = () {
-      bid = {'suit': suit, 'rank': num};
-      bidId = uid;
-      biddingId =
-          players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
-      players.forEach((key, value) {
-        if (key == uid) {
-          players[uid]['hasBid'] = true;
-        } else {
-          players[key]['hasBid'] = false;
-        }
-      });
-    };
-    if (bid == null) {
-      pBid();
-    } else if (bid['suit'] > suit && bid['rank'] > num) {
-      pBid();
-    }
+    print(players.values.toList().map((e) => e['hasBid']).toList());
     if (players.values.every((element) => element['hasBid'])) {
-      gameState = SPMP.playing;
+      print('every one bid');
+      gameState = SPMP.discarding;
       List<Map<String, dynamic>> widow = cardsController._cards
-          .where((element) => element['place'] == SPMP.widow)
+          .where((element) => element['uid'] == SPMP.widow)
           .toList();
       for (var i = 0; i < 2; i++) {
         cardsController.move(widow[i]['rank'], widow[i]['suit'],
-            players.keys.toList().indexOf(uid), SPMP.collectWidow);
-        sendMessage({'method': SPMP.collectWidow});
+            players.keys.toList().indexOf(bidId), SPMP.collectWidow);
+        sendMessage({'method': SPMP.collectWidow, 'uid': bidId});
       }
-      return true;
     }
-    return false;
   }
 
   bool acceptPlay(String uid) {

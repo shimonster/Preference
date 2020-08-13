@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../widgets/playing_card.dart';
 import '../providers/client.dart';
+import '../SPMP.dart';
 
 enum ranks {
   rank07,
@@ -90,6 +91,22 @@ class Cards extends ChangeNotifier {
         'rank': rank,
         'suit': suit,
         'uid': uid,
+      });
+    }
+    if (method == SPMP.collectWidow) {
+      final collectI = client.game.players.keys.toList().indexOf(uid);
+      [p1Cards, p2Cards, p3Cards][collectI] = _getLocationCards(
+          places.values[collectI],
+          collectI == 0 ? 30 : null,
+          collectI == 0 ? null : 0,
+          collectI == 0 ? 0 : collectI == 1 ? null : 30,
+          collectI == 1 ? 30 : null);
+      [p1Cards, p2Cards, p3Cards][collectI].forEach((element) {
+        element.move(Duration(milliseconds: 200),
+            eRight: element.right,
+            eLeft: element.left,
+            eTop: element.top,
+            eBottom: element.bottom);
       });
     }
   }

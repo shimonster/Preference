@@ -42,7 +42,7 @@ class Client extends ChangeNotifier {
               eventMap.map((key, value) => MapEntry(key, value));
           print('${DateTime.now()}, $event');
 
-          if (event['method'] == SPMP.bid) {
+          if (event['method'] == SPMP.bid || event['method'] == SPMP.pass) {
             game.biddingId = event['turn'];
             game.placeBid(event['rank'], event['suit'], event['uid']);
             bidStream.add(event);
@@ -64,13 +64,16 @@ class Client extends ChangeNotifier {
             }
           }
           if (event['method'] == SPMP.collectWidow) {
+            final widow = game.cards.cards
+                .where((element) => element.place == places.widow)
+                .toList();
             for (var i = 0; i < 2; i++) {
               game.cards.move(
-                  event['rank'][i],
-                  event['suit'][i],
+                  widow[i].number.index,
+                  widow[i].suit.index,
                   game.players.keys.toList().indexOf(event['uid']),
-                  SPMP.dispose,
-                  false,
+                  SPMP.collectWidow,
+                  event['uid'] == uid,
                   event['uid']);
             }
           }
@@ -85,7 +88,7 @@ class Client extends ChangeNotifier {
                 .map<Card>((e) => Card(
                     ranks.values[e['rank']],
                     suits.values[e['suit']],
-                    e['uid'] == 'widow'
+                    e['uid'] == SPMP.widow
                         ? places.widow
                         : places.values[
                             game.players.keys.toList().indexOf(e['uid'])]))

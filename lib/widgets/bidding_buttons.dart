@@ -19,8 +19,11 @@ class _BiddingButtonsState extends State<BiddingButtons> {
           child: Text('Pass'),
           onPressed: () {
             print('onPressed of pass button');
-            client.game.placeBid(-1, -1, '');
+            client.game.placeBid(-1, -1, client.uid);
           },
+        ),
+        SizedBox(
+          width: 10,
         ),
         FlatButton(
           child: Text('Bid'),
@@ -36,21 +39,27 @@ class _BiddingButtonsState extends State<BiddingButtons> {
                     (i) => Row(
                       children: List.generate(
                         5,
-                        (index) => FlatButton(
-                          child: Text('${suits[index]} ${i + 1}'),
-                          onPressed: client.game.bid != null
-                              ? client.game.bid['suit'] > i &&
-                                      client.game.bid['rank'] > i
-                                  ? () {
-                                      print('a bid button was pressed');
-                                      client.game
-                                          .placeBid(index, i, client.uid);
-                                    }
-                                  : null
-                              : () {
-                                  print('a bid button was pressed');
-                                  client.game.placeBid(index, i, client.uid);
-                                },
+                        (index) => SizedBox(
+                          width: 50,
+                          height: 50,
+                          child: RaisedButton(
+                            child: Text('${suits[index]} ${i + 1}'),
+                            onPressed: client.game.bid != null
+                                ? client.game.bid['suit'] >= index ||
+                                        client.game.bid['rank'] > i
+                                    ? () {
+                                        print('a bid button was pressed');
+                                        print('client uid: ${client.uid}');
+                                        client.game
+                                            .placeBid(index, i, client.uid);
+                                      }
+                                    : null
+                                : () {
+                                    print('a bid button was pressed');
+                                    print('client uid: ${client.uid}');
+                                    client.game.placeBid(index, i, client.uid);
+                                  },
+                          ),
                         ),
                       ),
                     ),

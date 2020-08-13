@@ -89,7 +89,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                                 client.game.biddingId == client.uid
                             ? Positioned(
                                 bottom:
-                                    MediaQuery.of(context).size.height * 0.3,
+                                    MediaQuery.of(context).size.height * 0.2,
                                 right: MediaQuery.of(context).size.width * 0.5 -
                                     50,
                                 child: BiddingButtons(),

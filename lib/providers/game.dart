@@ -59,43 +59,83 @@ class Game extends ChangeNotifier {
     print('prefs: $gameId');
   }
 
-  bool placeBid(int num, int suit, String id) {
-    print('placed bid: $id');
-    if (bid == null) {
-      bid = {'suit': suit, 'rank': num};
-      bidId = id;
-      players.forEach((key, value) {
-        if (key == bidId) {
-          players[bidId]['hasBid'] = true;
-        } else {
-          if (num != -1) {
+//  bool placeBid(int num, int suit, String id) {
+//    print('placed bid: $id');
+//    if(num == -1) {}
+//    if (bid == null) {
+//      bid = {'suit': suit, 'rank': num};
+//      bidId = id;
+//      biddingId =
+//          players.keys.toList()[(players.keys.toList().indexOf(id) + 1) % 3];
+//      players.forEach((key, value) {
+//        if (key == bidId) {
+//          players[bidId]['hasBid'] = true;
+//        } else {
+//          players[key]['hasBid'] = false;
+//        }
+//      });
+//      if (id == client.uid) {
+//        client.sendMessage(
+//            {'method': SPMP.bid, 'rank': num, 'suit': suit, 'uid': client.uid});
+//      }
+//    } else if (bid['suit'] > suit && bid['rank'] > num) {
+//      bid = {'suit': suit, 'rank': num};
+//      bidId = id;
+//      players.forEach((key, value) {
+//        if (key == bidId) {
+//          players[bidId]['hasBid'] = true;
+//        } else {
+//          players[key]['hasBid'] = false;
+//        }
+//      });
+//      if (id == client.uid) {
+//        client.sendMessage(
+//            {'method': SPMP.bid, 'rank': num, 'suit': suit, 'uid': client.uid});
+//      }
+//      return true;
+//    }
+//    return false;
+//  }
+
+  void placeBid(int num, int suit, String id) {
+    if (num == -1) {
+      print('plater passed');
+      print(players);
+      print('id : $id');
+      players[id]['hasBid'] = true;
+      biddingId =
+          players.keys.toList()[(players.keys.toList().indexOf(id) + 1) % 3];
+    } else {
+      final pBid = () {
+        print('a bid was plaed');
+        bid = {'suit': suit, 'rank': num};
+        bidId = id;
+        biddingId =
+            players.keys.toList()[(players.keys.toList().indexOf(id) + 1) % 3];
+        players.forEach((key, value) {
+          if (key == id) {
+            players[id]['hasBid'] = true;
+          } else {
             players[key]['hasBid'] = false;
           }
-        }
-      });
-      if (id == client.uid) {
-        client.sendMessage(
-            {'method': SPMP.bid, 'rank': num, 'suit': suit, 'uid': client.uid});
+        });
+      };
+      if (bid == null) {
+        print('no bids so far');
+        pBid();
+      } else if (bid['suit'] > suit && bid['rank'] > num) {
+        print('there was already a bid');
+        pBid();
       }
-    } else if (bid['suit'] > suit && bid['rank'] > num) {
-      bid = {'suit': suit, 'rank': num};
-      bidId = id;
-      players.forEach((key, value) {
-        if (key == bidId) {
-          players[bidId]['hasBid'] = true;
-        } else {
-          if (num != -1) {
-            players[key]['hasBid'] = false;
-          }
-        }
-      });
-      if (id == client.uid) {
-        client.sendMessage(
-            {'method': SPMP.bid, 'rank': num, 'suit': suit, 'uid': client.uid});
-      }
-      return true;
     }
-    return false;
+    if (id == client.uid) {
+      client.sendMessage({
+        'method': num == -1 ? SPMP.pass : SPMP.bid,
+        'rank': num,
+        'suit': suit,
+        'uid': client.uid
+      });
+    }
   }
 
   Future<void> leaveGame() async {
