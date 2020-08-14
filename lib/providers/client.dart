@@ -17,7 +17,6 @@ class Client extends ChangeNotifier {
   WebSocket ws;
   Game game;
   final socketStreamController = StreamController.broadcast();
-  Stream socketStream;
   final startGameStream = StreamController.broadcast();
   final bidStream = StreamController.broadcast();
 
@@ -29,7 +28,7 @@ class Client extends ChangeNotifier {
     port = portNumber;
     username = nickname;
     uid = id;
-    socketStream = socketStreamController.stream;
+    socketStreamController.onListen = () => print('stream listened to');
     final address = 'ws://localhost:$port/$uid/$username';
     // connects to web socket
     ws = WebSocket(address);

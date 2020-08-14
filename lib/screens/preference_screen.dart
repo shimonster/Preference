@@ -11,6 +11,9 @@ import '../SPMP.dart';
 import '../providers/client.dart';
 import '../widgets/game_info.dart';
 import '../widgets/start_playing_button.dart';
+import '../providers/cards.dart';
+import '../widgets/playing_card.dart';
+import '../helpers/card_move_extention.dart';
 
 class PreferenceScreen extends StatefulWidget {
   static const routeName = '/preference';
@@ -20,7 +23,6 @@ class PreferenceScreen extends StatefulWidget {
 }
 
 class _PreferenceScreenState extends State<PreferenceScreen> {
-  bool _isPlaying = false;
   bool _hasAccepted = false;
   bool _isLoading = true;
   bool hasPopped = false;
@@ -28,13 +30,10 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   StreamSubscription stream;
 
   void setHasAccepted(bool val) {
+    print('accepted');
     setState(() {
       _hasAccepted = val;
     });
-  }
-
-  void setIsPlaying(bool val) {
-    _isPlaying = val;
   }
 
   @override
@@ -69,6 +68,40 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   Widget build(BuildContext context) {
     final client = Provider.of<Client>(context, listen: false);
     final cards = client.game.cards;
+
+    Future<void> animateDistribute() async {
+      await Future.forEach([
+        ...cards.p2Cards,
+        ...cards.p1Cards,
+        ...cards.p3Cards,
+        ...cards.widows
+      ], (PlayingCard playingCard) async {
+        playingCard.move(
+          Duration(),
+          eTop: -100,
+          eRight: MediaQuery.of(context).size.width / 2,
+        );
+        playingCard.moveAndTwist(
+          Duration(milliseconds: 1000),
+          eTop: playingCard.top,
+          eRight: playingCard.right,
+          eLeft: playingCard.left,
+          eBottom: playingCard.bottom,
+          sRotation: rotation.back,
+          eRotation: playingCard.place == places.player1
+              ? rotation.face
+              : rotation.back,
+          sAngle: angle.up,
+          eAngle: playingCard.place == places.player1 ||
+                  playingCard.place == places.widow
+              ? angle.up
+              : playingCard.place == places.player2 ? angle.right : angle.left,
+          axis: Axis.vertical,
+        );
+        await Future.delayed(Duration(milliseconds: 100));
+      });
+    }
+
     return Scaffold(
       backgroundColor: Color.fromRGBO(28, 91, 11, 1),
       body: Container(
@@ -80,15 +113,16 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                 child: CircularProgressIndicator(),
               )
             : StreamBuilder(
-                stream: client.socketStream,
+                stream: client.socketStreamController.stream,
                 builder: (context, snapshot) {
+                  print(client.game.gameState);
                   return Stack(
                     fit: StackFit.loose,
                     children: [
-                      if (_isPlaying) ...cards.p2Cards,
-                      if (_isPlaying) ...cards.p1Cards,
-                      if (_isPlaying) ...cards.p3Cards,
-                      if (_isPlaying) ...cards.widows,
+                      if (client.game.isPlaying) ...cards.p2Cards,
+                      if (client.game.isPlaying) ...cards.p1Cards,
+                      if (client.game.isPlaying) ...cards.p3Cards,
+                      if (client.game.isPlaying) ...cards.widows,
                       if (client.game.gameState == SPMP.bidding)
                         StreamBuilder(
                           stream: client.bidStream.stream,
@@ -104,7 +138,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                                 )
                               : Container(),
                         ),
-                      if (_hasAccepted && !_isPlaying)
+                      if (_hasAccepted && !client.game.isPlaying)
                         Center(
                           child: Text(
                             'Get Ready!',
@@ -114,12 +148,12 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                             ),
                           ),
                         ),
-                      if (_isPlaying)
+                      if (client.game.isPlaying)
                         Center(
                           child: Text(client.uid),
                         ),
                       if (!_hasAccepted)
-                        StartPlayingButton(setIsPlaying, setHasAccepted),
+                        StartPlayingButton(setHasAccepted, animateDistribute),
                     ],
                   );
                 }),
