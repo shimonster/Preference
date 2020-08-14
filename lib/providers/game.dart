@@ -28,15 +28,7 @@ class Game extends ChangeNotifier {
   c.Cards cards;
 
   Future<void> createGame(String nickname) async {
-    final gId = 1234;
-    final uid = Uid().toString();
-    client.startClient(gId, nickname, uid);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('currentGame', gId);
-    await prefs.setInt('currentPlayer', 0);
-    gameId = gId;
-    cards = c.Cards(gameId: gameId, client: client);
-    notifyListeners();
+    joinGame(1234, nickname);
   }
 
   Future<void> joinGame(int gId, String nickname) async {
@@ -58,44 +50,6 @@ class Game extends ChangeNotifier {
     }
     print('prefs: $gameId');
   }
-
-//  bool placeBid(int num, int suit, String id) {
-//    print('placed bid: $id');
-//    if(num == -1) {}
-//    if (bid == null) {
-//      bid = {'suit': suit, 'rank': num};
-//      bidId = id;
-//      biddingId =
-//          players.keys.toList()[(players.keys.toList().indexOf(id) + 1) % 3];
-//      players.forEach((key, value) {
-//        if (key == bidId) {
-//          players[bidId]['hasBid'] = true;
-//        } else {
-//          players[key]['hasBid'] = false;
-//        }
-//      });
-//      if (id == client.uid) {
-//        client.sendMessage(
-//            {'method': SPMP.bid, 'rank': num, 'suit': suit, 'uid': client.uid});
-//      }
-//    } else if (bid['suit'] > suit && bid['rank'] > num) {
-//      bid = {'suit': suit, 'rank': num};
-//      bidId = id;
-//      players.forEach((key, value) {
-//        if (key == bidId) {
-//          players[bidId]['hasBid'] = true;
-//        } else {
-//          players[key]['hasBid'] = false;
-//        }
-//      });
-//      if (id == client.uid) {
-//        client.sendMessage(
-//            {'method': SPMP.bid, 'rank': num, 'suit': suit, 'uid': client.uid});
-//      }
-//      return true;
-//    }
-//    return false;
-//  }
 
   void placeBid(int num, int suit, String id) {
     if (num == -1) {

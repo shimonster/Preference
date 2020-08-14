@@ -81,10 +81,11 @@ class Cards extends ChangeNotifier {
 
   void move(
       int rank, int suit, int place, String method, bool isMe, String uid) {
-    _cards
-        .firstWhere((element) =>
-            element.number.index == rank && element.suit.index == suit)
-        .place = places.values[place];
+    final idx = _cards.indexWhere((element) =>
+        element.number.index == rank && element.suit.index == suit);
+    print('idx of widow: $idx');
+    _cards[idx].place = places.values[place];
+    print('new place: ${_cards[idx].place}');
     if (isMe) {
       client.sendMessage({
         'method': method,
@@ -94,19 +95,31 @@ class Cards extends ChangeNotifier {
       });
     }
     if (method == SPMP.collectWidow) {
-      final collectI = client.game.players.keys.toList().indexOf(uid);
-      [p1Cards, p2Cards, p3Cards][collectI] = _getLocationCards(
-          places.values[collectI],
-          collectI == 0 ? 30 : null,
-          collectI == 0 ? null : 0,
-          collectI == 0 ? 0 : collectI == 1 ? null : 30,
-          collectI == 1 ? 30 : null);
-      [p1Cards, p2Cards, p3Cards][collectI].forEach((element) {
+      print('moving to player who collected widow');
+      print(place);
+      final newCards = _getLocationCards(
+          places.values[place],
+          place == 0 ? 30 : null,
+          place == 0 ? null : 0,
+          place == 0 ? 0 : place == 1 ? null : 30,
+          place == 1 ? 30 : null);
+      print('length of new cards: ${newCards.length}');
+      if (place == 0) {
+        p1Cards = newCards;
+      } else if (place == 1) {
+        p2Cards = newCards;
+      } else {
+        p3Cards = newCards;
+      }
+      print([p1Cards, p2Cards, p3Cards][place]);
+      [p1Cards, p2Cards, p3Cards][place].forEach((element) {
+        print('changed position: $rank, $suit');
         element.move(Duration(milliseconds: 200),
             eRight: element.right,
             eLeft: element.left,
             eTop: element.top,
             eBottom: element.bottom);
+        element.positionStream.add('position');
       });
     }
   }
@@ -116,6 +129,8 @@ class Cards extends ChangeNotifier {
     var thisCards = [
       ..._cards.where((element) => element.place == place).toList()
     ];
+    print(
+        'cards length from location cards: ${thisCards.length}, place: $place');
     final double increment = 50;
     double i = -1;
     final List<Card> sortedCards = [];

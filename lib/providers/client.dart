@@ -31,7 +31,9 @@ class Client extends ChangeNotifier {
     uid = id;
     socketStream = socketStreamController.stream;
     final address = 'ws://localhost:$port/$uid/$username';
+    // connects to web socket
     ws = WebSocket(address);
+    // if web socket is open, listen
     if (ws.readyState != WebSocket.CLOSED ||
         ws.readyState != WebSocket.CLOSING) {
       print('socket open');
@@ -41,12 +43,14 @@ class Client extends ChangeNotifier {
           final Map<String, dynamic> event =
               eventMap.map((key, value) => MapEntry(key, value));
           print('${DateTime.now()}, $event');
-
+// event handling based on event['method'] -------------- event handling based on event['method'] --------------
+          // bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid
           if (event['method'] == SPMP.bid || event['method'] == SPMP.pass) {
             game.biddingId = event['turn'];
             game.placeBid(event['rank'], event['suit'], event['uid']);
             bidStream.add(event);
           }
+          // place place place place place place place place place place place
           if (event['method'] == SPMP.place) {
             game.cards.turn = event['turn'];
             game.cards.move(
@@ -57,26 +61,31 @@ class Client extends ChangeNotifier {
                 false,
                 event['uid']);
           }
+          // dispose dispose dispose dispose dispose dispose dispose dispose
           if (event['method'] == SPMP.dispose) {
             for (var i = 0; i < 2; i++) {
               game.cards.move(event['rank'][i], event['suit'][i], SPMP.disposed,
                   SPMP.dispose, false, event['uid']);
             }
           }
+          // collect-widow collect-widow collect-widow collect-widow collect-widow
           if (event['method'] == SPMP.collectWidow) {
+            game.gameState = SPMP.discarding;
             final widow = game.cards.cards
                 .where((element) => element.place == places.widow)
                 .toList();
             for (var i = 0; i < 2; i++) {
+              print('about to change position of cards');
               game.cards.move(
                   widow[i].number.index,
                   widow[i].suit.index,
                   game.players.keys.toList().indexOf(event['uid']),
                   SPMP.collectWidow,
-                  event['uid'] == uid,
+                  false,
                   event['uid']);
             }
           }
+          // start-playing start-playing start-playing start-playing start-playing
           if (event['method'] == SPMP.startPlaying) {
             game.isPlaying = true;
             game.biddingId = event['biddingId'];
@@ -95,14 +104,17 @@ class Client extends ChangeNotifier {
                 .toList());
             print(game.players);
           }
+          // finish-bidding finish-bidding finish-bidding finish-bidding finish-bidding
           if (event['method'] == SPMP.finishBidding) {
             game.gameState = SPMP.playing;
           }
+          // player-leave/player-join player-leave/player-join player-leave/player-join
           if (event['method'] == SPMP.playerJoin ||
               event['method'] == SPMP.playerLeave) {
             game.players =
                 Map<String, Map<String, dynamic>>.from(event['players']);
           }
+          // trick-collected trick-collected trick-collected trick-collected
           if (event['method'] == SPMP.trickCollected) {
             for (var i = 0; i < 3; i++) {
               game.cards.move(

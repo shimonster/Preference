@@ -37,6 +37,7 @@ class PlayingCardState extends State<PlayingCard>
       widget.positionStream.stream.listen((event) {
         setCardState(() {});
         if (event == 'position') {
+          print(widget.place);
           setState(() {});
         }
       });
@@ -52,6 +53,7 @@ class PlayingCardState extends State<PlayingCard>
 
   @override
   Widget build(BuildContext context) {
+    print('build of a card was run');
     final client = Provider.of<Client>(context, listen: false);
     return AnimatedPositioned(
       duration: Duration(seconds: 1),
