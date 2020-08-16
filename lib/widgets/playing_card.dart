@@ -39,6 +39,9 @@ class PlayingCardState extends State<PlayingCard>
   @override
   Widget build(BuildContext context) {
     print('build of a card was run: ${widget.currentTop}');
+    if (widget.place == places.widow) {
+      print('widow card build was run');
+    }
     final client = Provider.of<Client>(context, listen: false);
     return StreamBuilder(
       stream: widget.positionStream.stream,
@@ -77,7 +80,7 @@ class PlayingCardState extends State<PlayingCard>
                       (client.game.gameState == SPMP.playing ||
                           client.game.gameState == SPMP.discarding) &&
                       (client.game.cards.turn == client.uid ||
-                          client.game.biddingId == client.uid)
+                          client.game.bidId == client.uid)
                   ? Draggable(
                       feedback: card,
                       childWhenDragging: Container(),

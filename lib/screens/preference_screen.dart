@@ -53,7 +53,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         Provider.of<Client>(context, listen: false)
             .game
             .cards
-            .cardStream
+            .widowStream
             .close();
         print('event: ${event.type}');
         Navigator.of(context).pushReplacementNamed('/');
@@ -122,7 +122,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                 builder: (context, snapshot) {
                   print(client.game.gameState);
                   return StreamBuilder(
-                      stream: client.game.cards.cardStream.stream,
+                      stream: client.game.cards.widowStream.stream,
                       builder: (context, snapshot) {
                         return Stack(
                           fit: StackFit.loose,

@@ -74,7 +74,7 @@ class Client extends ChangeNotifier {
                 .where((element) => element.place == places.widow)
                 .toList();
             game.cards.move(
-                widow.map((e) => e.number.index).toList(),
+                widow.map((e) => e.rank.index).toList(),
                 widow.map((e) => e.suit.index).toList(),
                 game.players.keys.toList().indexOf(event['uid']),
                 SPMP.collectWidow,

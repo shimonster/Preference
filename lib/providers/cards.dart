@@ -43,11 +43,11 @@ enum places {
 }
 
 class Card {
-  final ranks number;
+  final ranks rank;
   final suits suit;
   places place;
 
-  Card(this.number, this.suit, this.place);
+  Card(this.rank, this.suit, this.place);
 }
 
 class Cards extends ChangeNotifier {
@@ -63,7 +63,7 @@ class Cards extends ChangeNotifier {
   int dealer;
   double width = html.window.innerWidth.toDouble();
   double height = html.window.innerHeight.toDouble();
-  final cardStream = StreamController.broadcast();
+  final widowStream = StreamController.broadcast();
 
   List<Card> _cards = [];
   List<PlayingCard> p1Cards = [];
@@ -93,17 +93,92 @@ class Cards extends ChangeNotifier {
       final List<T> list = crds
           .where((element) => element.suit == suits.values[i])
           .toList()
-            ..sort((a, b) => a.number.index > b.number.index ? -1 : 1);
+            ..sort((a, b) => a.rank.index > b.rank.index ? -1 : 1);
       sortedCards.addAll(list);
     }
     return sortedCards;
+  }
+
+  void moveWidowToPlayer(List<PlayingCard> newCards) {
+    for (var i = 0; i < 12; i++) {
+      p1Cards[i].moveAndTwist(
+        Duration(milliseconds: 200),
+        eRight: newCards[i].right,
+        eLeft: newCards[i].left,
+        eTop: newCards[i].top,
+        eBottom: newCards[i].bottom,
+        axis: Axis.vertical,
+        sRotation: rotation.back,
+        eRotation: rotation.face,
+      );
+    }
+  }
+
+  void collectWidow(int place) {
+    client.game.gameState = SPMP.discarding;
+    final newCards = _getLocationCards(
+        places.values[place],
+        place == 0 ? 30 : null,
+        place == 0 ? null : 0,
+        place == 0 ? 0 : place == 1 ? null : 30,
+        place == 1 ? 30 : null);
+    print('length of new cards: ${newCards.length}');
+    if (place == 0) {
+      p1Cards.addAll(widows);
+      widows = [];
+      p1Cards = sortCards(p1Cards);
+      print(p1Cards);
+      widowStream.add('collected widow');
+      for (var i = 0; i < 12; i++) {
+        p1Cards[i].moveAndTwist(
+          Duration(milliseconds: 200),
+          eRight: newCards[i].right,
+          eLeft: newCards[i].left,
+          eTop: newCards[i].top,
+          eBottom: newCards[i].bottom,
+          axis: Axis.vertical,
+          sRotation: rotation.back,
+          eRotation: rotation.face,
+        );
+      }
+    } else if (place == 1) {
+      p2Cards.addAll(widows);
+      widows = [];
+      widowStream.add('collected widow');
+      for (var i = 0; i < 12; i++) {
+        p2Cards[i].moveAndTwist(
+          Duration(milliseconds: 200),
+          eRight: newCards[i].right,
+          eLeft: newCards[i].left,
+          eTop: newCards[i].top,
+          eBottom: newCards[i].bottom,
+          sAngle: i < 10 ? null : angle.up,
+          eAngle: i < 10 ? null : angle.right,
+        );
+      }
+    } else {
+      p3Cards.addAll(widows);
+      widows = [];
+      widowStream.add('collected widow');
+      for (var i = 0; i < 12; i++) {
+        p3Cards[i].moveAndTwist(
+          Duration(milliseconds: 200),
+          eRight: newCards[i].right,
+          eLeft: newCards[i].left,
+          eTop: newCards[i].top,
+          eBottom: newCards[i].bottom,
+          sAngle: angle.up,
+          eAngle: angle.left,
+        );
+      }
+    }
   }
 
   void move(List<int> rank, List<int> suit, int place, String method, bool isMe,
       String uid) {
     for (var i = 0; i < rank.length; i++) {
       final idx = _cards.indexWhere((element) =>
-          element.number.index == rank[i] && element.suit.index == suit[i]);
+          element.rank.index == rank[i] && element.suit.index == suit[i]);
       print('idx of widow: $idx');
       _cards[idx].place = places.values[place];
       print('new place: ${_cards[idx].place}');
@@ -117,63 +192,7 @@ class Cards extends ChangeNotifier {
       });
     }
     if (method == SPMP.collectWidow) {
-      print('moving to player who collected widow');
-      print(place);
-      final newCards = _getLocationCards(
-          places.values[place],
-          place == 0 ? 30 : null,
-          place == 0 ? null : 0,
-          place == 0 ? 0 : place == 1 ? null : 30,
-          place == 1 ? 30 : null);
-      print('length of new cards: ${newCards.length}');
-      if (place == 0) {
-        p1Cards.addAll(widows);
-        widows = [];
-        p1Cards = sortCards(p1Cards);
-        cardStream.add('collected widow');
-        for (var i = 0; i < 12; i++) {
-          p1Cards[i].moveAndTwist(
-            Duration(milliseconds: 200),
-            eRight: newCards[i].right,
-            eLeft: newCards[i].left,
-            eTop: newCards[i].top,
-            eBottom: newCards[i].bottom,
-            axis: Axis.vertical,
-            sRotation: rotation.back,
-            eRotation: rotation.face,
-          );
-        }
-      } else if (place == 1) {
-        p2Cards.addAll(widows);
-        widows = [];
-        cardStream.add('collected widow');
-        for (var i = 0; i < 12; i++) {
-          p2Cards[i].moveAndTwist(
-            Duration(milliseconds: 200),
-            eRight: newCards[i].right,
-            eLeft: newCards[i].left,
-            eTop: newCards[i].top,
-            eBottom: newCards[i].bottom,
-            sAngle: i < 10 ? null : angle.up,
-            eAngle: i < 10 ? null : angle.right,
-          );
-        }
-      } else {
-        p3Cards.addAll(widows);
-        widows = [];
-        cardStream.add('collected widow');
-        for (var i = 0; i < 12; i++) {
-          p3Cards[i].moveAndTwist(
-            Duration(milliseconds: 200),
-            eRight: newCards[i].right,
-            eLeft: newCards[i].left,
-            eTop: newCards[i].top,
-            eBottom: newCards[i].bottom,
-            sAngle: angle.up,
-            eAngle: angle.left,
-          );
-        }
-      }
+      collectWidow(place);
     }
   }
 
@@ -196,7 +215,7 @@ class Cards extends ChangeNotifier {
       i++;
       return PlayingCard(
         e.suit,
-        e.number,
+        e.rank,
         e.place,
         top: top == 0 ? findSideLocation(l, i, true) : top,
         bottom: bottom == 0 ? findSideLocation(l, i, true) : bottom,
