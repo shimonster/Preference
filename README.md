@@ -1,4 +1,4 @@
-# preference
+# Preference
 
 An app to play preference.
 
