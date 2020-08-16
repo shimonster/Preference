@@ -51,17 +51,13 @@ class Game extends ChangeNotifier {
     print('prefs: $gameId');
   }
 
-  void placeBid(int num, int suit, String id) {
+  void placeBid(int num, int suit, String id, [String turn]) {
     if (num == -1) {
-      print('plater passed');
-      print(players);
-      print('id : $id');
       players[id]['hasBid'] = true;
-      biddingId =
+      biddingId = turn ??
           players.keys.toList()[(players.keys.toList().indexOf(id) + 1) % 3];
     } else {
       final pBid = () {
-        print('a bid was plaed');
         bid = {'suit': suit, 'rank': num};
         bidId = id;
         biddingId =
@@ -75,10 +71,8 @@ class Game extends ChangeNotifier {
         });
       };
       if (bid == null) {
-        print('no bids so far');
         pBid();
       } else if (bid['suit'] > suit && bid['rank'] > num) {
-        print('there was already a bid');
         pBid();
       }
     }
@@ -90,6 +84,7 @@ class Game extends ChangeNotifier {
         'uid': client.uid
       });
     }
+    client.bidStream.add('player bid');
   }
 
   Future<void> leaveGame() async {

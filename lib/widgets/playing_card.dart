@@ -31,21 +31,6 @@ class PlayingCardState extends State<PlayingCard>
   void Function(void Function()) setCardState;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!isInit) {
-      widget.positionStream.stream.listen((event) {
-        setCardState(() {});
-        if (event == 'position') {
-          print(widget.place);
-          setState(() {});
-        }
-      });
-    }
-    isInit = true;
-  }
-
-  @override
   void dispose() {
     super.dispose();
     widget.positionStream.close();
@@ -53,46 +38,56 @@ class PlayingCardState extends State<PlayingCard>
 
   @override
   Widget build(BuildContext context) {
-    print('build of a card was run');
+    print('build of a card was run: ${widget.currentTop}');
     final client = Provider.of<Client>(context, listen: false);
-    return AnimatedPositioned(
-      duration: Duration(seconds: 1),
-      curve: Curves.easeInOut,
-      top: widget.currentTop,
-      bottom: widget.currentBottom,
-      right: widget.currentRight,
-      left: widget.currentLeft,
-      child: StatefulBuilder(builder: (context, rebuild) {
-        setCardState = rebuild;
-        final card = Transform(
-          transform: Matrix4.rotationY(widget.currentRotationY)
-            ..rotateX(widget.currentRotationX)
-            ..rotateZ(widget.currentRotationZ),
-          alignment: Alignment.center,
-          child: Container(
-            width: MediaQuery.of(context).size.width * multiplySizeWidth,
-            height: MediaQuery.of(context).size.width * multiplySizeHeight,
-            decoration: BoxDecoration(
-              color: widget.isFace ? Colors.orange : Colors.blue,
-              border: Border.all(width: 5),
-            ),
-            child: Center(
-              child: Text('${widget.suit}   ${widget.rank}'),
-            ),
+    return StreamBuilder(
+      stream: widget.positionStream.stream,
+      builder: (context, snapshot) {
+        print('position builder was run');
+        return AnimatedPositioned(
+          duration: Duration(seconds: 1),
+          curve: Curves.easeInOut,
+          top: widget.currentTop,
+          bottom: widget.currentBottom,
+          right: widget.currentRight,
+          left: widget.currentLeft,
+          child: StreamBuilder(
+            stream: widget.rotationStream.stream,
+            builder: (context, snap) {
+              print('rotation builder was run');
+              final card = Transform(
+                transform: Matrix4.rotationY(widget.currentRotationY)
+                  ..rotateX(widget.currentRotationX)
+                  ..rotateZ(widget.currentRotationZ),
+                alignment: Alignment.center,
+                child: Container(
+                  width: MediaQuery.of(context).size.width * multiplySizeWidth,
+                  height:
+                      MediaQuery.of(context).size.width * multiplySizeHeight,
+                  decoration: BoxDecoration(
+                    color: widget.isFace ? Colors.orange : Colors.blue,
+                    border: Border.all(width: 5),
+                  ),
+                  child: Center(
+                    child: Text('${widget.suit}   ${widget.rank}'),
+                  ),
+                ),
+              );
+              return widget.place == places.player1 &&
+                      (client.game.gameState == SPMP.playing ||
+                          client.game.gameState == SPMP.discarding) &&
+                      (client.game.cards.turn == client.uid ||
+                          client.game.biddingId == client.uid)
+                  ? Draggable(
+                      feedback: card,
+                      childWhenDragging: Container(),
+                      child: card,
+                    )
+                  : card;
+            },
           ),
         );
-        return widget.place == places.player1 &&
-                (client.game.gameState == SPMP.playing ||
-                    client.game.gameState == SPMP.discarding) &&
-                (client.game.cards.turn == client.uid ||
-                    client.game.biddingId == client.uid)
-            ? Draggable(
-                feedback: card,
-                childWhenDragging: Container(),
-                child: card,
-              )
-            : card;
-      }),
+      },
     );
   }
 }

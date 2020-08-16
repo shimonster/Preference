@@ -46,8 +46,8 @@ class Client extends ChangeNotifier {
           // bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid
           if (event['method'] == SPMP.bid || event['method'] == SPMP.pass) {
             game.biddingId = event['turn'];
-            game.placeBid(event['rank'], event['suit'], event['uid']);
-            bidStream.add(event);
+            game.placeBid(
+                event['rank'], event['suit'], event['uid'], event['turn']);
           }
           // place place place place place place place place place place place
           if (event['method'] == SPMP.place) {
@@ -73,16 +73,13 @@ class Client extends ChangeNotifier {
             final widow = game.cards.cards
                 .where((element) => element.place == places.widow)
                 .toList();
-            for (var i = 0; i < 2; i++) {
-              print('about to change position of cards');
-              game.cards.move(
-                  widow[i].number.index,
-                  widow[i].suit.index,
-                  game.players.keys.toList().indexOf(event['uid']),
-                  SPMP.collectWidow,
-                  false,
-                  event['uid']);
-            }
+            game.cards.move(
+                widow.map((e) => e.number.index).toList(),
+                widow.map((e) => e.suit.index).toList(),
+                game.players.keys.toList().indexOf(event['uid']),
+                SPMP.collectWidow,
+                false,
+                event['uid']);
           }
           // start-playing start-playing start-playing start-playing start-playing
           if (event['method'] == SPMP.startPlaying) {
@@ -130,6 +127,7 @@ class Client extends ChangeNotifier {
         onDone: () {
           sendMessage({'method': SPMP.playerLeave, 'uid': uid});
           socketStreamController.close();
+          bidStream.close();
         },
         onError: (error) =>
             print('client error listening to web socket: $error'),

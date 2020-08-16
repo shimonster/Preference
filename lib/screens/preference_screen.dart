@@ -50,6 +50,11 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
           _isLoading = true;
         });
         hasPopped = true;
+        Provider.of<Client>(context, listen: false)
+            .game
+            .cards
+            .cardStream
+            .close();
         print('event: ${event.type}');
         Navigator.of(context).pushReplacementNamed('/');
       }
@@ -113,49 +118,60 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                 child: CircularProgressIndicator(),
               )
             : StreamBuilder(
-                stream: client.socketStreamController.stream,
+                stream: client.startGameStream.stream,
                 builder: (context, snapshot) {
                   print(client.game.gameState);
-                  return Stack(
-                    fit: StackFit.loose,
-                    children: [
-                      if (client.game.isPlaying) ...cards.p2Cards,
-                      if (client.game.isPlaying) ...cards.p1Cards,
-                      if (client.game.isPlaying) ...cards.p3Cards,
-                      if (client.game.isPlaying) ...cards.widows,
-                      if (client.game.gameState == SPMP.bidding)
-                        StreamBuilder(
-                          stream: client.bidStream.stream,
-                          builder: (ctx, snap) => client.game.biddingId ==
-                                  client.uid
-                              ? Positioned(
-                                  bottom:
-                                      MediaQuery.of(context).size.height * 0.2,
-                                  right:
-                                      MediaQuery.of(context).size.width * 0.5 -
-                                          50,
-                                  child: BiddingButtons(),
-                                )
-                              : Container(),
-                        ),
-                      if (_hasAccepted && !client.game.isPlaying)
-                        Center(
-                          child: Text(
-                            'Get Ready!',
-                            style: TextStyle(
-                              fontSize: 30,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      if (client.game.isPlaying)
-                        Center(
-                          child: Text(client.uid),
-                        ),
-                      if (!_hasAccepted)
-                        StartPlayingButton(setHasAccepted, animateDistribute),
-                    ],
-                  );
+                  return StreamBuilder(
+                      stream: client.game.cards.cardStream.stream,
+                      builder: (context, snapshot) {
+                        return Stack(
+                          fit: StackFit.loose,
+                          children: [
+                            if (client.game.isPlaying) ...cards.p2Cards,
+                            if (client.game.isPlaying) ...cards.p1Cards,
+                            if (client.game.isPlaying) ...cards.p3Cards,
+                            if (client.game.isPlaying) ...cards.widows,
+                            if (client.game.gameState == SPMP.bidding)
+                              StreamBuilder(
+                                stream: client.bidStream.stream,
+                                builder: (ctx, snap) {
+                                  return client.game.biddingId == client.uid &&
+                                          client.game.gameState == SPMP.bidding
+                                      ? Positioned(
+                                          bottom: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.2,
+                                          right: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.5 -
+                                              50,
+                                          child: BiddingButtons(),
+                                        )
+                                      : Container();
+                                },
+                              ),
+                            if (_hasAccepted && !client.game.isPlaying)
+                              Center(
+                                child: Text(
+                                  'Get Ready!',
+                                  style: TextStyle(
+                                    fontSize: 30,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            if (client.game.isPlaying)
+                              Center(
+                                child: Text(client.uid),
+                              ),
+                            if (!_hasAccepted)
+                              StartPlayingButton(
+                                  setHasAccepted, animateDistribute),
+                          ],
+                        );
+                      });
                 }),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startTop,

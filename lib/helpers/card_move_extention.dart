@@ -30,7 +30,8 @@ class CardMoveExtension {
   double currentTop;
   double currentBottom;
   Duration moveDuration;
-  final positionStream = StreamController();
+  final positionStream = StreamController.broadcast();
+  final rotationStream = StreamController.broadcast();
 
   // e is for end and s is for start
 
@@ -71,7 +72,7 @@ class CardMoveExtension {
     if (sAngle != null && eAngle != null) {
       angleAnimation.addListener(() {
         currentRotationZ = angleAnimation.value;
-        positionStream.add('rotation');
+        rotationStream.add('rotation');
       });
     }
     if (sRotation != null && eRotation != null) {
@@ -85,7 +86,7 @@ class CardMoveExtension {
         axis == Axis.horizontal
             ? currentRotationX = rotationAnimation.value
             : currentRotationY = rotationAnimation.value;
-        positionStream.add('rotation');
+        rotationStream.add('rotation');
       });
     }
     await animationController.forward().then((value) {
@@ -96,6 +97,7 @@ class CardMoveExtension {
 
   Future<void> move(Duration duration,
       {double eBottom, double eTop, double eRight, double eLeft}) async {
+    print('move card was run');
     moveDuration = duration;
     currentTop = eTop;
     currentBottom = eBottom;

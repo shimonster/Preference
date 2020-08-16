@@ -1,11 +1,14 @@
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../widgets/playing_card.dart';
 import '../providers/client.dart';
 import '../SPMP.dart';
+import '../helpers/card_move_extention.dart';
 
 enum ranks {
   rank07,
@@ -60,6 +63,7 @@ class Cards extends ChangeNotifier {
   int dealer;
   double width = html.window.innerWidth.toDouble();
   double height = html.window.innerHeight.toDouble();
+  final cardStream = StreamController.broadcast();
 
   List<Card> _cards = [];
   List<PlayingCard> p1Cards = [];
@@ -76,16 +80,34 @@ class Cards extends ChangeNotifier {
     p1Cards = _getLocationCards(places.player1, 30, null, 0, null);
     p2Cards = _getLocationCards(places.player2, null, 0, null, 30);
     p3Cards = _getLocationCards(places.player3, null, 0, 30, null);
-    widows = _getLocationCards(places.widow, null, 30, null, 0);
+    widows = _getLocationCards(places.widow, null, 30, 0, null);
   }
 
-  void move(
-      int rank, int suit, int place, String method, bool isMe, String uid) {
-    final idx = _cards.indexWhere((element) =>
-        element.number.index == rank && element.suit.index == suit);
-    print('idx of widow: $idx');
-    _cards[idx].place = places.values[place];
-    print('new place: ${_cards[idx].place}');
+  List<T> sortCards<T>(List crds) {
+    List<T> sortedCards = [];
+    crds.sort((a, b) =>
+        int.parse(a.suit.toString()[10]) > int.parse(b.suit.toString()[10])
+            ? -1
+            : 1);
+    for (var i = 0; i < 4; i++) {
+      final List<T> list = crds
+          .where((element) => element.suit == suits.values[i])
+          .toList()
+            ..sort((a, b) => a.number.index > b.number.index ? -1 : 1);
+      sortedCards.addAll(list);
+    }
+    return sortedCards;
+  }
+
+  void move(List<int> rank, List<int> suit, int place, String method, bool isMe,
+      String uid) {
+    for (var i = 0; i < rank.length; i++) {
+      final idx = _cards.indexWhere((element) =>
+          element.number.index == rank[i] && element.suit.index == suit[i]);
+      print('idx of widow: $idx');
+      _cards[idx].place = places.values[place];
+      print('new place: ${_cards[idx].place}');
+    }
     if (isMe) {
       client.sendMessage({
         'method': method,
@@ -105,23 +127,61 @@ class Cards extends ChangeNotifier {
           place == 1 ? 30 : null);
       print('length of new cards: ${newCards.length}');
       if (place == 0) {
-        p1Cards = newCards;
+        p1Cards.addAll(widows);
+        widows = [];
+        p1Cards = sortCards(p1Cards);
+        cardStream.add('collected widow');
+        for (var i = 0; i < 12; i++) {
+          p1Cards[i].moveAndTwist(
+            Duration(milliseconds: 200),
+            eRight: newCards[i].right,
+            eLeft: newCards[i].left,
+            eTop: newCards[i].top,
+            eBottom: newCards[i].bottom,
+            axis: Axis.vertical,
+            sRotation: rotation.back,
+            eRotation: rotation.face,
+          );
+        }
       } else if (place == 1) {
-        p2Cards = newCards;
+        p2Cards.addAll(widows);
+        widows = [];
+        cardStream.add('collected widow');
+        for (var i = 0; i < 12; i++) {
+          p2Cards[i].moveAndTwist(
+            Duration(milliseconds: 200),
+            eRight: newCards[i].right,
+            eLeft: newCards[i].left,
+            eTop: newCards[i].top,
+            eBottom: newCards[i].bottom,
+            sAngle: i < 10 ? null : angle.up,
+            eAngle: i < 10 ? null : angle.right,
+          );
+        }
       } else {
-        p3Cards = newCards;
+        p3Cards.addAll(widows);
+        widows = [];
+        cardStream.add('collected widow');
+        for (var i = 0; i < 12; i++) {
+          p3Cards[i].moveAndTwist(
+            Duration(milliseconds: 200),
+            eRight: newCards[i].right,
+            eLeft: newCards[i].left,
+            eTop: newCards[i].top,
+            eBottom: newCards[i].bottom,
+            sAngle: angle.up,
+            eAngle: angle.left,
+          );
+        }
       }
-      print([p1Cards, p2Cards, p3Cards][place]);
-      [p1Cards, p2Cards, p3Cards][place].forEach((element) {
-        print('changed position: $rank, $suit');
-        element.move(Duration(milliseconds: 200),
-            eRight: element.right,
-            eLeft: element.left,
-            eTop: element.top,
-            eBottom: element.bottom);
-        element.positionStream.add('position');
-      });
     }
+  }
+
+  double findSideLocation(int amnt, int i, bool isVert) {
+    final increment = 50;
+    final offset = i * increment;
+    final mLength = isVert ? height : width;
+    return ((mLength - (amnt * increment)) / 2) + offset;
   }
 
   List<PlayingCard> _getLocationCards(
@@ -129,75 +189,19 @@ class Cards extends ChangeNotifier {
     var thisCards = [
       ..._cards.where((element) => element.place == place).toList()
     ];
-    print(
-        'cards length from location cards: ${thisCards.length}, place: $place');
-    final double increment = 50;
-    double i = -1;
-    final List<Card> sortedCards = [];
-    if (place == places.player1) {
-      thisCards.sort((a, b) {
-        if (int.parse(a.suit.toString()[10]) >
-            int.parse(b.suit.toString()[10])) {
-          return -1;
-        } else {
-          return 1;
-        }
-      });
-      for (var i = 0; i < 4; i++) {
-        final int start =
-            thisCards.indexWhere((element) => element.suit == suits.values[i]);
-        final int end = thisCards
-            .lastIndexWhere((element) => element.suit == suits.values[i]);
-        final List<Card> list =
-            start == -1 ? [] : thisCards.sublist(start, end + 1)
-              ..sort((a, b) {
-                if (int.parse(
-                        '${a.number.toString()[10]}${a.number.toString().length > 11 ? a.number.toString()[11] : ''}') >
-                    int.parse(
-                        '${b.number.toString()[10]}${b.number.toString().length > 11 ? b.number.toString()[11] : ''}')) {
-                  return -1;
-                } else {
-                  return 1;
-                }
-              });
-        sortedCards.addAll(list);
-      }
-      thisCards = sortedCards;
-    }
+    int i = -1;
+    thisCards = sortCards(thisCards);
+    final l = thisCards.length;
     return thisCards.map((e) {
       i++;
       return PlayingCard(
         e.suit,
         e.number,
         e.place,
-        top: top == 0
-            ? ((height / 2) -
-                    (((thisCards.length * increment) +
-                            width * PlayingCardState().multiplySizeHeight) /
-                        2)) +
-                (i * increment)
-            : top,
-        bottom: bottom == 0
-            ? ((height / 2) -
-                    (((thisCards.length * increment) +
-                            width * PlayingCardState().multiplySizeHeight) /
-                        2)) +
-                (i * increment)
-            : bottom,
-        right: right == 0
-            ? ((width / 2) -
-                    (((thisCards.length * increment) +
-                            width * PlayingCardState().multiplySizeWidth) /
-                        2)) +
-                (i * increment)
-            : right,
-        left: left == 0
-            ? ((width / 2) -
-                    (((thisCards.length * increment) +
-                            width * PlayingCardState().multiplySizeWidth) /
-                        2)) +
-                (i * increment)
-            : left,
+        top: top == 0 ? findSideLocation(l, i, true) : top,
+        bottom: bottom == 0 ? findSideLocation(l, i, true) : bottom,
+        right: right == 0 ? findSideLocation(l, i, false) : right,
+        left: left == 0 ? findSideLocation(l, i, false) : left,
       );
     }).toList();
   }
