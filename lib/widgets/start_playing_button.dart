@@ -15,17 +15,18 @@ class StartPlayingButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final client = Provider.of<Client>(context);
     return Positioned(
-        bottom: 30,
-        child: RaisedButton(
-          onPressed: () async {
-            client.play();
-            setHasAccepted(true);
-            client.startGameStream.stream.listen((_) async {
-              await Future.delayed(Duration(milliseconds: 50));
-              animateDistribution();
-            });
-          },
-          child: Text('start'),
-        ));
+      bottom: 30,
+      child: RaisedButton(
+        onPressed: () async {
+          client.play();
+          setHasAccepted(true);
+          client.startGameStream.stream.listen((_) async {
+            await Future.delayed(Duration(milliseconds: 50));
+            animateDistribution();
+          });
+        },
+        child: Text('start'),
+      ),
+    );
   }
 }

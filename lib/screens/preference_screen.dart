@@ -124,6 +124,8 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                   return StreamBuilder(
                       stream: client.game.cards.widowStream.stream,
                       builder: (context, snapshot) {
+                        print(
+                            'preference screen about to build stack: ${cards.widows}, ${cards.p1Cards}');
                         return Stack(
                           fit: StackFit.loose,
                           children: [

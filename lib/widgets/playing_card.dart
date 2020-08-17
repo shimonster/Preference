@@ -76,6 +76,8 @@ class PlayingCardState extends State<PlayingCard>
                   ),
                 ),
               );
+              print(
+                  '${widget.place == places.player1 && (client.game.gameState == SPMP.playing || client.game.gameState == SPMP.discarding) && (client.game.cards.turn == client.uid || client.game.bidId == client.uid)} ${widget.place}');
               return widget.place == places.player1 &&
                       (client.game.gameState == SPMP.playing ||
                           client.game.gameState == SPMP.discarding) &&

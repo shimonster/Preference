@@ -179,7 +179,7 @@ class Cards extends ChangeNotifier {
     for (var i = 0; i < rank.length; i++) {
       final idx = _cards.indexWhere((element) =>
           element.rank.index == rank[i] && element.suit.index == suit[i]);
-      print('idx of widow: $idx');
+      print('idx of cards: $idx');
       _cards[idx].place = places.values[place];
       print('new place: ${_cards[idx].place}');
     }
