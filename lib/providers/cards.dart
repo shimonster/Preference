@@ -216,7 +216,6 @@ class Cards extends ChangeNotifier {
       return PlayingCard(
         e.suit,
         e.rank,
-        e.place,
         top: top == 0 ? findSideLocation(l, i, true) : top,
         bottom: bottom == 0 ? findSideLocation(l, i, true) : bottom,
         right: right == 0 ? findSideLocation(l, i, false) : right,

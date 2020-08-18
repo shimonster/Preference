@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../helpers/card_move_extention.dart';
-import '../providers/cards.dart';
+import '../providers/cards.dart' as c;
 import '../providers/client.dart';
 import '../SPMP.dart';
 
 // ignore: must_be_immutable
 class PlayingCard extends StatefulWidget with CardMoveExtension {
-  PlayingCard(this.suit, this.rank, this.place,
+  PlayingCard(this.suit, this.rank,
       {this.top, this.bottom, this.right, this.left});
 
-  final suits suit;
-  final ranks rank;
-  final places place;
+  final c.suits suit;
+  final c.ranks rank;
   final double top;
   final double bottom;
   final double right;
@@ -30,6 +29,16 @@ class PlayingCardState extends State<PlayingCard>
   bool isInit = false;
   void Function(void Function()) setCardState;
 
+  c.Card get thisCard {
+    final card = Provider.of<Client>(context, listen: false)
+        .game
+        .cards
+        .cards
+        .firstWhere((element) =>
+            element.rank == widget.rank && element.suit == widget.suit);
+    return card;
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -39,7 +48,7 @@ class PlayingCardState extends State<PlayingCard>
   @override
   Widget build(BuildContext context) {
     print('build of a card was run: ${widget.currentTop}');
-    if (widget.place == places.widow) {
+    if (thisCard.place == c.places.widow) {
       print('widow card build was run');
     }
     final client = Provider.of<Client>(context, listen: false);
@@ -72,13 +81,13 @@ class PlayingCardState extends State<PlayingCard>
                     border: Border.all(width: 5),
                   ),
                   child: Center(
-                    child: Text('${widget.suit}   ${widget.rank}'),
+                    child: Text('${thisCard.suit}   ${thisCard.rank}'),
                   ),
                 ),
               );
               print(
-                  '${widget.place == places.player1 && (client.game.gameState == SPMP.playing || client.game.gameState == SPMP.discarding) && (client.game.cards.turn == client.uid || client.game.bidId == client.uid)} ${widget.place}');
-              return widget.place == places.player1 &&
+                  '${thisCard.place == c.places.player1 && (client.game.gameState == SPMP.playing || client.game.gameState == SPMP.discarding) && (client.game.cards.turn == client.uid || client.game.bidId == client.uid)} ${thisCard.place}');
+              return thisCard.place == c.places.player1 &&
                       (client.game.gameState == SPMP.playing ||
                           client.game.gameState == SPMP.discarding) &&
                       (client.game.cards.turn == client.uid ||

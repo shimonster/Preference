@@ -81,6 +81,13 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         ...cards.p3Cards,
         ...cards.widows
       ], (PlayingCard playingCard) async {
+        final thisCard = Provider.of<Client>(context, listen: false)
+            .game
+            .cards
+            .cards
+            .firstWhere((element) =>
+                element.rank == playingCard.rank &&
+                element.suit == playingCard.suit);
         playingCard.move(
           Duration(),
           eTop: -100,
@@ -93,14 +100,13 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
           eLeft: playingCard.left,
           eBottom: playingCard.bottom,
           sRotation: rotation.back,
-          eRotation: playingCard.place == places.player1
-              ? rotation.face
-              : rotation.back,
+          eRotation:
+              thisCard.place == places.player1 ? rotation.face : rotation.back,
           sAngle: angle.up,
-          eAngle: playingCard.place == places.player1 ||
-                  playingCard.place == places.widow
-              ? angle.up
-              : playingCard.place == places.player2 ? angle.right : angle.left,
+          eAngle:
+              thisCard.place == places.player1 || thisCard.place == places.widow
+                  ? angle.up
+                  : thisCard.place == places.player2 ? angle.right : angle.left,
           axis: Axis.vertical,
         );
         await Future.delayed(Duration(milliseconds: 100));
