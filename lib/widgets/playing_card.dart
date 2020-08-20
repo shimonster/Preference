@@ -95,6 +95,7 @@ class PlayingCardState extends State<PlayingCard>
                   ? Draggable(
                       feedback: card,
                       childWhenDragging: Container(),
+                      data: thisCard,
                       child: card,
                     )
                   : card;

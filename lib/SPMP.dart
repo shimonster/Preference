@@ -31,14 +31,15 @@ class SPMP {
   static const player1 = 0;
   static const player2 = 1;
   static const player3 = 2;
-  static const widow = 4;
-  static const disposed = 5;
-  static const center1 = 6;
-  static const center2 = 7;
-  static const center3 = 8;
-  static const trick1 = 9;
-  static const trick2 = 10;
-  static const trick3 = 11;
+  static const widow = 3;
+  static const disposed = 4;
+  static const center1 = 5;
+  static const center2 = 6;
+  static const center3 = 7;
+  static const trick1 = 8;
+  static const trick2 = 9;
+  static const trick3 = 10;
+  static const disposing = 11;
 
   // game stages
   static const bidding = 'BIDDING';

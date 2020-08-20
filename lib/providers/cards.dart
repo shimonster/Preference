@@ -40,6 +40,7 @@ enum places {
   trick1,
   trick2,
   trick3,
+  disposing,
 }
 
 class Card {
@@ -64,6 +65,7 @@ class Cards extends ChangeNotifier {
   double width = html.window.innerWidth.toDouble();
   double height = html.window.innerHeight.toDouble();
   final widowStream = StreamController.broadcast();
+  final disposeStream = StreamController.broadcast();
 
   List<Card> _cards = [];
   List<PlayingCard> p1Cards = [];
@@ -73,6 +75,86 @@ class Cards extends ChangeNotifier {
 
   List<Card> get cards {
     return [..._cards];
+  }
+
+  void move(List<int> rank, List<int> suit, int place, String method, bool isMe,
+      String uid) {
+    for (var i = 0; i < rank.length; i++) {
+      final idx = _cards.indexWhere((element) =>
+          element.rank.index == rank[i] && element.suit.index == suit[i]);
+      print('idx of cards: $idx');
+      _cards[idx].place = places.values[place];
+      print('new place: ${_cards[idx].place}');
+    }
+    if (isMe) {
+      client.sendMessage({
+        'method': method,
+        'rank': rank,
+        'suit': suit,
+        'uid': uid,
+      });
+    }
+    if (method == SPMP.collectWidow) {
+      collectWidow(place);
+    }
+    if (place == SPMP.disposing) {
+      disposingCards(rank[0], suit[0]);
+    }
+  }
+
+  void disposingCards(int rank, int suit) {
+    // TODO: position cards better
+    final crdIdx = p1Cards.indexWhere(
+        (element) => element.rank.index == rank && element.suit.index == suit);
+    p1Cards[crdIdx].move(
+      Duration(milliseconds: 100),
+      eBottom: height / 2,
+      eRight: (width / 2) -
+          (100 *
+              _cards
+                  .where((element) => element.place == places.disposing)
+                  .length),
+    );
+    disposeStream.add('disposing');
+  }
+
+  void disposeCards() {
+    final place = client.game.players.keys.toList().indexOf(client.game.bidId);
+    final isP1 = place == 0;
+    final isP2 = place == 1;
+    for (var i = 0; i < 2; i++) {
+      (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)
+          .where((element) => cards
+              .where((element) => element.place == places.disposing)
+              .toList()
+              .any((e) => e.rank == element.rank && e.suit == element.suit))
+          .toList()[i]
+          .move(
+            Duration(milliseconds: 100),
+            eLeft: -200,
+            eTop: -200,
+          );
+    }
+    (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).removeWhere((element) => cards
+        .where((element) => element.place == places.disposing)
+        .toList()
+        .any((e) => e.rank == element.rank && e.suit == element.suit));
+    final newCards = _getLocationCards(
+        places.values[place],
+        place == 0 ? 30 : null,
+        place == 0 ? null : 0,
+        place == 0 ? 0 : place == 1 ? null : 30,
+        place == 1 ? 30 : null);
+    for (var i = 0; i < 10; i++) {
+      (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
+        Duration(milliseconds: 200),
+        eRight: newCards[i].right,
+        eLeft: newCards[i].left,
+        eTop: newCards[i].top,
+        eBottom: newCards[i].bottom,
+      );
+    }
+    disposeStream.add('diposed');
   }
 
   void setCards(List<Card> newCards) {
@@ -123,76 +205,27 @@ class Cards extends ChangeNotifier {
         place == 0 ? 0 : place == 1 ? null : 30,
         place == 1 ? 30 : null);
     print('length of new cards: ${newCards.length}');
+    final isP1 = place == 0;
+    final isP2 = place == 1;
+    (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).addAll(widows);
+    widows = [];
+    widowStream.add('collected widow');
     if (place == 0) {
-      p1Cards.addAll(widows);
-      widows = [];
       p1Cards = sortCards(p1Cards);
-      print(p1Cards);
-      widowStream.add('collected widow');
-      for (var i = 0; i < 12; i++) {
-        p1Cards[i].moveAndTwist(
-          Duration(milliseconds: 200),
-          eRight: newCards[i].right,
-          eLeft: newCards[i].left,
-          eTop: newCards[i].top,
-          eBottom: newCards[i].bottom,
-          axis: Axis.vertical,
-          sRotation: rotation.back,
-          eRotation: rotation.face,
-        );
-      }
-    } else if (place == 1) {
-      p2Cards.addAll(widows);
-      widows = [];
-      widowStream.add('collected widow');
-      for (var i = 0; i < 12; i++) {
-        p2Cards[i].moveAndTwist(
-          Duration(milliseconds: 200),
-          eRight: newCards[i].right,
-          eLeft: newCards[i].left,
-          eTop: newCards[i].top,
-          eBottom: newCards[i].bottom,
-          sAngle: i < 10 ? null : angle.up,
-          eAngle: i < 10 ? null : angle.right,
-        );
-      }
-    } else {
-      p3Cards.addAll(widows);
-      widows = [];
-      widowStream.add('collected widow');
-      for (var i = 0; i < 12; i++) {
-        p3Cards[i].moveAndTwist(
-          Duration(milliseconds: 200),
-          eRight: newCards[i].right,
-          eLeft: newCards[i].left,
-          eTop: newCards[i].top,
-          eBottom: newCards[i].bottom,
-          sAngle: angle.up,
-          eAngle: angle.left,
-        );
-      }
     }
-  }
-
-  void move(List<int> rank, List<int> suit, int place, String method, bool isMe,
-      String uid) {
-    for (var i = 0; i < rank.length; i++) {
-      final idx = _cards.indexWhere((element) =>
-          element.rank.index == rank[i] && element.suit.index == suit[i]);
-      print('idx of cards: $idx');
-      _cards[idx].place = places.values[place];
-      print('new place: ${_cards[idx].place}');
-    }
-    if (isMe) {
-      client.sendMessage({
-        'method': method,
-        'rank': rank,
-        'suit': suit,
-        'uid': uid,
-      });
-    }
-    if (method == SPMP.collectWidow) {
-      collectWidow(place);
+    for (var i = 0; i < 12; i++) {
+      (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].moveAndTwist(
+        Duration(milliseconds: 200),
+        eRight: newCards[i].right,
+        eLeft: newCards[i].left,
+        eTop: newCards[i].top,
+        eBottom: newCards[i].bottom,
+        axis: isP1 ? i >= 10 ? Axis.vertical : null : null,
+        sRotation: isP1 ? rotation.back : null,
+        eRotation: isP1 ? rotation.face : null,
+        sAngle: i >= 10 && !isP1 ? angle.up : null,
+        eAngle: i >= 10 && !isP1 ? isP2 ? angle.right : angle.left : null,
+      );
     }
   }
 
