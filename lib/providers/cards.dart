@@ -64,7 +64,7 @@ class Cards extends ChangeNotifier {
   int dealer;
   double width = html.window.innerWidth.toDouble();
   double height = html.window.innerHeight.toDouble();
-  final widowStream = StreamController.broadcast();
+  final cardStream = StreamController.broadcast();
   final disposeStream = StreamController.broadcast();
 
   List<Card> _cards = [];
@@ -79,6 +79,9 @@ class Cards extends ChangeNotifier {
 
   void move(List<int> rank, List<int> suit, int place, String method, bool isMe,
       String uid) {
+    if (place == SPMP.disposed) {
+      disposeCards(isMe ? null : rank, isMe ? null : suit);
+    }
     for (var i = 0; i < rank.length; i++) {
       final idx = _cards.indexWhere((element) =>
           element.rank.index == rank[i] && element.suit.index == suit[i]);
@@ -100,6 +103,9 @@ class Cards extends ChangeNotifier {
     if (place == SPMP.disposing) {
       disposingCards(rank[0], suit[0]);
     }
+    if (place == SPMP.disposed) {
+      moveDisposed();
+    }
   }
 
   void disposingCards(int rank, int suit) {
@@ -118,27 +124,57 @@ class Cards extends ChangeNotifier {
     disposeStream.add('disposing');
   }
 
-  void disposeCards() {
+  void disposeCards([List<int> rank, List<int> suit]) {
+    print('disposed cards was run');
+    List<Card> disposing = [];
+    final place = client.game.players.keys.toList().indexOf(client.game.bidId);
+    print(place);
+    final isP1 = place == 0;
+    final isP2 = place == 1;
+    print(_cards.map((e) => e.place).toList());
+    if (rank == null) {
+      disposing = _cards.where((e) => e.place == places.disposing).toList();
+    }
+    for (var i = 0; i < 2; i++) {
+      print('loop was run');
+      (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)
+          .firstWhere((element) {
+            if (rank == null) {
+              print(disposing.length);
+              return disposing
+                  .any((e) => e.rank == element.rank && e.suit == element.suit);
+            } else {
+              disposing.add(cards.firstWhere(
+                  (e) => e.rank.index == rank[i] && e.suit.index == suit[i]));
+              return element.rank.index == rank[i] &&
+                  element.suit.index == suit[i];
+            }
+          })
+          .move(
+            Duration(milliseconds: 100),
+            eBottom: isP1 ? -200 : null,
+            eTop: isP1 ? null : -200,
+            eRight: isP2 ? null : -200,
+            eLeft: isP2 ? -200 : null,
+          )
+          .then((value) => cardStream.add('after disposal'));
+    }
+    print(disposing);
+    if (rank == null) {
+      p1Cards.removeWhere((element) => disposing
+          .any((e) => e.rank == element.rank && e.suit == element.suit));
+    } else {
+      for (var i = 0; i < 2; i++) {
+        (isP2 ? p2Cards : p3Cards).removeWhere((element) =>
+            element.rank.index == rank[i] && element.suit.index == suit[i]);
+      }
+    }
+  }
+
+  void moveDisposed() {
     final place = client.game.players.keys.toList().indexOf(client.game.bidId);
     final isP1 = place == 0;
     final isP2 = place == 1;
-    for (var i = 0; i < 2; i++) {
-      (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)
-          .where((element) => cards
-              .where((element) => element.place == places.disposing)
-              .toList()
-              .any((e) => e.rank == element.rank && e.suit == element.suit))
-          .toList()[i]
-          .move(
-            Duration(milliseconds: 100),
-            eLeft: -200,
-            eTop: -200,
-          );
-    }
-    (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).removeWhere((element) => cards
-        .where((element) => element.place == places.disposing)
-        .toList()
-        .any((e) => e.rank == element.rank && e.suit == element.suit));
     final newCards = _getLocationCards(
         places.values[place],
         place == 0 ? 30 : null,
@@ -154,6 +190,7 @@ class Cards extends ChangeNotifier {
         eBottom: newCards[i].bottom,
       );
     }
+    client.game.gameState = SPMP.declaring;
     disposeStream.add('diposed');
   }
 
@@ -209,7 +246,7 @@ class Cards extends ChangeNotifier {
     final isP2 = place == 1;
     (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).addAll(widows);
     widows = [];
-    widowStream.add('collected widow');
+    cardStream.add('collected widow');
     if (place == 0) {
       p1Cards = sortCards(p1Cards);
     }

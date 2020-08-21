@@ -45,15 +45,15 @@ class _BiddingButtonsState extends State<BiddingButtons> {
                           child: RaisedButton(
                             child: Text('${suits[index]} ${i + 1}'),
                             onPressed: client.game.bid != null
-                                ? client.game.bid['suit'] <= i
-                                    ? client.game.bid['suit'] <= i
-                                        ? () {
-                                            print('a bid button was pressed');
-                                            print('client uid: ${client.uid}');
-                                            client.game
-                                                .placeBid(index, i, client.uid);
-                                          }
-                                        : null
+                                ? client.game.bid['suit'] <= i &&
+                                        (client.game.bid['suit'] > i ||
+                                            client.game.bid['rank'] <= index)
+                                    ? () {
+                                        print('a bid button was pressed');
+                                        print('client uid: ${client.uid}');
+                                        client.game
+                                            .placeBid(index, i, client.uid);
+                                      }
                                     : null
                                 : () {
                                     print('a bid button was pressed');

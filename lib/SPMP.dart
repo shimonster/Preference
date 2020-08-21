@@ -44,6 +44,7 @@ class SPMP {
   // game stages
   static const bidding = 'BIDDING';
   static const discarding = 'DISCARDING';
+  static const declaring = 'DECLARING';
   static const playing = 'PLAYING';
   static const showingScore = 'SHOWINGSCORE';
   static const notStarted = 'NOTSTARTED';

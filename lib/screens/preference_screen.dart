@@ -55,7 +55,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         Provider.of<Client>(context, listen: false)
             .game
             .cards
-            .widowStream
+            .cardStream
             .close();
         print('event: ${event.type}');
         Navigator.of(context).pushReplacementNamed('/');
@@ -131,104 +131,101 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                 builder: (context, snapshot) {
                   print(client.game.gameState);
                   return StreamBuilder(
-                      stream: client.game.cards.widowStream.stream,
-                      builder: (context, snapshot) {
-                        print(
-                            'preference screen about to build stack: ${cards.widows}, ${cards.p1Cards}');
-                        return StreamBuilder(
-                            stream: client.game.cards.disposeStream.stream,
-                            builder: (context, snapshot) {
-                              return Stack(
-                                fit: StackFit.loose,
-                                children: [
-                                  if (client.game.bidId == client.uid &&
-                                      client.game.gameState == SPMP.discarding)
-                                    DisposeTarget(),
-                                  if (client.game.isPlaying) ...cards.p2Cards,
-                                  if (client.game.isPlaying) ...cards.p1Cards,
-                                  if (client.game.isPlaying) ...cards.p3Cards,
-                                  if (client.game.isPlaying) ...cards.widows,
-                                  if (client.game.bidId == client.uid &&
-                                      client.game.gameState ==
-                                          SPMP.discarding &&
-                                      client.game.bidId == client.uid &&
-                                      client.game.gameState == SPMP.discarding)
-                                    RaisedButton(
-                                      child: Text('Dispose'),
-                                      onPressed: client.game.cards.cards
-                                                  .where((element) =>
-                                                      element.place ==
-                                                      c.places.disposing)
-                                                  .length ==
-                                              2
-                                          ? () {
-                                              cards.move(
-                                                  cards.cards
-                                                      .where((e) =>
-                                                          e.place ==
-                                                          c.places.disposing)
-                                                      .toList()
-                                                      .map((e) => e.rank.index)
-                                                      .toList(),
-                                                  cards.cards
-                                                      .where((e) =>
-                                                          e.place ==
-                                                          c.places.disposing)
-                                                      .toList()
-                                                      .map((e) => e.suit.index)
-                                                      .toList(),
-                                                  SPMP.disposed,
-                                                  SPMP.dispose,
-                                                  true,
-                                                  client.uid);
-                                            }
-                                          : null,
-                                    ),
-                                  if (client.game.gameState == SPMP.bidding)
-                                    StreamBuilder(
-                                      stream: client.bidStream.stream,
-                                      builder: (ctx, snap) {
-                                        return client.game.biddingId ==
-                                                    client.uid &&
-                                                client.game.gameState ==
-                                                    SPMP.bidding
-                                            ? Positioned(
-                                                bottom: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    0.2,
-                                                right: MediaQuery.of(context)
-                                                            .size
-                                                            .width *
-                                                        0.5 -
-                                                    50,
-                                                child: BiddingButtons(),
-                                              )
-                                            : Container();
-                                      },
-                                    ),
-                                  if (_hasAccepted && !client.game.isPlaying)
-                                    Center(
-                                      child: Text(
-                                        'Get Ready!',
-                                        style: TextStyle(
-                                          fontSize: 30,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  if (client.game.isPlaying)
-                                    Center(
-                                      child: Text(client.uid),
-                                    ),
-                                  if (!_hasAccepted)
-                                    StartPlayingButton(
-                                        setHasAccepted, animateDistribute),
-                                ],
-                              );
-                            });
-                      });
-                }),
+                    stream: client.game.cards.cardStream.stream,
+                    builder: (context, snapshot) {
+                      print(
+                          'preference screen about to build stack: ${cards.widows}, ${cards.p1Cards}');
+                      return Stack(
+                        fit: StackFit.loose,
+                        children: [
+                          if (client.game.bidId == client.uid &&
+                              client.game.gameState == SPMP.discarding)
+                            DisposeTarget(),
+                          if (client.game.isPlaying) ...cards.p2Cards,
+                          if (client.game.isPlaying) ...cards.p1Cards,
+                          if (client.game.isPlaying) ...cards.p3Cards,
+                          if (client.game.isPlaying) ...cards.widows,
+                          if (client.game.bidId == client.uid)
+                            StreamBuilder(
+                              stream: client.game.cards.disposeStream.stream,
+                              builder: (context, snapshot) {
+                                return client.game.gameState == SPMP.discarding
+                                    ? RaisedButton(
+                                        child: Text('Dispose'),
+                                        onPressed: client.game.cards.cards
+                                                    .where((element) =>
+                                                        element.place ==
+                                                        c.places.disposing)
+                                                    .length ==
+                                                2
+                                            ? () {
+                                                client.game.cards.move(
+                                                    cards.cards
+                                                        .where((element) =>
+                                                            element.place ==
+                                                            c.places.disposing)
+                                                        .map(
+                                                            (e) => e.rank.index)
+                                                        .toList(),
+                                                    cards.cards
+                                                        .where((element) =>
+                                                            element.place ==
+                                                            c.places.disposing)
+                                                        .map(
+                                                            (e) => e.suit.index)
+                                                        .toList(),
+                                                    SPMP.disposed,
+                                                    SPMP.dispose,
+                                                    true,
+                                                    client.uid);
+                                              }
+                                            : null,
+                                      )
+                                    : Container();
+                              },
+                            ),
+                          if (client.game.gameState == SPMP.bidding)
+                            StreamBuilder(
+                              stream: client.bidStream.stream,
+                              builder: (ctx, snap) {
+                                return client.game.biddingId == client.uid &&
+                                        client.game.gameState == SPMP.bidding
+                                    ? Positioned(
+                                        bottom:
+                                            MediaQuery.of(context).size.height *
+                                                0.2,
+                                        right:
+                                            MediaQuery.of(context).size.width *
+                                                    0.5 -
+                                                50,
+                                        child: BiddingButtons(),
+                                      )
+                                    : Container();
+                              },
+                            ),
+                          if (_hasAccepted && !client.game.isPlaying)
+                            Center(
+                              child: Text(
+                                'Get Ready!',
+                                style: TextStyle(
+                                  fontSize: 30,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          if (client.game.isPlaying)
+                            Center(
+                              child: Text(client.uid),
+                            ),
+                          if (!_hasAccepted)
+                            StartPlayingButton(
+                                setHasAccepted, animateDistribute),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
       floatingActionButton: GameInfo(),

@@ -71,7 +71,6 @@ class Client extends ChangeNotifier {
         }
         // collect-widow collect-widow collect-widow collect-widow collect-widow
         if (event['method'] == SPMP.collectWidow) {
-          game.gameState = SPMP.discarding;
           final widow = game.cards.cards
               .where((element) => element.place == places.widow)
               .toList();

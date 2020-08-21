@@ -128,6 +128,7 @@ class Server {
     print('about to send server message: $message');
     clientSockets.forEach((key, value) {
       if (message['method'] == SPMP.startPlaying) {
+        // if we are starting playing
         Map<String, Map<String, dynamic>> newPlayers = {
           ...gameController.players
         };
@@ -147,6 +148,7 @@ class Server {
         cardsController.players = newPlayers;
         value.add(json.encode({...message, 'players': newPlayers}));
       }
+      // otherwise just send message
       if (key != exclude && message['method'] != SPMP.startPlaying) {
         value.add(json.encode(message));
       }
