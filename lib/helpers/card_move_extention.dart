@@ -97,7 +97,7 @@ class CardMoveExtension {
 
   Future<void> move(Duration duration,
       {double eBottom, double eTop, double eRight, double eLeft}) async {
-    print('move card was run');
+    print('move card was run: $isFace');
     moveDuration = duration;
     currentTop = eTop;
     currentBottom = eBottom;

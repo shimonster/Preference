@@ -152,10 +152,10 @@ class Cards extends ChangeNotifier {
           })
           .move(
             Duration(milliseconds: 100),
-            eBottom: isP1 ? -200 : null,
-            eTop: isP1 ? null : -200,
-            eRight: isP2 ? null : -200,
-            eLeft: isP2 ? -200 : null,
+            eBottom: isP1 ? 200 : null,
+            eTop: isP1 ? null : 200,
+            eRight: isP2 ? null : 200,
+            eLeft: isP2 ? 200 : null,
           )
           .then((value) => cardStream.add('after disposal'));
     }
@@ -175,6 +175,7 @@ class Cards extends ChangeNotifier {
     final place = client.game.players.keys.toList().indexOf(client.game.bidId);
     final isP1 = place == 0;
     final isP2 = place == 1;
+    print((isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).length);
     final newCards = _getLocationCards(
         places.values[place],
         place == 0 ? 30 : null,
@@ -191,7 +192,7 @@ class Cards extends ChangeNotifier {
       );
     }
     client.game.gameState = SPMP.declaring;
-    disposeStream.add('diposed');
+    cardStream.add('diposed');
   }
 
   void setCards(List<Card> newCards) {
