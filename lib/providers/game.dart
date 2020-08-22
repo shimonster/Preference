@@ -38,7 +38,7 @@ class Game extends ChangeNotifier {
     await prefs.setInt('currentGame', gId);
     await prefs.setInt('currentPlayer', 0);
     gameId = gId;
-    cards = c.Cards(gameId: gameId, client: client);
+    cards = c.Cards(client: client);
     notifyListeners();
   }
 

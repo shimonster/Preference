@@ -12,6 +12,8 @@ class PlaceTarget extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(),
       ),
+      height: 100,
+      width: 100,
       child: DragTarget<c.Card>(
         builder: (ctx, _, __) {
           print(_);
