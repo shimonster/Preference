@@ -70,6 +70,17 @@ class GameManagement {
     }
   }
 
+  void declareGame(int rank, int suit) {
+    bid = {'rank': rank, 'suit': suit};
+    gameState = SPMP.playing;
+    cardsController.turn = bidId;
+    sendMessage({
+      'method': SPMP.declare,
+      'rank': rank,
+      'suit': suit,
+    });
+  }
+
   bool acceptPlay(String uid) {
     players[uid]['isPlaying'] = true;
     if (players.values.every((element) => element['isPlaying'])) {

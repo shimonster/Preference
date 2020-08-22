@@ -87,6 +87,21 @@ class Game extends ChangeNotifier {
     client.bidStream.add('player bid');
   }
 
+  void declareGame(int rank, int suit, bool isMe) {
+    bid = {'rank': rank, 'suit': suit};
+    gameState = SPMP.playing;
+    cards.cardStream.add('declared');
+    print('after add to card stream');
+    cards.turn = bidId;
+    if (isMe) {
+      client.sendMessage({
+        'method': SPMP.declare,
+        'rank': rank,
+        'suit': suit,
+      });
+    }
+  }
+
   Future<void> leaveGame() async {
     client.sendMessage({'method': SPMP.playerLeave, 'uid': client.uid});
     final prefs = await SharedPreferences.getInstance();

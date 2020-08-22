@@ -42,7 +42,9 @@ class PlayingCardState extends State<PlayingCard>
   @override
   void dispose() {
     super.dispose();
+    print('card dispose');
     widget.positionStream.close();
+    widget.rotationStream.close();
   }
 
   @override
@@ -56,9 +58,9 @@ class PlayingCardState extends State<PlayingCard>
       stream: widget.positionStream.stream,
       builder: (context, snapshot) {
         print('position builder was run');
-        return AnimatedPositioned(
-          duration: Duration(seconds: 1),
-          curve: Curves.easeInOut,
+        return Positioned(
+//          duration: Duration(seconds: 1),
+//          curve: Curves.easeInOut,
           top: widget.currentTop,
           bottom: widget.currentBottom,
           right: widget.currentRight,
@@ -81,7 +83,8 @@ class PlayingCardState extends State<PlayingCard>
                     border: Border.all(width: 5),
                   ),
                   child: Center(
-                    child: Text('${thisCard.suit}   ${thisCard.rank}'),
+                    child: Text(
+                        '${thisCard.suit}   ${thisCard.rank}    ${thisCard.place}'),
                   ),
                 ),
               );

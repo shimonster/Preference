@@ -11,11 +11,10 @@ import '../SPMP.dart';
 import '../providers/client.dart';
 import '../widgets/game_info.dart';
 import '../widgets/start_playing_button.dart';
-import '../providers/cards.dart' as c;
-import '../widgets/playing_card.dart';
-import '../helpers/card_move_extention.dart';
 import '../widgets/dispose_target.dart';
-import '../SPMP.dart';
+import '../widgets/dispose_button.dart';
+import '../widgets/select_button.dart';
+import '../widgets/place_target.dart';
 
 class PreferenceScreen extends StatefulWidget {
   static const routeName = '/preference';
@@ -76,46 +75,6 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
     final client = Provider.of<Client>(context, listen: false);
     final cards = client.game.cards;
 
-    Future<void> animateDistribute() async {
-      await Future.forEach([
-        ...cards.p2Cards,
-        ...cards.p1Cards,
-        ...cards.p3Cards,
-        ...cards.widows
-      ], (PlayingCard playingCard) async {
-        final thisCard = Provider.of<Client>(context, listen: false)
-            .game
-            .cards
-            .cards
-            .firstWhere((element) =>
-                element.rank == playingCard.rank &&
-                element.suit == playingCard.suit);
-        playingCard.move(
-          Duration(),
-          eTop: -100,
-          eRight: MediaQuery.of(context).size.width / 2,
-        );
-        playingCard.moveAndTwist(
-          Duration(milliseconds: 1000),
-          eTop: playingCard.top,
-          eRight: playingCard.right,
-          eLeft: playingCard.left,
-          eBottom: playingCard.bottom,
-          sRotation: rotation.back,
-          eRotation: thisCard.place == c.places.player1
-              ? rotation.face
-              : rotation.back,
-          sAngle: angle.up,
-          eAngle: thisCard.place == c.places.player1 ||
-                  thisCard.place == c.places.widow
-              ? angle.up
-              : thisCard.place == c.places.player2 ? angle.right : angle.left,
-          axis: Axis.vertical,
-        );
-        await Future.delayed(Duration(milliseconds: 100));
-      });
-    }
-
     return Scaffold(
       backgroundColor: Color.fromRGBO(28, 91, 11, 1),
       body: Container(
@@ -138,71 +97,43 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                       return Stack(
                         fit: StackFit.loose,
                         children: [
-                          if (client.game.bidId == client.uid &&
-                              client.game.gameState == SPMP.discarding)
-                            DisposeTarget(),
+                          // cards
                           if (client.game.isPlaying) ...cards.p2Cards,
                           if (client.game.isPlaying) ...cards.p1Cards,
                           if (client.game.isPlaying) ...cards.p3Cards,
                           if (client.game.isPlaying) ...cards.widows,
-                          if (client.game.bidId == client.uid)
-                            StreamBuilder(
-                              stream: client.game.cards.disposeStream.stream,
-                              builder: (context, snapshot) {
-                                return client.game.gameState == SPMP.discarding
-                                    ? RaisedButton(
-                                        child: Text('Dispose'),
-                                        onPressed: client.game.cards.cards
-                                                    .where((element) =>
-                                                        element.place ==
-                                                        c.places.disposing)
-                                                    .length ==
-                                                2
-                                            ? () {
-                                                client.game.cards.move(
-                                                    cards.cards
-                                                        .where((element) =>
-                                                            element.place ==
-                                                            c.places.disposing)
-                                                        .map(
-                                                            (e) => e.rank.index)
-                                                        .toList(),
-                                                    cards.cards
-                                                        .where((element) =>
-                                                            element.place ==
-                                                            c.places.disposing)
-                                                        .map(
-                                                            (e) => e.suit.index)
-                                                        .toList(),
-                                                    SPMP.disposed,
-                                                    SPMP.dispose,
-                                                    true,
-                                                    client.uid);
-                                              }
-                                            : null,
-                                      )
-                                    : Container();
-                              },
-                            ),
+                          // other stuff
+                          if (client.game.bidId == client.uid &&
+                              client.game.gameState == SPMP.discarding)
+                            DisposeTarget(),
+                          // ---------------------------------
+                          if (client.game.bidId == client.uid &&
+                              client.game.gameState == SPMP.declaring)
+                            SelectButton(
+                                (int i, int index) =>
+                                    client.game.declareGame(i, index, true),
+                                (int i, int index) =>
+                                    client.game.bid['suit'] <= i ||
+                                    client.game.bid['suit'] > i ||
+                                    client.game.bid['rank'] <= index),
+                          // ---------------------------------
+                          if (client.game.bidId == client.uid) DisposeButton(),
+                          // ---------------------------------
+                          if (client.game.gameState == SPMP.playing)
+                            if (client.game.cards.turn == client.uid)
+                              Text('my turn!')
+                            else
+                              Text(client.game.cards.turn),
+                          if (client.game.gameState == SPMP.playing &&
+                              client.game.cards.turn == client.uid)
+                            PlaceTarget(),
+                          // ---------------------------------
                           if (client.game.gameState == SPMP.bidding)
-                            StreamBuilder(
-                              stream: client.bidStream.stream,
-                              builder: (ctx, snap) {
-                                return client.game.biddingId == client.uid &&
-                                        client.game.gameState == SPMP.bidding
-                                    ? Positioned(
-                                        bottom:
-                                            MediaQuery.of(context).size.height *
-                                                0.2,
-                                        right:
-                                            MediaQuery.of(context).size.width *
-                                                    0.5 -
-                                                50,
-                                        child: BiddingButtons(),
-                                      )
-                                    : Container();
-                              },
-                            ),
+                            BiddingButtons(),
+                          // ---------------------------------
+                          if (!_hasAccepted)
+                            StartPlayingButton(setHasAccepted, context),
+                          // ---------------------------------
                           if (_hasAccepted && !client.game.isPlaying)
                             Center(
                               child: Text(
@@ -213,13 +144,11 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                                 ),
                               ),
                             ),
+                          // ---------------------------------
                           if (client.game.isPlaying)
                             Center(
                               child: Text(client.uid),
                             ),
-                          if (!_hasAccepted)
-                            StartPlayingButton(
-                                setHasAccepted, animateDistribute),
                         ],
                       );
                     },

@@ -47,6 +47,10 @@ class Client extends ChangeNotifier {
           game.placeBid(
               event['rank'], event['suit'], event['uid'], event['turn']);
         }
+        // declare declare declare declare declare declare declare
+        if (event['method'] == SPMP.declare) {
+          game.declareGame(event['rank'], event['suit'], false);
+        }
         // place place place place place place place place place place place
         if (event['method'] == SPMP.place) {
           game.cards.turn = event['turn'];
@@ -60,6 +64,7 @@ class Client extends ChangeNotifier {
         }
         // dispose dispose dispose dispose dispose dispose dispose dispose
         if (event['method'] == SPMP.dispose) {
+          game.gameState = SPMP.declaring;
           print(List<int>.from(event['suit']).runtimeType);
           game.cards.move(
               List<int>.from(event['rank']),
@@ -71,6 +76,7 @@ class Client extends ChangeNotifier {
         }
         // collect-widow collect-widow collect-widow collect-widow collect-widow
         if (event['method'] == SPMP.collectWidow) {
+          game.gameState = SPMP.discarding;
           final widow = game.cards.cards
               .where((element) => element.place == places.widow)
               .toList();
@@ -103,7 +109,7 @@ class Client extends ChangeNotifier {
         }
         // finish-bidding finish-bidding finish-bidding finish-bidding finish-bidding
         if (event['method'] == SPMP.finishBidding) {
-          game.gameState = SPMP.playing;
+          game.gameState = SPMP.declaring;
         }
         // player-leave/player-join player-leave/player-join player-leave/player-join
         if (event['method'] == SPMP.playerJoin ||
@@ -125,6 +131,7 @@ class Client extends ChangeNotifier {
       },
       onDone: () {
         sendMessage({'method': SPMP.playerLeave, 'uid': uid});
+        print('client done');
         socketStreamController.close();
         bidStream.close();
         game.cards.disposeStream.close();

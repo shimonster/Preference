@@ -4,6 +4,7 @@ class SPMP {
   static const pass = 'PASS';
   static const place = 'PLACE';
   static const dispose = 'DISPOSE';
+  static const declare = 'DECLARE';
   static const collectWidow = 'COLLECTWIDOW';
   static const acceptPlay = 'ACCEPTPLAY';
   static const startPlaying = 'STARTPLAYING';

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../widgets/playing_card.dart';
+import '../providers/cards.dart';
 
 enum rotation {
   face,
@@ -121,5 +122,37 @@ class CardMoveExtension {
     move(duration, eTop: eTop, eBottom: eBottom, eRight: eRight, eLeft: eLeft);
     rotate(sRotation, eRotation, sAngle, eAngle, duration, axis);
     await Future.delayed(duration);
+  }
+
+  static Future<void> animateDistribute(
+      Cards cards, BuildContext context) async {
+    await Future.forEach(
+        [...cards.p2Cards, ...cards.p1Cards, ...cards.p3Cards, ...cards.widows],
+        (PlayingCard playingCard) async {
+      final thisCard = cards.cards.firstWhere((element) =>
+          element.rank == playingCard.rank && element.suit == playingCard.suit);
+      playingCard.move(
+        Duration(),
+        eTop: -100,
+        eRight: MediaQuery.of(context).size.width / 2,
+      );
+      playingCard.moveAndTwist(
+        Duration(milliseconds: 1000),
+        eTop: playingCard.top,
+        eRight: playingCard.right,
+        eLeft: playingCard.left,
+        eBottom: playingCard.bottom,
+        sRotation: rotation.back,
+        eRotation:
+            thisCard.place == places.player1 ? rotation.face : rotation.back,
+        sAngle: angle.up,
+        eAngle:
+            thisCard.place == places.player1 || thisCard.place == places.widow
+                ? angle.up
+                : thisCard.place == places.player2 ? angle.right : angle.left,
+        axis: Axis.vertical,
+      );
+      await Future.delayed(Duration(milliseconds: 100));
+    });
   }
 }

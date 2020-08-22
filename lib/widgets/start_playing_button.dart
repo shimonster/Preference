@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/client.dart';
+import '../helpers/card_move_extention.dart';
 
 class StartPlayingButton extends StatelessWidget {
-  const StartPlayingButton(this.setHasAccepted, this.animateDistribution);
+  const StartPlayingButton(this.setHasAccepted, this.ctx);
 
   final void Function(bool) setHasAccepted;
-  final Future<void> Function() animateDistribution;
+  final BuildContext ctx;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,7 @@ class StartPlayingButton extends StatelessWidget {
           setHasAccepted(true);
           client.startGameStream.stream.listen((_) async {
             await Future.delayed(Duration(milliseconds: 50));
-            animateDistribution();
+            CardMoveExtension.animateDistribute(client.game.cards, ctx);
           });
         },
         child: Text('start'),

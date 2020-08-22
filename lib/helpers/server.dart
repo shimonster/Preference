@@ -55,6 +55,11 @@ class Server {
                         gameController.placeBid(
                             event['rank'], event['suit'], event['uid']);
                       }
+                      // declare declare declare declare declare declare declare
+                      if (event['method'] == SPMP.declare) {
+                        gameController.declareGame(
+                            event['rank'], event['suit']);
+                      }
                       // place place place place place place place place place
                       if (event['method'] == SPMP.place) {
                         cardsController.move(

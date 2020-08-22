@@ -52,16 +52,14 @@ class Card {
 }
 
 class Cards extends ChangeNotifier {
-  Cards({this.gameId, this.client}) {
+  Cards({this.client}) {
     print('created new cards');
+    disposeStream.done.then((value) => print('dispose stream done'));
   }
 
-  String token;
-  String uid;
   String turn;
   final Client client;
-  final int gameId;
-  int dealer;
+//  int dealer;
   double width = html.window.innerWidth.toDouble();
   double height = html.window.innerHeight.toDouble();
   final cardStream = StreamController.broadcast();
@@ -77,10 +75,10 @@ class Cards extends ChangeNotifier {
     return [..._cards];
   }
 
-  void move(List<int> rank, List<int> suit, int place, String method, bool isMe,
-      String uid) {
+  void move(List<int> rank, List<int> suit, int place, String method,
+      bool shouldSend, String uid) {
     if (place == SPMP.disposed) {
-      disposeCards(isMe ? null : rank, isMe ? null : suit);
+      disposeCards(shouldSend ? null : rank, shouldSend ? null : suit);
     }
     for (var i = 0; i < rank.length; i++) {
       final idx = _cards.indexWhere((element) =>
@@ -89,7 +87,7 @@ class Cards extends ChangeNotifier {
       _cards[idx].place = places.values[place];
       print('new place: ${_cards[idx].place}');
     }
-    if (isMe) {
+    if (shouldSend) {
       client.sendMessage({
         'method': method,
         'rank': rank,
@@ -108,6 +106,11 @@ class Cards extends ChangeNotifier {
     }
   }
 
+  void placeCard(int rank, int suit) {
+    move([rank], [suit], client.game.players.keys.toList().indexOf(turn),
+        SPMP.place, turn == client.uid, client.uid);
+  }
+
   void disposingCards(int rank, int suit) {
     // TODO: position cards better
     final crdIdx = p1Cards.indexWhere(
@@ -122,6 +125,7 @@ class Cards extends ChangeNotifier {
                   .length),
     );
     disposeStream.add('disposing');
+    print('after dispose add');
   }
 
   void disposeCards([List<int> rank, List<int> suit]) {
@@ -205,10 +209,7 @@ class Cards extends ChangeNotifier {
 
   List<T> sortCards<T>(List crds) {
     List<T> sortedCards = [];
-    crds.sort((a, b) =>
-        int.parse(a.suit.toString()[10]) > int.parse(b.suit.toString()[10])
-            ? -1
-            : 1);
+    crds.sort((a, b) => a.suit.index > b.suit.index ? -1 : 1);
     for (var i = 0; i < 4; i++) {
       final List<T> list = crds
           .where((element) => element.suit == suits.values[i])
