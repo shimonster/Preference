@@ -34,16 +34,16 @@ class _BiddingButtonsState extends State<BiddingButtons> {
                     SizedBox(
                       width: 10,
                     ),
-                    SelectButton((int i, int index) {
+                    SelectButton((int suit, int rank) {
                       print('a bid button was pressed');
                       print('client uid: ${client.uid}');
-                      client.game.placeBid(index, i, client.uid);
+                      client.game.placeBid(rank, suit, client.uid);
                     },
-                        (int i, int index) =>
+                        (int suit, int rank) =>
                             client.game.bid == null ||
-                            (client.game.bid['suit'] <= i &&
-                                (client.game.bid['suit'] > i ||
-                                    client.game.bid['rank'] < index))),
+                            !((client.game.bid['suit'] > suit &&
+                                    client.game.bid['rank'] >= rank) ||
+                                client.game.bid['rank'] > rank)),
                   ],
                 ),
               )

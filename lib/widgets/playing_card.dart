@@ -26,8 +26,6 @@ class PlayingCardState extends State<PlayingCard>
     with SingleTickerProviderStateMixin {
   double multiplySizeWidth = 0.06;
   double multiplySizeHeight = 0.06 * 23 / 16;
-  bool isInit = false;
-  void Function(void Function()) setCardState;
 
   c.Card get thisCard {
     final card = Provider.of<Client>(context, listen: false)
@@ -88,13 +86,16 @@ class PlayingCardState extends State<PlayingCard>
                   ),
                 ),
               );
-              print(
-                  '${thisCard.place == c.places.player1 && (client.game.gameState == SPMP.playing || client.game.gameState == SPMP.discarding) && (client.game.cards.turn == client.uid || client.game.bidId == client.uid)} ${thisCard.place}');
+              print('${thisCard.place == c.places.player1} &&'
+                  '(${client.game.gameState == SPMP.playing} &&'
+                  '${client.game.cards.turn == client.uid}) &&'
+                  '(${client.game.gameState == SPMP.discarding} &&'
+                  '${client.game.bidId == client.uid}) ${thisCard.place}');
               return thisCard.place == c.places.player1 &&
-                      (client.game.gameState == SPMP.playing ||
-                          client.game.gameState == SPMP.discarding) &&
-                      (client.game.cards.turn == client.uid ||
-                          client.game.bidId == client.uid)
+                      ((client.game.gameState == SPMP.playing &&
+                              client.game.cards.turn == client.uid) ||
+                          (client.game.gameState == SPMP.discarding &&
+                              client.game.bidId == client.uid))
                   ? Draggable(
                       feedback: card,
                       childWhenDragging: Container(),

@@ -67,7 +67,13 @@ class Server {
                             event['suit'],
                             gameController.players.keys
                                 .toList()
-                                .indexOf(event['uid']));
+                                .indexOf(gameController.cardsController.turn));
+                        sendMessage({
+                          'method': SPMP.place,
+                          'suit': event['suit'],
+                          'rank': event['rank'],
+                          'turn': cardsController.turn,
+                        }, cardsController.turn);
                       }
                       // dispose dispose dispose dispose dispose dispose dispose
                       if (event['method'] == SPMP.dispose) {

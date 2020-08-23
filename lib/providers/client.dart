@@ -54,13 +54,7 @@ class Client extends ChangeNotifier {
         // place place place place place place place place place place place
         if (event['method'] == SPMP.place) {
           game.cards.turn = event['turn'];
-          game.cards.move(
-              event['rank'],
-              event['suit'],
-              game.players.keys.toList().indexOf(event['uid']),
-              SPMP.place,
-              false,
-              event['uid']);
+          game.cards.placeCard(event['rank'], event['suit']);
         }
         // dispose dispose dispose dispose dispose dispose dispose dispose
         if (event['method'] == SPMP.dispose) {

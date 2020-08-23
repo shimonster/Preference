@@ -22,6 +22,13 @@ class GameManagement {
       players[uid]['hasBid'] = true;
       biddingId =
           players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
+      sendMessage({
+        'method': SPMP.pass,
+        'rank': num,
+        'suit': suit,
+        'uid': uid,
+        'turn': biddingId,
+      }, uid);
     } else {
       // player placed bid :)
       final pBid = () {
@@ -37,22 +44,23 @@ class GameManagement {
             players[key]['hasBid'] = false;
           }
         });
+        sendMessage({
+          'method': SPMP.bid,
+          'rank': num,
+          'suit': suit,
+          'uid': uid,
+          'turn': biddingId,
+        }, uid);
       };
       if (bid == null) {
         print('no bids so far');
         pBid();
-      } else if (bid['suit'] > suit && bid['rank'] > num) {
+      } else if ((bid['suit'] > suit && bid['rank'] >= num) ||
+          bid['rank'] > num) {
         print('there was already a bid');
         pBid();
       }
     }
-    sendMessage({
-      'method': suit == -1 ? SPMP.pass : SPMP.bid,
-      'rank': num,
-      'suit': suit,
-      'uid': uid,
-      'turn': biddingId,
-    }, uid);
 
     print(players.values.toList().map((e) => e['hasBid']).toList());
     // if everyone pid or passed

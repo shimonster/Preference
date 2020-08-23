@@ -109,13 +109,14 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                           // ---------------------------------
                           if (client.game.bidId == client.uid &&
                               client.game.gameState == SPMP.declaring)
-                            SelectButton(
-                                (int i, int index) =>
-                                    client.game.declareGame(i, index, true),
-                                (int i, int index) =>
-                                    client.game.bid['suit'] <= i ||
-                                    client.game.bid['suit'] > i ||
-                                    client.game.bid['rank'] <= index),
+                            SelectButton((int suit, int rank) {
+                              print('onpressse d handler');
+                              client.game.declareGame(suit, rank, true);
+                            },
+                                (int suit, int rank) =>
+                                    !((client.game.bid['suit'] > suit &&
+                                            client.game.bid['rank'] >= rank) ||
+                                        client.game.bid['rank'] > rank)),
                           // ---------------------------------
                           if (client.game.bidId == client.uid) DisposeButton(),
                           // ---------------------------------

@@ -72,7 +72,8 @@ class Game extends ChangeNotifier {
       };
       if (bid == null) {
         pBid();
-      } else if (bid['suit'] > suit && bid['rank'] > num) {
+      } else if ((bid['suit'] > suit && bid['rank'] >= num) ||
+          bid['rank'] > num) {
         pBid();
       }
     }
@@ -91,7 +92,11 @@ class Game extends ChangeNotifier {
     bid = {'rank': rank, 'suit': suit};
     gameState = SPMP.playing;
     cards.cardStream.add('declared');
+    cards.p1Cards.forEach((element) {
+      element.positionStream.add('playing');
+    });
     print('after add to card stream');
+    print(bidId);
     cards.turn = bidId;
     if (isMe) {
       client.sendMessage({

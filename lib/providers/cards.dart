@@ -77,6 +77,8 @@ class Cards extends ChangeNotifier {
 
   void move(List<int> rank, List<int> suit, int place, String method,
       bool shouldSend, String uid) {
+    print(rank);
+    print(suit);
     if (place == SPMP.disposed) {
       disposeCards(shouldSend ? null : rank, shouldSend ? null : suit);
     }
@@ -90,8 +92,8 @@ class Cards extends ChangeNotifier {
     if (shouldSend) {
       client.sendMessage({
         'method': method,
-        'rank': rank,
-        'suit': suit,
+        'rank': rank.length == 1 ? rank[0] : rank,
+        'suit': suit.length == 1 ? suit[0] : suit,
         'uid': uid,
       });
     }
@@ -107,8 +109,51 @@ class Cards extends ChangeNotifier {
   }
 
   void placeCard(int rank, int suit) {
-    move([rank], [suit], client.game.players.keys.toList().indexOf(turn),
-        SPMP.place, turn == client.uid, client.uid);
+    final turnIdx = client.game.players.keys.toList().indexOf(turn);
+    print(turnIdx);
+    print(turn);
+    move([rank], [suit], turnIdx + 5, SPMP.place, turn == client.uid,
+        client.uid);
+    final isP1 = turnIdx == 0;
+    final isP2 = turnIdx == 1;
+    final newCards = _getLocationCards(
+      places.values[turnIdx],
+      isP1 ? 30 : null,
+      isP1 ? null : 0,
+      isP1 ? 0 : isP2 ? null : 30,
+      isP2 ? 30 : null,
+    );
+    for (var i = 0;
+        i <
+            10 -
+                cards
+                    .where((element) =>
+                        element.place ==
+                        (isP1
+                            ? places.center1
+                            : isP2 ? places.center2 : places.center3))
+                    .length;
+        i++) {
+      final card = (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i];
+      if (card.suit.index != suit && card.rank.index != rank) {
+        (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
+          Duration(milliseconds: 200),
+          eTop: newCards[i].top,
+          eBottom: newCards[i].bottom,
+          eRight: newCards[i].right,
+          eLeft: newCards[i].left,
+        );
+      } else {
+        (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
+          Duration(milliseconds: 200),
+          eBottom: isP1 ? 500 : null,
+          eTop: isP1 ? null : 500,
+          eRight: isP1 ? 500 : isP2 ? null : 500,
+          eLeft: isP2 ? 500 : null,
+        );
+      }
+    }
+    cardStream.add('placed');
   }
 
   void disposingCards(int rank, int suit) {
@@ -141,10 +186,10 @@ class Cards extends ChangeNotifier {
     }
     for (var i = 0; i < 2; i++) {
       print('loop was run');
+      print(disposing.length);
       (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)
           .firstWhere((element) {
             if (rank == null) {
-              print(disposing.length);
               return disposing
                   .any((e) => e.rank == element.rank && e.suit == element.suit);
             } else {
