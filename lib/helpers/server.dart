@@ -63,17 +63,20 @@ class Server {
                       // place place place place place place place place place
                       if (event['method'] == SPMP.place) {
                         cardsController.move(
-                            event['rank'],
-                            event['suit'],
-                            gameController.players.keys
-                                .toList()
-                                .indexOf(gameController.cardsController.turn));
+                          event['rank'],
+                          event['suit'],
+                          gameController.players.keys
+                                  .toList()
+                                  .indexOf(cardsController.turn) +
+                              5,
+                          cardsController.turn,
+                        );
                         sendMessage({
                           'method': SPMP.place,
                           'suit': event['suit'],
                           'rank': event['rank'],
                           'turn': cardsController.turn,
-                        }, cardsController.turn);
+                        }, event['uid']);
                       }
                       // dispose dispose dispose dispose dispose dispose dispose
                       if (event['method'] == SPMP.dispose) {
@@ -135,33 +138,38 @@ class Server {
     );
   }
 
+  Map<String, dynamic> sortPlayers(String uid) {
+    Map<String, Map<String, dynamic>> newPlayers = {...gameController.players};
+    void sort() {
+      print(
+          'list not sorted correctly: $uid: ${newPlayers.keys.toList().first}');
+      final entries = newPlayers.entries.toList();
+      final first = entries[0];
+      entries.add(first);
+      entries.removeAt(0);
+      newPlayers = entries.fold(
+          {},
+          (previousValue, element) =>
+              {...previousValue, element.key: element.value});
+      if (newPlayers.keys.toList().first != uid) {
+        sort();
+      }
+    }
+
+    sort();
+    print('$newPlayers  $uid');
+    return {'players': newPlayers};
+  }
+
   void sendMessage(Map<String, dynamic> message, [String exclude]) {
     print('about to send server message: $message');
     clientSockets.forEach((key, value) {
-      if (message['method'] == SPMP.startPlaying) {
-        // if we are starting playing
-        Map<String, Map<String, dynamic>> newPlayers = {
-          ...gameController.players
-        };
-        while (newPlayers.keys.toList().first != key) {
-          print(
-              'list not sorted correctly: $key: ${newPlayers.keys.toList().first}');
-          final entries = newPlayers.entries.toList();
-          final first = entries[0];
-          entries.add(first);
-          entries.removeAt(0);
-          newPlayers = entries.fold(
-              {},
-              (previousValue, element) =>
-                  {...previousValue, element.key: element.value});
+      if (key != exclude) {
+        if (message['method'] == SPMP.startPlaying) {
+          value.add(json.encode({...message, ...sortPlayers(key)}));
+        } else {
+          value.add(json.encode(message));
         }
-        gameController.players = newPlayers;
-        cardsController.players = newPlayers;
-        value.add(json.encode({...message, 'players': newPlayers}));
-      }
-      // otherwise just send message
-      if (key != exclude && message['method'] != SPMP.startPlaying) {
-        value.add(json.encode(message));
       }
     });
   }

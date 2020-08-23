@@ -17,6 +17,8 @@ class PlayingCard extends StatefulWidget with CardMoveExtension {
   final double bottom;
   final double right;
   final double left;
+  static const multiplySizeWidth = 0.06;
+  static const multiplySizeHeight = 0.06 * 23 / 16;
 
   @override
   PlayingCardState createState() => PlayingCardState();
@@ -24,9 +26,6 @@ class PlayingCard extends StatefulWidget with CardMoveExtension {
 
 class PlayingCardState extends State<PlayingCard>
     with SingleTickerProviderStateMixin {
-  double multiplySizeWidth = 0.06;
-  double multiplySizeHeight = 0.06 * 23 / 16;
-
   c.Card get thisCard {
     final card = Provider.of<Client>(context, listen: false)
         .game
@@ -52,6 +51,7 @@ class PlayingCardState extends State<PlayingCard>
       print('widow card build was run');
     }
     final client = Provider.of<Client>(context, listen: false);
+    final width = MediaQuery.of(context).size.width;
     return StreamBuilder(
       stream: widget.positionStream.stream,
       builder: (context, snapshot) {
@@ -73,9 +73,8 @@ class PlayingCardState extends State<PlayingCard>
                   ..rotateZ(widget.currentRotationZ),
                 alignment: Alignment.center,
                 child: Container(
-                  width: MediaQuery.of(context).size.width * multiplySizeWidth,
-                  height:
-                      MediaQuery.of(context).size.width * multiplySizeHeight,
+                  width: width * PlayingCard.multiplySizeWidth,
+                  height: width * PlayingCard.multiplySizeHeight,
                   decoration: BoxDecoration(
                     color: widget.isFace ? Colors.orange : Colors.blue,
                     border: Border.all(width: 5),

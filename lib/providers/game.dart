@@ -109,6 +109,7 @@ class Game extends ChangeNotifier {
 
   Future<void> leaveGame() async {
     client.sendMessage({'method': SPMP.playerLeave, 'uid': client.uid});
+    client.ws?.close();
     final prefs = await SharedPreferences.getInstance();
 //    await prefs.setInt('currentGame', null);
 //    await prefs.setInt('currentPlayer', null);

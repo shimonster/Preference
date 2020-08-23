@@ -28,7 +28,6 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   bool _isLoading = true;
   bool hasPopped = false;
   StreamSubscription sub;
-  StreamSubscription stream;
 
   void setHasAccepted(bool val) {
     print('accepted');
@@ -46,7 +45,9 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
           }),
         );
     sub = html.window.onPopState.listen((event) {
-      if (!hasPopped) {
+      if (!hasPopped && event.type == 'popstate') {
+        Provider.of<Client>(context, listen: false).game.leaveGame();
+        sub.cancel();
         setState(() {
           _isLoading = true;
         });
@@ -65,9 +66,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   @override
   void dispose() {
     super.dispose();
-    sub.cancel();
-    stream.cancel();
-    Provider.of<Client>(context, listen: false).game.leaveGame();
+    print('preference dispose');
   }
 
   @override
@@ -93,7 +92,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                     stream: client.game.cards.cardStream.stream,
                     builder: (context, snapshot) {
                       print(
-                          'preference screen about to build stack: p1: ${cards.p1Cards}, p2: ${cards.p2Cards}, p3: ${cards.p3Cards}');
+                          'preference screen about to build stack: p1: ${cards.p1Cards}, p2: ${cards.p2Cards}, p3: ${cards.p3Cards}, cards: ${cards.cards.map((e) => e.place).toList()}');
                       return Stack(
                         fit: StackFit.loose,
                         children: [

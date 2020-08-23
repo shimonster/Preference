@@ -39,7 +39,7 @@ class Client extends ChangeNotifier {
         final eventMap = json.decode(jsonEvent.data) as Map;
         final Map<String, dynamic> event =
             eventMap.map((key, value) => MapEntry(key, value));
-        print('${DateTime.now()}, $event');
+        print('RECEIVED MESSAGE, $event');
 // event handling based on event['method'] -------------- event handling based on event['method'] --------------
         // bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid
         if (event['method'] == SPMP.bid || event['method'] == SPMP.pass) {
@@ -53,8 +53,8 @@ class Client extends ChangeNotifier {
         }
         // place place place place place place place place place place place
         if (event['method'] == SPMP.place) {
-          game.cards.turn = event['turn'];
           game.cards.placeCard(event['rank'], event['suit']);
+          game.cards.turn = event['turn'];
         }
         // dispose dispose dispose dispose dispose dispose dispose dispose
         if (event['method'] == SPMP.dispose) {

@@ -1,6 +1,7 @@
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -59,7 +60,6 @@ class Cards extends ChangeNotifier {
 
   String turn;
   final Client client;
-//  int dealer;
   double width = html.window.innerWidth.toDouble();
   double height = html.window.innerHeight.toDouble();
   final cardStream = StreamController.broadcast();
@@ -134,22 +134,25 @@ class Cards extends ChangeNotifier {
                             : isP2 ? places.center2 : places.center3))
                     .length;
         i++) {
+      print(newCards[i].bottom);
       final card = (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i];
-      if (card.suit.index != suit && card.rank.index != rank) {
-        (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
-          Duration(milliseconds: 200),
-          eTop: newCards[i].top,
-          eBottom: newCards[i].bottom,
-          eRight: newCards[i].right,
-          eLeft: newCards[i].left,
-        );
-      } else {
+      if (card.suit.index == suit && card.rank.index == rank) {
+        print('from places: $i');
         (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
           Duration(milliseconds: 200),
           eBottom: isP1 ? 500 : null,
           eTop: isP1 ? null : 500,
           eRight: isP1 ? 500 : isP2 ? null : 500,
           eLeft: isP2 ? 500 : null,
+        );
+      } else {
+        print('normal: $i');
+        (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
+          Duration(milliseconds: 200),
+          eTop: newCards[i].top,
+          eBottom: newCards[i].bottom,
+          eRight: newCards[i].right,
+          eLeft: newCards[i].left,
         );
       }
     }
@@ -313,11 +316,12 @@ class Cards extends ChangeNotifier {
     }
   }
 
-  double findSideLocation(int amnt, int i, bool isVert) {
-    final increment = 50;
-    final offset = i * increment;
+  double findSideLocation(int amnt, int i, bool isVert, double unitLength) {
     final mLength = isVert ? height : width;
-    return ((mLength - (amnt * increment)) / 2) + offset;
+    final increment = min(width, height) / 18;
+    final offset = i * increment;
+    final start = (mLength - (((amnt - 1) * increment) + unitLength)) / 2;
+    return start + offset;
   }
 
   List<PlayingCard> _getLocationCards(
@@ -333,10 +337,16 @@ class Cards extends ChangeNotifier {
       return PlayingCard(
         e.suit,
         e.rank,
-        top: top == 0 ? findSideLocation(l, i, true) : top,
-        bottom: bottom == 0 ? findSideLocation(l, i, true) : bottom,
-        right: right == 0 ? findSideLocation(l, i, false) : right,
-        left: left == 0 ? findSideLocation(l, i, false) : left,
+        top: top == 0
+            ? findSideLocation(
+                l, i, true, width * PlayingCard.multiplySizeHeight)
+            : top,
+        right: right == 0
+            ? findSideLocation(
+                l, i, false, width * PlayingCard.multiplySizeWidth)
+            : right,
+        bottom: bottom,
+        left: left,
       );
     }).toList();
   }

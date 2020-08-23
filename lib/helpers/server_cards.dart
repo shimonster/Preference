@@ -51,6 +51,7 @@ class CardsManagement {
     bool didPlace = false;
     cards.firstWhere((element) =>
         element['rank'] == rank && element['suit'] == suit)['place'] = place;
+    print(place);
     // placing a card
     if (place == SPMP.center1) {
       didPlace = true;
