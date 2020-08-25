@@ -50,6 +50,11 @@ class Card {
   places place;
 
   Card(this.rank, this.suit, this.place);
+
+  @override
+  String toString() {
+    return '$rank, $suit, $place';
+  }
 }
 
 class Cards extends ChangeNotifier {
@@ -106,9 +111,22 @@ class Cards extends ChangeNotifier {
     if (place == SPMP.disposed) {
       moveDisposed();
     }
+    if (place == SPMP.trick1) {
+      collectTrick(0);
+    }
+    if (place == SPMP.trick2) {
+      collectTrick(1);
+    }
+    if (place == SPMP.trick3) {
+      collectTrick(2);
+    }
   }
 
-  void placeCard(int rank, int suit) {
+  void collectTrick(int pNum) {
+    for (var i = 0; i < 3; i++) {}
+  }
+
+  void placeCard(int rank, int suit, [String nTurn]) {
     final turnIdx = client.game.players.keys.toList().indexOf(turn);
     print(turnIdx);
     print(turn);
@@ -123,6 +141,7 @@ class Cards extends ChangeNotifier {
       isP1 ? 0 : isP2 ? null : 30,
       isP2 ? 30 : null,
     );
+    // moves cards that haven't been collected to new place
     for (var i = 0;
         i <
             10 -
@@ -136,27 +155,19 @@ class Cards extends ChangeNotifier {
         i++) {
       print(newCards[i].bottom);
       final card = (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i];
-      if (card.suit.index == suit && card.rank.index == rank) {
-        print('from places: $i');
-        (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
-          Duration(milliseconds: 200),
-          eBottom: isP1 ? 500 : null,
-          eTop: isP1 ? null : 500,
-          eRight: isP1 ? 500 : isP2 ? null : 500,
-          eLeft: isP2 ? 500 : null,
-        );
-      } else {
-        print('normal: $i');
-        (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
-          Duration(milliseconds: 200),
-          eTop: newCards[i].top,
-          eBottom: newCards[i].bottom,
-          eRight: newCards[i].right,
-          eLeft: newCards[i].left,
-        );
-      }
+      final isCard = card.suit.index == suit && card.rank.index == rank;
+      (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
+        Duration(milliseconds: 200),
+        eBottom: isCard ? newCards[i].bottom : isP1 ? 500 : null,
+        eTop: isCard ? newCards[i].top : isP1 ? null : 500,
+        eRight: isCard ? newCards[i].right : isP1 ? 500 : isP2 ? null : 500,
+        eLeft: isCard ? newCards[i].left : isP2 ? 500 : null,
+      );
     }
+    turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];
+    print('before add to card stream');
     cardStream.add('placed');
+    print('after add to card stream');
   }
 
   void disposingCards(int rank, int suit) {

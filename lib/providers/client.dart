@@ -16,7 +16,6 @@ class Client extends ChangeNotifier {
   String uid;
   WebSocket ws;
   Game game;
-  final socketStreamController = StreamController.broadcast();
   final startGameStream = StreamController.broadcast();
   final bidStream = StreamController.broadcast();
 
@@ -28,7 +27,6 @@ class Client extends ChangeNotifier {
     port = portNumber;
     username = nickname;
     uid = id;
-    socketStreamController.onListen = () => print('stream listened to');
     final address = 'ws://localhost:$port/$uid/$username';
     // connects to web socket
     ws = WebSocket(address);
@@ -53,8 +51,7 @@ class Client extends ChangeNotifier {
         }
         // place place place place place place place place place place place
         if (event['method'] == SPMP.place) {
-          game.cards.placeCard(event['rank'], event['suit']);
-          game.cards.turn = event['turn'];
+          game.cards.placeCard(event['rank'], event['suit'], event['turn']);
         }
         // dispose dispose dispose dispose dispose dispose dispose dispose
         if (event['method'] == SPMP.dispose) {
@@ -121,12 +118,10 @@ class Client extends ChangeNotifier {
               false,
               event['uid']);
         }
-        socketStreamController.add(event);
       },
       onDone: () {
         sendMessage({'method': SPMP.playerLeave, 'uid': uid});
         print('client done');
-        socketStreamController.close();
         bidStream.close();
         game.cards.disposeStream.close();
       },
@@ -137,7 +132,6 @@ class Client extends ChangeNotifier {
 
   void sendMessage(Map<String, dynamic> message) {
     print('sending message from client');
-    socketStreamController.add(message);
     ws.send(json.encode(message));
     notifyListeners();
   }

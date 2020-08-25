@@ -142,7 +142,7 @@ class Server {
     Map<String, Map<String, dynamic>> newPlayers = {...gameController.players};
     void sort() {
       print(
-          'list not sorted correctly: $uid: ${newPlayers.keys.toList().first}');
+          'list not sorted correctly: $uid: ${newPlayers.keys.toList().first}, ${newPlayers.keys.toList()[1]}');
       final entries = newPlayers.entries.toList();
       final first = entries[0];
       entries.add(first);
@@ -166,6 +166,7 @@ class Server {
     clientSockets.forEach((key, value) {
       if (key != exclude) {
         if (message['method'] == SPMP.startPlaying) {
+          print(sortPlayers(key));
           value.add(json.encode({...message, ...sortPlayers(key)}));
         } else {
           value.add(json.encode(message));

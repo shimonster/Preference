@@ -39,7 +39,6 @@ class PlayingCardState extends State<PlayingCard>
   @override
   void dispose() {
     super.dispose();
-    print('card dispose');
     widget.positionStream.close();
     widget.rotationStream.close();
   }
@@ -55,7 +54,7 @@ class PlayingCardState extends State<PlayingCard>
     return StreamBuilder(
       stream: widget.positionStream.stream,
       builder: (context, snapshot) {
-        print('position builder was run');
+        print('position builder was run: $thisCard');
         return Positioned(
 //          duration: Duration(seconds: 1),
 //          curve: Curves.easeInOut,
