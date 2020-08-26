@@ -47,8 +47,9 @@ class CardsManagement {
     return cards;
   }
 
-  void move(int rank, int suit, int place, [String uid]) {
+  bool move(int rank, int suit, int place, [String uid]) {
     bool didPlace = false;
+    bool didCollectTrick = false;
     cards.firstWhere((element) =>
         element['rank'] == rank && element['suit'] == suit)['place'] = place;
     print(place);
@@ -69,14 +70,9 @@ class CardsManagement {
       turn =
           players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
     }
-    if (didPlace) {
-      if (player1Cards == player2Cards && player2Cards == player3Cards) {
-        sendMessage({
-          'method': SPMP.trickCollected,
-          'turn': turn,
-          'uid': uid,
-        });
-      }
+    if (didPlace &&
+        (player1Cards == player2Cards && player2Cards == player3Cards)) {
+      didCollectTrick = true;
     }
     // collecting widow
     if (place == SPMP.player1) {
@@ -100,5 +96,6 @@ class CardsManagement {
     } else if (place == SPMP.trick3) {
       player3Tricks += 1;
     }
+    return didCollectTrick;
   }
 }

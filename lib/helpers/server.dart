@@ -62,7 +62,7 @@ class Server {
                       }
                       // place place place place place place place place place
                       if (event['method'] == SPMP.place) {
-                        cardsController.move(
+                        final didCollect = cardsController.move(
                           event['rank'],
                           event['suit'],
                           gameController.players.keys
@@ -77,6 +77,13 @@ class Server {
                           'rank': event['rank'],
                           'turn': cardsController.turn,
                         }, event['uid']);
+                        if (didCollect) {
+                          sendMessage({
+                            'method': SPMP.trickCollected,
+                            'turn': cardsController.turn,
+                            'uid': event['uid'],
+                          });
+                        }
                       }
                       // dispose dispose dispose dispose dispose dispose dispose
                       if (event['method'] == SPMP.dispose) {

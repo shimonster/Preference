@@ -110,10 +110,16 @@ class Client extends ChangeNotifier {
         }
         // trick-collected trick-collected trick-collected trick-collected
         if (event['method'] == SPMP.trickCollected) {
+          final placedCards = game.cards.cards
+              .where((element) =>
+                  element.place == places.center1 ||
+                  element.place == places.center2 ||
+                  element.place == places.center3)
+              .toList();
           game.cards.move(
-              event['rank'],
-              event['suit'],
-              game.players.keys.toList().indexOf(event['uid']) + 9,
+              placedCards.map((e) => e.rank.index).toList(),
+              placedCards.map((e) => e.suit.index).toList(),
+              game.players.keys.toList().indexOf(event['uid']) + 8,
               event['method'],
               false,
               event['uid']);

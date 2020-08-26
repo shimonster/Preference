@@ -82,6 +82,15 @@ class Cards extends ChangeNotifier {
 
   void move(List<int> rank, List<int> suit, int place, String method,
       bool shouldSend, String uid) {
+    if (place == SPMP.trick1) {
+      collectTrick(0);
+    }
+    if (place == SPMP.trick2) {
+      collectTrick(1);
+    }
+    if (place == SPMP.trick3) {
+      collectTrick(2);
+    }
     print(rank);
     print(suit);
     if (place == SPMP.disposed) {
@@ -111,19 +120,28 @@ class Cards extends ChangeNotifier {
     if (place == SPMP.disposed) {
       moveDisposed();
     }
-    if (place == SPMP.trick1) {
-      collectTrick(0);
-    }
-    if (place == SPMP.trick2) {
-      collectTrick(1);
-    }
-    if (place == SPMP.trick3) {
-      collectTrick(2);
-    }
   }
 
   void collectTrick(int pNum) {
-    for (var i = 0; i < 3; i++) {}
+    final placed = _cards.where((element) =>
+        element.place == places.center1 ||
+        element.place == places.center2 ||
+        element.place == places.center3);
+    final placedCards = [...p1Cards, ...p2Cards, ...p3Cards]
+        .where((element) =>
+            placed.any((e) => e.suit == element.suit && e.rank == element.rank))
+        .toList();
+    final isP1 = pNum == 0;
+    final isP2 = pNum == 1;
+    for (var i = 0; i < 3; i++) {
+      placedCards[i].move(
+        Duration(milliseconds: 200),
+        eTop: isP1 ? null : height / 2,
+        eBottom: isP1 ? -200 : null,
+        eRight: isP1 ? width / 2 : isP2 ? null : -200,
+        eLeft: isP2 ? -200 : null,
+      );
+    }
   }
 
   void placeCard(int rank, int suit, [String nTurn]) {

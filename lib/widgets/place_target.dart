@@ -21,6 +21,7 @@ class PlaceTarget extends StatelessWidget {
           return Container();
         },
         onAccept: (c.Card value) {
+          print('place accepted');
           client.game.cards.placeCard(value.rank.index, value.suit.index);
         },
       ),
