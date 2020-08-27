@@ -176,10 +176,10 @@ class Cards extends ChangeNotifier {
       final isCard = card.suit.index == suit && card.rank.index == rank;
       (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
         Duration(milliseconds: 200),
-        eBottom: isCard ? newCards[i].bottom : isP1 ? 500 : null,
-        eTop: isCard ? newCards[i].top : isP1 ? null : 500,
-        eRight: isCard ? newCards[i].right : isP1 ? 500 : isP2 ? null : 500,
-        eLeft: isCard ? newCards[i].left : isP2 ? 500 : null,
+        eBottom: !isCard ? newCards[i].bottom : isP1 ? 500 : null,
+        eTop: !isCard ? newCards[i].top : isP1 ? null : 500,
+        eRight: !isCard ? newCards[i].right : isP1 ? 500 : isP2 ? null : 500,
+        eLeft: !isCard ? newCards[i].left : isP2 ? 500 : null,
       );
     }
     turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];

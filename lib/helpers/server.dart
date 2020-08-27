@@ -78,10 +78,28 @@ class Server {
                           'turn': cardsController.turn,
                         }, event['uid']);
                         if (didCollect) {
+                          String collectUid;
+                          Map<String, dynamic> biggestCard;
+                          final placed = cardsController.cards.where(
+                              (element) =>
+                                  element['place'] == SPMP.center1 ||
+                                  element['place'] == SPMP.center2 ||
+                                  element['place'] == SPMP.center3);
+                          for (var i in placed) {
+                            if (biggestCard == null ||
+                                (i['rank'] > biggestCard['rank'] &&
+                                    i['suit'] >= biggestCard['suit']) ||
+                                i['suit'] > biggestCard['suit']) {
+                              print(i);
+                              biggestCard = i;
+                              collectUid = cardsController.cards.firstWhere(
+                                  (element) => element == biggestCard)['uid'];
+                            }
+                          }
                           sendMessage({
                             'method': SPMP.trickCollected,
                             'turn': cardsController.turn,
-                            'uid': event['uid'],
+                            'uid': collectUid,
                           });
                         }
                       }

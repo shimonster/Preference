@@ -41,9 +41,9 @@ class _BiddingButtonsState extends State<BiddingButtons> {
                     },
                         (int suit, int rank) =>
                             client.game.bid == null ||
-                            !((client.game.bid['suit'] > suit &&
-                                    client.game.bid['rank'] >= rank) ||
-                                client.game.bid['rank'] > rank)),
+                            !((client.game.bid['suit'] >= suit &&
+                                    client.game.bid['rank'] > rank) ||
+                                client.game.bid['suit'] > suit)),
                   ],
                 ),
               )
