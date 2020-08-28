@@ -159,21 +159,26 @@ class Cards extends ChangeNotifier {
       isP1 ? 0 : isP2 ? null : 30,
       isP2 ? 30 : null,
     );
+    print(cards
+        .where((element) =>
+            element.place ==
+            (isP1 ? places.player1 : isP2 ? places.player2 : places.player3))
+        .length);
     // moves cards that haven't been collected to new place
     for (var i = 0;
         i <
-            10 -
-                cards
-                    .where((element) =>
-                        element.place ==
-                        (isP1
-                            ? places.center1
-                            : isP2 ? places.center2 : places.center3))
-                    .length;
+            cards
+                .where((element) =>
+                    element.place ==
+                    (isP1
+                        ? places.player1
+                        : isP2 ? places.player2 : places.player3))
+                .length;
         i++) {
-      print(newCards[i].bottom);
+//      print('${newCards[i].bottom} $i');
       final card = (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i];
       final isCard = card.suit.index == suit && card.rank.index == rank;
+      print(isCard);
       (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
         Duration(milliseconds: 200),
         eBottom: !isCard ? newCards[i].bottom : isP1 ? 500 : null,

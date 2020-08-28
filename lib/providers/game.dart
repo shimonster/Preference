@@ -58,6 +58,7 @@ class Game extends ChangeNotifier {
           players.keys.toList()[(players.keys.toList().indexOf(id) + 1) % 3];
     } else {
       final pBid = () {
+        print('bid placed');
         bid = {'suit': suit, 'rank': num};
         bidId = id;
         biddingId =
@@ -71,9 +72,12 @@ class Game extends ChangeNotifier {
         });
       };
       if (bid == null) {
+        print('no bid yet');
         pBid();
-      } else if ((bid['suit'] > suit && bid['rank'] >= num) ||
-          bid['rank'] > num) {
+      } else if ((client.game.bid['suit'] > suit &&
+              client.game.bid['rank'] >= num) ||
+          client.game.bid['rank'] > num) {
+        print('already a bid');
         pBid();
       }
     }

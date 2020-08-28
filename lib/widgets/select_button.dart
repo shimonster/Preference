@@ -33,10 +33,7 @@ class SelectButton extends StatelessWidget {
                       height: 50,
                       child: RaisedButton(
                         child: Text('${suits[index]} ${i + 1}'),
-                        onPressed: client.game.bid == null ||
-                                (client.game.bid['suit'] <= index &&
-                                    (client.game.bid['suit'] > index ||
-                                        client.game.bid['rank'] <= i))
+                        onPressed: condition(index, i)
                             ? () => pressHandler(index, i)
                             : null,
                       ),
