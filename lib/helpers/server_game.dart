@@ -63,7 +63,7 @@ class GameManagement {
     }
 
     print(players.values.toList().map((e) => e['hasBid']).toList());
-    // if everyone pid or passed
+    // if everyone bid or passed
     if (players.values.every((element) => element['hasBid'])) {
       print('every one bid');
       gameState = SPMP.discarding;
@@ -72,7 +72,7 @@ class GameManagement {
           .toList();
       for (var i = 0; i < 2; i++) {
         cardsController.move(widow[i]['rank'], widow[i]['suit'],
-            players.keys.toList().indexOf(bidId), SPMP.collectWidow);
+            players.keys.toList().indexOf(bidId), bidId);
       }
       sendMessage({'method': SPMP.collectWidow, 'uid': bidId});
     }

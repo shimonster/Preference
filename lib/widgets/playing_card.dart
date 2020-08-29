@@ -20,6 +20,10 @@ class PlayingCard extends StatefulWidget with CardMoveExtension {
   static const multiplySizeWidth = 0.06;
   static const multiplySizeHeight = 0.06 * 23 / 16;
 
+  bool equals(PlayingCard other) {
+    return other.rank == rank && other.suit == suit;
+  }
+
   @override
   PlayingCardState createState() => PlayingCardState();
 }
@@ -45,16 +49,12 @@ class PlayingCardState extends State<PlayingCard>
 
   @override
   Widget build(BuildContext context) {
-    print('build of a card was run: ${widget.currentTop}');
-    if (thisCard.place == c.places.widow) {
-      print('widow card build was run');
-    }
     final client = Provider.of<Client>(context, listen: false);
     final width = MediaQuery.of(context).size.width;
     return StreamBuilder(
       stream: widget.positionStream.stream,
       builder: (context, snapshot) {
-        print('position builder was run: $thisCard');
+        print('position builder was run');
         return Positioned(
 //          duration: Duration(seconds: 1),
 //          curve: Curves.easeInOut,
@@ -65,7 +65,7 @@ class PlayingCardState extends State<PlayingCard>
           child: StreamBuilder(
             stream: widget.rotationStream.stream,
             builder: (context, snap) {
-              print('rotation builder was run');
+              print('rotation builder was run: $thisCard');
               final card = Transform(
                 transform: Matrix4.rotationY(widget.currentRotationY)
                   ..rotateX(widget.currentRotationX)
@@ -84,11 +84,6 @@ class PlayingCardState extends State<PlayingCard>
                   ),
                 ),
               );
-              print('${thisCard.place == c.places.player1} &&'
-                  '(${client.game.gameState == SPMP.playing} &&'
-                  '${client.game.cards.turn == client.uid}) &&'
-                  '(${client.game.gameState == SPMP.discarding} &&'
-                  '${client.game.bidId == client.uid}) ${thisCard.place}');
               return thisCard.place == c.places.player1 &&
                       ((client.game.gameState == SPMP.playing &&
                               client.game.cards.turn == client.uid) ||

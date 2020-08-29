@@ -75,6 +75,7 @@ class Cards extends ChangeNotifier {
   List<PlayingCard> p2Cards = [];
   List<PlayingCard> p3Cards = [];
   List<PlayingCard> widows = [];
+  List<PlayingCard> placed = [];
 
   List<Card> get cards {
     return [..._cards];
@@ -96,6 +97,7 @@ class Cards extends ChangeNotifier {
     if (place == SPMP.disposed) {
       disposeCards(shouldSend ? null : rank, shouldSend ? null : suit);
     }
+    // ===================================
     for (var i = 0; i < rank.length; i++) {
       final idx = _cards.indexWhere((element) =>
           element.rank.index == rank[i] && element.suit.index == suit[i]);
@@ -111,6 +113,7 @@ class Cards extends ChangeNotifier {
         'uid': uid,
       });
     }
+    // =======================================
     if (method == SPMP.collectWidow) {
       collectWidow(place);
     }
@@ -123,35 +126,47 @@ class Cards extends ChangeNotifier {
   }
 
   void collectTrick(int pNum) {
-    final placed = _cards.where((element) =>
-        element.place == places.center1 ||
-        element.place == places.center2 ||
-        element.place == places.center3);
-    final placedCards = [...p1Cards, ...p2Cards, ...p3Cards]
-        .where((element) =>
-            placed.any((e) => e.suit == element.suit && e.rank == element.rank))
-        .toList();
     final isP1 = pNum == 0;
     final isP2 = pNum == 1;
     for (var i = 0; i < 3; i++) {
-      placedCards[i].move(
-        Duration(milliseconds: 200),
-        eTop: isP1 ? null : height / 2,
-        eBottom: isP1 ? -200 : null,
-        eRight: isP1 ? width / 2 : isP2 ? null : -200,
-        eLeft: isP2 ? -200 : null,
-      );
+      placed[i]
+          .move(
+            Duration(milliseconds: 200),
+            eTop: isP1 ? null : height / 2,
+            eBottom: isP1 ? -200 : null,
+            eRight: isP1 ? width / 2 : isP2 ? null : -200,
+            eLeft: isP2 ? -200 : null,
+          )
+          .then((value) => placed = []);
     }
   }
 
   void placeCard(int rank, int suit, [String nTurn]) {
     final turnIdx = client.game.players.keys.toList().indexOf(turn);
     print(turnIdx);
+    final isP1 = turnIdx == 0;
+    final isP2 = turnIdx == 1;
+    final card = (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).firstWhere(
+        (element) => element.rank.index == rank && element.suit.index == suit);
+    print(card);
+    placed.add(card);
+    (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)
+        .removeWhere((element) => element.equals(card));
+    // moves cards that were placed
+    print(placed);
+    placed.last.move(
+      Duration(milliseconds: 200),
+      eBottom: isP1 ? height * 7 / 12 : null,
+      eTop: isP1 ? null : height / 3,
+      eRight: isP2
+          ? null
+          : (width / 2) -
+              (PlayingCard.multiplySizeWidth * width / (isP1 ? 2 : 1)),
+      eLeft: isP2 ? width / 2 : null,
+    );
     print(turn);
     move([rank], [suit], turnIdx + 5, SPMP.place, turn == client.uid,
         client.uid);
-    final isP1 = turnIdx == 0;
-    final isP2 = turnIdx == 1;
     final newCards = _getLocationCards(
       places.values[turnIdx],
       isP1 ? 30 : null,
@@ -159,11 +174,6 @@ class Cards extends ChangeNotifier {
       isP1 ? 0 : isP2 ? null : 30,
       isP2 ? 30 : null,
     );
-    print(cards
-        .where((element) =>
-            element.place ==
-            (isP1 ? places.player1 : isP2 ? places.player2 : places.player3))
-        .length);
     // moves cards that haven't been collected to new place
     for (var i = 0;
         i <
@@ -175,19 +185,19 @@ class Cards extends ChangeNotifier {
                         : isP2 ? places.player2 : places.player3))
                 .length;
         i++) {
-//      print('${newCards[i].bottom} $i');
-      final card = (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i];
-      final isCard = card.suit.index == suit && card.rank.index == rank;
-      print(isCard);
       (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards)[i].move(
         Duration(milliseconds: 200),
-        eBottom: !isCard ? newCards[i].bottom : isP1 ? 500 : null,
-        eTop: !isCard ? newCards[i].top : isP1 ? null : 500,
-        eRight: !isCard ? newCards[i].right : isP1 ? 500 : isP2 ? null : 500,
-        eLeft: !isCard ? newCards[i].left : isP2 ? 500 : null,
+        eBottom: newCards[i].bottom,
+        eTop: newCards[i].top,
+        eRight: newCards[i].right,
+        eLeft: newCards[i].left,
       );
     }
     turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];
+    // updates my cards if my turn
+    if (turn == client.uid) {
+      p1Cards.forEach((element) => element.rotationStream.add('my turn'));
+    }
     print('before add to card stream');
     cardStream.add('placed');
     print('after add to card stream');

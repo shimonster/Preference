@@ -96,11 +96,6 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                       return Stack(
                         fit: StackFit.loose,
                         children: [
-                          // cards
-                          if (client.game.isPlaying) ...cards.p2Cards,
-                          if (client.game.isPlaying) ...cards.p1Cards,
-                          if (client.game.isPlaying) ...cards.p3Cards,
-                          if (client.game.isPlaying) ...cards.widows,
                           // other stuff
                           if (client.game.bidId == client.uid &&
                               client.game.gameState == SPMP.discarding)
@@ -144,6 +139,13 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                                 ),
                               ),
                             ),
+                          // ---------------------------------
+                          if (client.game.isPlaying) ...cards.p2Cards,
+                          if (client.game.isPlaying) ...cards.p1Cards,
+                          if (client.game.isPlaying) ...cards.p3Cards,
+                          if (client.game.isPlaying) ...cards.widows,
+                          if (client.game.gameState == SPMP.playing)
+                            ...cards.placed,
                           // ---------------------------------
                           if (client.game.isPlaying)
                             Center(

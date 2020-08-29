@@ -12,6 +12,7 @@ class SPMP {
   static const playerJoin = 'PLAYERJOIN';
   static const playerLeave = 'PLAYERLEAVE';
   static const trickCollected = 'TRICKCOLLECTED';
+  static const finishRound = 'FINISHROUND';
 
   // cards
   static const spade = 0;

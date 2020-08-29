@@ -38,7 +38,8 @@ class Client extends ChangeNotifier {
         final Map<String, dynamic> event =
             eventMap.map((key, value) => MapEntry(key, value));
         print('RECEIVED MESSAGE, $event');
-// event handling based on event['method'] -------------- event handling based on event['method'] --------------
+
+        /// event handling based on [event['method']] -------------- event handling based on event['method'] --------------
         // bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid bid
         if (event['method'] == SPMP.bid || event['method'] == SPMP.pass) {
           game.biddingId = event['turn'];

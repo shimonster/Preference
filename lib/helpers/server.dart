@@ -37,10 +37,13 @@ class Server {
                 print('player joined');
                 gameController.joinGame(uid, nickname);
                 cardsController.joinGame(uid, nickname);
-                sendMessage({
-                  'method': SPMP.playerJoin,
-                  'players': gameController.players,
-                }, uid);
+                sendMessage(
+                  {
+                    'method': SPMP.playerJoin,
+                    'players': gameController.players,
+                    'uid': uid,
+                  }, /*uid*/
+                );
                 // when the web socket is open, we listen for additions
                 if (ws.readyState == WebSocket.open) {
                   ws.listen(
@@ -62,7 +65,7 @@ class Server {
                       }
                       // place place place place place place place place place
                       if (event['method'] == SPMP.place) {
-                        final didCollect = cardsController.move(
+                        cardsController.move(
                           event['rank'],
                           event['suit'],
                           gameController.players.keys
@@ -77,31 +80,6 @@ class Server {
                           'rank': event['rank'],
                           'turn': cardsController.turn,
                         }, event['uid']);
-                        if (didCollect) {
-                          String collectUid;
-                          Map<String, dynamic> biggestCard;
-                          final placed = cardsController.cards.where(
-                              (element) =>
-                                  element['place'] == SPMP.center1 ||
-                                  element['place'] == SPMP.center2 ||
-                                  element['place'] == SPMP.center3);
-                          for (var i in placed) {
-                            if (biggestCard == null ||
-                                (i['rank'] > biggestCard['rank'] &&
-                                    i['suit'] >= biggestCard['suit']) ||
-                                i['suit'] > biggestCard['suit']) {
-                              print(i);
-                              biggestCard = i;
-                              collectUid = cardsController.cards.firstWhere(
-                                  (element) => element == biggestCard)['uid'];
-                            }
-                          }
-                          sendMessage({
-                            'method': SPMP.trickCollected,
-                            'turn': cardsController.turn,
-                            'uid': collectUid,
-                          });
-                        }
                       }
                       // dispose dispose dispose dispose dispose dispose dispose
                       if (event['method'] == SPMP.dispose) {
@@ -166,6 +144,9 @@ class Server {
   Map<String, dynamic> sortPlayers(String uid) {
     Map<String, Map<String, dynamic>> newPlayers = {...gameController.players};
     void sort() {
+      if (newPlayers.keys.toList().first == uid) {
+        return;
+      }
       print(
           'list not sorted correctly: $uid: ${newPlayers.keys.toList().first}, ${newPlayers.keys.toList()[1]}');
       final entries = newPlayers.entries.toList();
@@ -188,11 +169,14 @@ class Server {
 
   void sendMessage(Map<String, dynamic> message, [String exclude]) {
     print('about to send server message: $message');
+    print(clientSockets);
     clientSockets.forEach((key, value) {
       if (key != exclude) {
         if (message['method'] == SPMP.startPlaying) {
-          print(sortPlayers(key));
-          value.add(json.encode({...message, ...sortPlayers(key)}));
+          final players = sortPlayers(key);
+          print(key);
+          print(gameController.players);
+          value.add(json.encode({...message, ...players}));
         } else {
           value.add(json.encode(message));
         }
