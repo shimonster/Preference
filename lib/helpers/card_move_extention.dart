@@ -105,7 +105,9 @@ class CardMoveExtension {
     currentRight = eRight;
     currentLeft = eLeft;
     positionStream.add('position');
+    print('after move add to position stream');
     await Future.delayed(duration);
+    print('after move card future');
   }
 
   Future<void> moveAndTwist(Duration duration,
@@ -154,5 +156,32 @@ class CardMoveExtension {
       );
       await Future.delayed(Duration(milliseconds: 100));
     });
+  }
+
+  static Future<void> alignCards(
+      List<PlayingCard> newCards, bool isP1, bool isP2, Cards cards,
+      {rotation sRotation,
+      rotation eRotation,
+      angle sAngle,
+      angle eAngle,
+      Axis axis}) async {
+    (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)
+        .forEach((element) {
+      final newCard = newCards
+          .firstWhere((e) => e.rank == element.rank && e.suit == element.suit);
+      element.moveAndTwist(
+        Duration(milliseconds: 200),
+        eBottom: newCard.bottom,
+        eTop: newCard.top,
+        eRight: newCard.right,
+        eLeft: newCard.left,
+        sAngle: sAngle,
+        eAngle: eAngle,
+        axis: axis,
+        sRotation: sRotation,
+        eRotation: eRotation,
+      );
+    });
+    await Future.delayed(Duration(milliseconds: 200));
   }
 }

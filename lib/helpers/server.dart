@@ -74,12 +74,6 @@ class Server {
                               5,
                           cardsController.turn,
                         );
-                        sendMessage({
-                          'method': SPMP.place,
-                          'suit': event['suit'],
-                          'rank': event['rank'],
-                          'turn': cardsController.turn,
-                        }, event['uid']);
                       }
                       // dispose dispose dispose dispose dispose dispose dispose
                       if (event['method'] == SPMP.dispose) {

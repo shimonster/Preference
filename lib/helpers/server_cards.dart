@@ -62,10 +62,9 @@ class CardsManagement {
   }
 
   bool placeCard(int place, String uid, int suit, int rank) {
-    bool didPlace = false;
     bool didCollectTrick = false;
+    // changes turn and sends message
     if (place >= 5 && place <= 7) {
-      didPlace = true;
       turn =
           players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
       sendMessage({
@@ -75,6 +74,7 @@ class CardsManagement {
         'turn': turn,
       }, uid);
     }
+    // updates card amounts
     if (place == SPMP.center1) {
       player1Cards -= 1;
     } else if (place == SPMP.center2) {
@@ -83,12 +83,44 @@ class CardsManagement {
       player3Cards -= 1;
     }
     // someone collected trick
-    if (didPlace &&
-        player1Cards == player2Cards &&
-        player2Cards == player3Cards) {
-      collectTrick(place);
+    collectTrick(place);
+    return didCollectTrick;
+  }
+
+  void collectWidow(int place, String uid) {
+    // if the new place is someones cards
+    if (place < 3) {
+      cards = cards.map((e) => e..update('uid', (value) => uid)).toList();
+    }
+    if (place == SPMP.player1) {
+      player1Cards += 2;
+    } else if (place == SPMP.player2) {
+      player2Cards += 2;
+    } else if (place == SPMP.player3) {
+      player3Cards += 2;
+    }
+  }
+
+  void dispose(int place) {
+    if (place == SPMP.disposed) {
+      player1Cards = 10;
+      player2Cards = 10;
+      player3Cards = 10;
+    }
+  }
+
+  void collectTrick(int place) {
+    if (player1Cards == player2Cards && player2Cards == player3Cards) {
+      if (place == SPMP.trick1) {
+        player1Tricks += 1;
+      } else if (place == SPMP.trick2) {
+        player2Tricks += 1;
+      } else if (place == SPMP.trick3) {
+        player3Tricks += 1;
+      }
       String collectUid;
       Map<String, dynamic> biggestCard;
+      // finds cards that were placed
       final placed = cards.where((element) =>
           element['place'] == SPMP.center1 ||
           element['place'] == SPMP.center2 ||
@@ -116,39 +148,6 @@ class CardsManagement {
           'method': SPMP.finishRound,
         });
       }
-    }
-    return didCollectTrick;
-  }
-
-  void collectWidow(int place, String uid) {
-    // if the new place is someones cards
-    if (place < 3) {
-      cards = cards.map((e) => e..update('uid', (value) => uid)).toList();
-    }
-    if (place == SPMP.player1) {
-      player1Cards += 2;
-    } else if (place == SPMP.player2) {
-      player2Cards += 2;
-    } else if (place == SPMP.player3) {
-      player3Cards += 2;
-    }
-  }
-
-  void dispose(int place) {
-    if (place == SPMP.disposed) {
-      player1Cards = 10;
-      player2Cards = 10;
-      player3Cards = 10;
-    }
-  }
-
-  void collectTrick(int place) {
-    if (place == SPMP.trick1) {
-      player1Tricks += 1;
-    } else if (place == SPMP.trick2) {
-      player2Tricks += 1;
-    } else if (place == SPMP.trick3) {
-      player3Tricks += 1;
     }
   }
 }
