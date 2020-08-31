@@ -175,6 +175,8 @@ class Cards extends ChangeNotifier {
       eRotation: isP1 ? null : rotation.face,
     );
     print(turn);
+    move([rank], [suit], turnIdx + 5, SPMP.place, turn == client.uid,
+        client.uid);
     final newCards = _getLocationCards(
       places.values[turnIdx],
       isP1 ? 30 : null,
@@ -184,8 +186,6 @@ class Cards extends ChangeNotifier {
     );
     // moves cards that haven't been collected to new place
     CardMoveExtension.alignCards(newCards, isP1, isP2, this);
-    move([rank], [suit], turnIdx + 5, SPMP.place, turn == client.uid,
-        client.uid);
     turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];
     // updates my cards if my turn
     if (turn == client.uid) {

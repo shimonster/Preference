@@ -41,6 +41,21 @@ class PlayingCardState extends State<PlayingCard>
   }
 
   @override
+  void initState() {
+    super.initState();
+    widget.positionStream.stream.listen((event) {
+      print('position stream: ${widget.suit.index}  ${widget.rank.index}');
+    });
+//    widget.rotationStream.stream.listen((event) {
+//      print('position stream');
+//    });
+    widget.positionStream.done.then((value) => print(
+        'position stream done: ${widget.suit.index}  ${widget.rank.index}'));
+    widget.rotationStream.done.then((value) => print(
+        'ROTATION stream done: ${widget.suit.index}  ${widget.rank.index}'));
+  }
+
+  @override
   void dispose() {
     super.dispose();
     widget.positionStream.close();
