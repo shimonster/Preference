@@ -1,12 +1,15 @@
 import 'dart:math';
 
+import './server.dart';
+
 import '../SPMP.dart';
 
 class CardsManagement {
-  CardsManagement(this.sendMessage);
+  CardsManagement(this.sendMessage, this.server);
 
   final void Function(Map<String, dynamic> message, [String exclude])
       sendMessage;
+  final Server server;
   List<Map<String, dynamic>> cards;
   Map<String, Map<String, dynamic>> players = {};
   String turn;
@@ -110,14 +113,10 @@ class CardsManagement {
   }
 
   void collectTrick(int place) {
-    if (player1Cards == player2Cards && player2Cards == player3Cards) {
-      if (place == SPMP.trick1) {
-        player1Tricks += 1;
-      } else if (place == SPMP.trick2) {
-        player2Tricks += 1;
-      } else if (place == SPMP.trick3) {
-        player3Tricks += 1;
-      }
+    if (player1Cards == player2Cards &&
+        player2Cards == player3Cards &&
+        server.gameController.gameState == SPMP.playing) {
+      print('collect trick server');
       String collectUid;
       Map<String, dynamic> biggestCard;
       // finds cards that were placed
@@ -138,6 +137,15 @@ class CardsManagement {
               element['rank'] == biggestCard['rank'])['uid'];
         }
       }
+      final pIdx = players.keys.toList().indexOf(collectUid);
+      print(pIdx);
+      if (pIdx == 0) {
+        player1Tricks += 1;
+      } else if (pIdx == 1) {
+        player2Tricks += 1;
+      } else {
+        player3Tricks += 1;
+      }
       sendMessage({
         'method': SPMP.trickCollected,
         'turn': turn,
@@ -146,6 +154,9 @@ class CardsManagement {
       if (player1Cards == 0) {
         sendMessage({
           'method': SPMP.finishRound,
+          'p1Tricks': player1Tricks,
+          'p2Tricks': player2Tricks,
+          'p3Tricks': player3Tricks,
         });
       }
     }

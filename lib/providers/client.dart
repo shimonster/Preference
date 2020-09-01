@@ -3,8 +3,9 @@ import 'dart:html';
 import 'dart:convert';
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-//import 'package:flutter/material.dart' as m;
+import 'package:flutter/material.dart' as m;
 
 import '../SPMP.dart';
 import './game.dart';
@@ -16,6 +17,7 @@ class Client extends ChangeNotifier {
   String uid;
   WebSocket ws;
   Game game;
+  BuildContext context;
   final startGameStream = StreamController.broadcast();
   final bidStream = StreamController.broadcast();
 
@@ -124,6 +126,16 @@ class Client extends ChangeNotifier {
               event['method'],
               false,
               event['uid']);
+        }
+        // finish-round finish-round finish-round finish-round finish-round
+        if (event['method'] == SPMP.finishRound) {
+          m.showDialog(
+            context: context,
+            builder: (ctx) => m.AlertDialog(
+              content: Text(
+                  '${event['p1Tricks']}     ${event['p2Tricks']}     ${event['p3Tricks']}'),
+            ),
+          );
         }
       },
       onDone: () {

@@ -20,7 +20,7 @@ class Server {
 
   void startServer() {
     print('server started');
-    cardsController = CardsManagement(sendMessage);
+    cardsController = CardsManagement(sendMessage, this);
     gameController = GameManagement(cardsController, sendMessage);
     HttpServer.bind('localhost', port).then(
       (server) {

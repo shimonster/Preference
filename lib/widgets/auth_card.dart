@@ -65,7 +65,7 @@ class _AuthCardState extends State<AuthCard> {
                         border: OutlineInputBorder(),
                       ),
                       inputFormatters: [
-                        WhitelistingTextInputFormatter.digitsOnly,
+                        FilteringTextInputFormatter.digitsOnly,
                       ],
                       onSaved: (input) {
                         _gameCode = int.parse(input.trim());
@@ -101,9 +101,8 @@ class _AuthCardState extends State<AuthCard> {
                             _isLoading = false;
                           });
                           Navigator.of(context).pop();
-                          Navigator.of(context).pushReplacementNamed(
-                            PreferenceScreen.routeName,
-                          );
+                          Navigator.of(context)
+                              .pushReplacementNamed(PreferenceScreen.routeName);
                           showDialog(
                               context: context,
                               builder: (ctx) {

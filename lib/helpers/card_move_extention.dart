@@ -165,6 +165,7 @@ class CardMoveExtension {
       angle sAngle,
       angle eAngle,
       Axis axis}) async {
+    print('align cards was run');
     (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)
         .forEach((element) {
       final newCard = newCards

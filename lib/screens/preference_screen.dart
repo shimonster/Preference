@@ -39,6 +39,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   @override
   void initState() {
     super.initState();
+    Provider.of<Client>(context, listen: false).context = context;
     Provider.of<Client>(context, listen: false).game.getCurrentGame().then(
           (_) => setState(() {
             _isLoading = false;
@@ -121,7 +122,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                               Text(client.game.cards.turn),
                           if (client.game.gameState == SPMP.playing &&
                               client.game.cards.turn == client.uid)
-                            PlaceTarget(),
+                            Center(child: PlaceTarget()),
                           // ---------------------------------
                           if (client.game.gameState == SPMP.bidding)
                             BiddingButtons(),
