@@ -36,7 +36,6 @@ class Server {
                 clientSockets.putIfAbsent(uid, () => ws);
                 print('player joined');
                 gameController.joinGame(uid, nickname);
-                cardsController.joinGame(uid, nickname);
                 sendMessage(
                   {
                     'method': SPMP.playerJoin,
@@ -109,12 +108,36 @@ class Server {
                           'players': gameController.players
                         });
                       }
+                      // accept-new-game accept-new-game accept-new-game accept-new-game
+                      if (event['method'] == SPMP.acceptNewRound) {
+                        gameController.players[event['uid']]
+                            ['hasAcceptedNewGame'] = true;
+                        if (gameController.players.values.toList().every(
+                            (element) => element['hasAcceptedNewGame'])) {
+                          gameController.players =
+                              gameController.players.map((key, value) {
+                            final newVal = value;
+                            newVal['hasAcceptedNewGame'] = false;
+                            return MapEntry(key, newVal);
+                          });
+                          cardsController.player1Tricks = 0;
+                          cardsController.player2Tricks = 0;
+                          cardsController.player3Tricks = 0;
+                          gameController.bidId = null;
+                          gameController.bid = null;
+                          final newCards = cardsController.randomize();
+                          sendMessage({
+                            'method': SPMP.startPlaying,
+                            'cards': newCards,
+                            'biddingId': gameController.biddingId,
+                          });
+                        }
+                      }
                     },
                     onDone: () {
                       print('listening to web socket finished');
                       clientSockets.remove(uid);
                       gameController.players.remove(uid);
-                      cardsController.players.remove(uid);
                       if (gameController.players.isEmpty) {
                         server.close();
                       }

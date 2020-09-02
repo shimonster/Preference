@@ -101,6 +101,12 @@ class GameManagement {
 
   void joinGame(String uid, String nickname) {
     players.putIfAbsent(
-        uid, () => {'nickname': nickname, 'isPlaying': false, 'hasBid': false});
+        uid,
+        () => {
+              'nickname': nickname,
+              'isPlaying': false,
+              'hasBid': false,
+              'hasAcceptedNewGame': false
+            });
   }
 }

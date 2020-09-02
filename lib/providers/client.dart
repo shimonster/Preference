@@ -3,7 +3,6 @@ import 'dart:html';
 import 'dart:convert';
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' as m;
 
@@ -17,7 +16,7 @@ class Client extends ChangeNotifier {
   String uid;
   WebSocket ws;
   Game game;
-  BuildContext context;
+  m.BuildContext context;
   final startGameStream = StreamController.broadcast();
   final bidStream = StreamController.broadcast();
 
@@ -88,8 +87,8 @@ class Client extends ChangeNotifier {
           game.biddingId = event['biddingId'];
           game.gameState = SPMP.bidding;
           startGameStream.add(true);
-          game.players =
-              Map<String, Map<String, dynamic>>.from(event['players']);
+          game.players = Map<String, Map<String, dynamic>>.from(
+              event['players'] ?? game.players);
           game.cards.setCards(List<Map>.from(event['cards'])
               .map<Card>((e) => Card(
                   ranks.values[e['rank']],
@@ -129,14 +128,29 @@ class Client extends ChangeNotifier {
         }
         // finish-round finish-round finish-round finish-round finish-round
         if (event['method'] == SPMP.finishRound) {
-          m.showDialog(
+          m
+              .showDialog(
             context: context,
             builder: (ctx) => m.AlertDialog(
-              content: Text(
-                  '${event['p1Tricks']}     ${event['p2Tricks']}     ${event['p3Tricks']}'),
+              content: m.Column(
+                children: [
+                  m.Text('${event['p1Tricks']}     '
+                      '${event['p2Tricks']}     '
+                      '${event['p3Tricks']}'),
+                ],
+              ),
             ),
-          );
+          )
+              .then((value) {
+            game.bidId = null;
+            game.bid = null;
+            game.isPlaying = false;
+            startGameStream.add('about to start new round');
+            sendMessage({'method': SPMP.acceptNewRound, 'uid': uid});
+          });
         }
+        // new-round new-round new-round new-round new-round new-round new-round
+        if (event['method'] == SPMP.newRound) {}
       },
       onDone: () {
         sendMessage({'method': SPMP.playerLeave, 'uid': uid});

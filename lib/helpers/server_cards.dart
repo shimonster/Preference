@@ -11,7 +11,6 @@ class CardsManagement {
       sendMessage;
   final Server server;
   List<Map<String, dynamic>> cards;
-  Map<String, Map<String, dynamic>> players = {};
   String turn;
   int player1Cards = 0;
   int player2Cards = 0;
@@ -19,12 +18,6 @@ class CardsManagement {
   int player1Tricks = 0;
   int player2Tricks = 0;
   int player3Tricks = 0;
-
-  void joinGame(String uid, String nickname) {
-    print('card join game');
-    players.putIfAbsent(
-        uid, () => {'nickname': nickname, 'isPlaying': false, 'hasBid': false});
-  }
 
   List<Map<String, dynamic>> randomize() {
     List<Map<String, dynamic>> addCard = [];
@@ -39,7 +32,8 @@ class CardsManagement {
     cards.shuffle(Random());
     cards.asMap().forEach((elemId, element) {
       if (elemId < 30) {
-        cards[elemId]['uid'] = players.keys.toList()[(elemId / 10).floor()];
+        cards[elemId]['uid'] =
+            server.gameController.players.keys.toList()[(elemId / 10).floor()];
       } else {
         cards[elemId]['uid'] = SPMP.widow;
       }
@@ -50,50 +44,49 @@ class CardsManagement {
     return cards;
   }
 
-  bool move(int rank, int suit, int place, [String uid]) {
-    bool didCollectTrick = false;
+  void move(int rank, int suit, int place, [String uid]) {
     cards.firstWhere((element) =>
         element['rank'] == rank && element['suit'] == suit)['place'] = place;
     print(place);
     // placing a card
-    didCollectTrick = placeCard(place, uid, suit, rank);
+    placeCard(place, uid, suit, rank);
     // collecting widow
     collectWidow(place, uid);
     // disposed cards
     dispose(place);
-    return didCollectTrick;
   }
 
-  bool placeCard(int place, String uid, int suit, int rank) {
-    bool didCollectTrick = false;
+  void placeCard(int place, String uid, int suit, int rank) {
     // changes turn and sends message
     if (place >= 5 && place <= 7) {
-      turn =
-          players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
+      turn = server.gameController.players.keys.toList()[
+          (server.gameController.players.keys.toList().indexOf(uid) + 1) % 3];
       sendMessage({
         'method': SPMP.place,
         'suit': suit,
         'rank': rank,
         'turn': turn,
       }, uid);
+      // updates card amounts
+      if (place == SPMP.center1) {
+        player1Cards -= 1;
+      } else if (place == SPMP.center2) {
+        player2Cards -= 1;
+      } else if (place == SPMP.center3) {
+        player3Cards -= 1;
+      }
+      // someone collected trick
+      collectTrick(place);
     }
-    // updates card amounts
-    if (place == SPMP.center1) {
-      player1Cards -= 1;
-    } else if (place == SPMP.center2) {
-      player2Cards -= 1;
-    } else if (place == SPMP.center3) {
-      player3Cards -= 1;
-    }
-    // someone collected trick
-    collectTrick(place);
-    return didCollectTrick;
   }
 
   void collectWidow(int place, String uid) {
     // if the new place is someones cards
     if (place < 3) {
-      cards = cards.map((e) => e..update('uid', (value) => uid)).toList();
+      cards = cards
+          .map((e) =>
+              e..update('uid', (value) => value == SPMP.widow ? uid : value))
+          .toList();
     }
     if (place == SPMP.player1) {
       player1Cards += 2;
@@ -126,25 +119,32 @@ class CardsManagement {
           element['place'] == SPMP.center3);
       // determines the biggest card
       for (var i in placed) {
+        print(i);
         if (biggestCard == null ||
             (i['rank'] > biggestCard['rank'] &&
                 i['suit'] >= biggestCard['suit']) ||
             i['suit'] > biggestCard['suit']) {
-          print(i);
           biggestCard = i;
           collectUid = cards.firstWhere((element) =>
               element['suit'] == biggestCard['suit'] &&
               element['rank'] == biggestCard['rank'])['uid'];
         }
       }
-      final pIdx = players.keys.toList().indexOf(collectUid);
+      final pIdx =
+          server.gameController.players.keys.toList().indexOf(collectUid);
       print(pIdx);
-      if (pIdx == 0) {
+      final isP1 = pIdx == 0;
+      final isP2 = pIdx == 1;
+      if (isP1) {
         player1Tricks += 1;
-      } else if (pIdx == 1) {
+      } else if (isP2) {
         player2Tricks += 1;
       } else {
         player3Tricks += 1;
+      }
+      for (var i in placed) {
+        move(i['rank'], i['suit'],
+            isP1 ? SPMP.trick1 : isP2 ? SPMP.trick2 : SPMP.trick3);
       }
       sendMessage({
         'method': SPMP.trickCollected,

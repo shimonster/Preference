@@ -13,6 +13,8 @@ class SPMP {
   static const playerLeave = 'PLAYERLEAVE';
   static const trickCollected = 'TRICKCOLLECTED';
   static const finishRound = 'FINISHROUND';
+  static const newRound = 'NEWROUND';
+  static const acceptNewRound = 'ACCEPTNEWROUND';
 
   // cards
   static const spade = 0;
