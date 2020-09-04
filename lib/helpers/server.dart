@@ -98,6 +98,8 @@ class Server {
                             'method': SPMP.startPlaying,
                             'cards': cards,
                             'biddingId': gameController.biddingId,
+                            'spectating':
+                                gameController.players.keys.toList().sublist(2),
                           });
                         }
                       }
@@ -110,12 +112,12 @@ class Server {
                       }
                       // accept-new-game accept-new-game accept-new-game accept-new-game
                       if (event['method'] == SPMP.acceptNewRound) {
-                        gameController.players[event['uid']]
+                        gameController.allPlayers[event['uid']]
                             ['hasAcceptedNewGame'] = true;
                         if (gameController.players.values.toList().every(
                             (element) => element['hasAcceptedNewGame'])) {
-                          gameController.players =
-                              gameController.players.map((key, value) {
+                          gameController.allPlayers =
+                              gameController.allPlayers.map((key, value) {
                             final newVal = value;
                             newVal['hasAcceptedNewGame'] = false;
                             return MapEntry(key, newVal);
@@ -137,7 +139,7 @@ class Server {
                     onDone: () {
                       print('listening to web socket finished');
                       clientSockets.remove(uid);
-                      gameController.players.remove(uid);
+                      gameController.allPlayers.remove(uid);
                       if (gameController.players.isEmpty) {
                         server.close();
                       }

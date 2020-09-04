@@ -9,59 +9,22 @@ class GameManagement {
   Map<String, int> bid;
   String bidId;
   String biddingId;
-  Map<String, Map<String, dynamic>> players = {};
+  Map<String, Map<String, dynamic>> get players {
+    return allPlayers == null
+        ? null
+        : allPlayers.entries.toList().fold(
+            {},
+            (previousValue, element) => previousValue.keys.toList().length < 3
+                ? {...previousValue, element.key: element.value}
+                : previousValue);
+  }
+
+  Map<String, Map<String, dynamic>> allPlayers = {};
   int dealer = 0;
   bool isPlaying = false;
   String gameState = SPMP.notStarted;
 
-  void placeBid(int num, int suit, String uid) {
-    print('place bid was run');
-    if (num == -1) {
-      // player passed
-      print('plater passed');
-      players[uid]['hasBid'] = true;
-      biddingId =
-          players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
-      sendMessage({
-        'method': SPMP.pass,
-        'rank': num,
-        'suit': suit,
-        'uid': uid,
-        'turn': biddingId,
-      }, uid);
-    } else {
-      // player placed bid :)
-      final pBid = () {
-        print('a bid was plaed');
-        bid = {'suit': suit, 'rank': num};
-        bidId = uid;
-        biddingId =
-            players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
-        players.forEach((key, value) {
-          if (key == uid) {
-            players[uid]['hasBid'] = true;
-          } else {
-            players[key]['hasBid'] = false;
-          }
-        });
-        sendMessage({
-          'method': SPMP.bid,
-          'rank': num,
-          'suit': suit,
-          'uid': uid,
-          'turn': biddingId,
-        }, uid);
-      };
-      if (bid == null) {
-        print('no bids so far');
-        pBid();
-      } else if ((bid['suit'] > suit && bid['rank'] >= num) ||
-          bid['rank'] > num) {
-        print('there was already a bid');
-        pBid();
-      }
-    }
-
+  void collectWidow() {
     print(players.values.toList().map((e) => e['hasBid']).toList());
     // if everyone bid or passed
     if (players.values.every((element) => element['hasBid'])) {
@@ -78,6 +41,51 @@ class GameManagement {
     }
   }
 
+  void pBid(String uid, int suit, int num) {
+    print('a bid was plaed');
+    bid = {'suit': suit, 'rank': num};
+    bidId = uid;
+    biddingId =
+        players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
+    players.forEach((key, value) {
+      allPlayers[key]['hasBid'] = key == uid;
+    });
+  }
+
+  void placeBid(int num, int suit, String uid) {
+    print('place bid was run');
+    void sendBidMessage() {
+      sendMessage({
+        'method': num == -1 ? SPMP.pass : SPMP.bid,
+        'rank': num,
+        'suit': suit,
+        'uid': uid,
+        'turn': biddingId,
+      }, uid);
+    }
+
+    if (bid != null) {
+      print(
+          '${bid == null} || (${bid['suit'] > suit} && ${bid['rank'] >= num}) ||'
+          '${bid['rank'] > num}');
+    }
+
+    if (num == -1) {
+      print('player passed');
+      allPlayers[uid]['hasBid'] = true;
+      biddingId =
+          players.keys.toList()[(players.keys.toList().indexOf(uid) + 1) % 3];
+      sendBidMessage();
+    } else if (bid == null ||
+        (suit > bid['suit'] && num >= bid['rank']) ||
+        num > bid['rank']) {
+      print('a valid bid was placed');
+      pBid(uid, suit, num);
+      sendBidMessage();
+    }
+    collectWidow();
+  }
+
   void declareGame(int rank, int suit) {
     bid = {'rank': rank, 'suit': suit};
     gameState = SPMP.playing;
@@ -90,7 +98,7 @@ class GameManagement {
   }
 
   bool acceptPlay(String uid) {
-    players[uid]['isPlaying'] = true;
+    allPlayers[uid]['isPlaying'] = true;
     if (players.values.every((element) => element['isPlaying'])) {
       isPlaying = true;
       gameState = SPMP.bidding;
@@ -100,7 +108,7 @@ class GameManagement {
   }
 
   void joinGame(String uid, String nickname) {
-    players.putIfAbsent(
+    allPlayers.putIfAbsent(
         uid,
         () => {
               'nickname': nickname,

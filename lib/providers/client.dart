@@ -19,6 +19,7 @@ class Client extends ChangeNotifier {
   m.BuildContext context;
   final startGameStream = StreamController.broadcast();
   final bidStream = StreamController.broadcast();
+  bool isSpectating = false;
 
   void init() {
     game = Game(this);

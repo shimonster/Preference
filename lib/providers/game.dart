@@ -71,12 +71,9 @@ class Game extends ChangeNotifier {
           }
         });
       };
-      if (bid == null) {
-        print('no bid yet');
-        pBid();
-      } else if ((client.game.bid['suit'] > suit &&
-              client.game.bid['rank'] >= num) ||
-          client.game.bid['rank'] > num) {
+      if (bid == null ||
+          (suit > bid['suit'] && num >= bid['rank']) ||
+          num > bid['rank']) {
         print('already a bid');
         pBid();
       }
