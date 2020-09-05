@@ -9,20 +9,20 @@ class GameManagement {
   Map<String, int> bid;
   String bidId;
   String biddingId;
-  Map<String, Map<String, dynamic>> get players {
-    return allPlayers == null
-        ? null
-        : allPlayers.entries.toList().fold(
-            {},
-            (previousValue, element) => previousValue.keys.toList().length < 3
-                ? {...previousValue, element.key: element.value}
-                : previousValue);
-  }
-
   Map<String, Map<String, dynamic>> allPlayers = {};
   int dealer = 0;
   bool isPlaying = false;
   String gameState = SPMP.notStarted;
+
+  Map<String, Map<String, dynamic>> get players {
+    return {
+      ...allPlayers
+    }..removeWhere((key, value) => spectating.any((element) => element == key));
+  }
+
+  List<String> get spectating {
+    return allPlayers.length < 2 ? [] : allPlayers.keys.toList().sublist(2);
+  }
 
   void collectWidow() {
     print(players.values.toList().map((e) => e['hasBid']).toList());

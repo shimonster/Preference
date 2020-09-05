@@ -98,8 +98,7 @@ class Server {
                             'method': SPMP.startPlaying,
                             'cards': cards,
                             'biddingId': gameController.biddingId,
-                            'spectating':
-                                gameController.players.keys.toList().sublist(2),
+                            'spectating': gameController.spectating,
                           });
                         }
                       }
@@ -162,12 +161,13 @@ class Server {
 
   Map<String, dynamic> sortPlayers(String uid) {
     Map<String, Map<String, dynamic>> newPlayers = {...gameController.players};
+    print('sort players was run');
     void sort() {
       if (newPlayers.keys.toList().first == uid) {
         return;
       }
-      print(
-          'list not sorted correctly: $uid: ${newPlayers.keys.toList().first}, ${newPlayers.keys.toList()[1]}');
+//      print(
+//          'list not sorted correctly: $uid: ${newPlayers.keys.toList().first}, ${newPlayers.keys.toList()[1]}');
       final entries = newPlayers.entries.toList();
       final first = entries[0];
       entries.add(first);
@@ -192,9 +192,15 @@ class Server {
     clientSockets.forEach((key, value) {
       if (key != exclude) {
         if (message['method'] == SPMP.startPlaying) {
-          final players = sortPlayers(key);
+          Map<String, dynamic> players;
+          print(gameController.spectating);
+          if (!gameController.spectating.any((element) => element == key)) {
+            players = sortPlayers(key);
+          } else {
+            print('player is spectating');
+            players = gameController.players;
+          }
           print(key);
-          print(gameController.players);
           value.add(json.encode({...message, ...players}));
         } else {
           value.add(json.encode(message));
