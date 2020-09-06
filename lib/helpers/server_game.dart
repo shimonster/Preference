@@ -21,7 +21,9 @@ class GameManagement {
   }
 
   List<String> get spectating {
-    return allPlayers.length < 2 ? [] : allPlayers.keys.toList().sublist(2);
+    return allPlayers.length < 3
+        ? []
+        : allPlayers.keys.toList().sublist(2, allPlayers.length - 1);
   }
 
   void collectWidow() {

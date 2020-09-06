@@ -73,7 +73,9 @@ class CardMoveExtension {
     if (sAngle != null && eAngle != null) {
       angleAnimation.addListener(() {
         currentRotationZ = angleAnimation.value;
-        rotationStream.add('rotation');
+        try {
+          rotationStream.add('rotation');
+        } catch (error) {}
       });
     }
     if (sRotation != null && eRotation != null) {
@@ -87,7 +89,9 @@ class CardMoveExtension {
         axis == Axis.horizontal
             ? currentRotationX = rotationAnimation.value
             : currentRotationY = rotationAnimation.value;
-        rotationStream.add('rotation');
+        try {
+          rotationStream.add('rotation');
+        } catch (error) {}
       });
     }
     await animationController.forward().then((value) {
@@ -104,7 +108,9 @@ class CardMoveExtension {
     currentBottom = eBottom;
     currentRight = eRight;
     currentLeft = eLeft;
-    positionStream.add('position');
+    try {
+      positionStream.add('position');
+    } catch (error) {}
     print('after move add to position stream');
     await Future.delayed(duration);
     print('after move card future');

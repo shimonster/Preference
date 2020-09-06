@@ -152,6 +152,9 @@ class CardsManagement {
         'uid': collectUid,
       });
       if (player1Cards == 0) {
+        final last = server.gameController.allPlayers.entries.last;
+        server.gameController.allPlayers.removeWhere((key, value) => key == last.key);
+        server.gameController.allPlayers = {last.key: last.value, ...server.gameController.allPlayers}
         sendMessage({
           'method': SPMP.finishRound,
           'p1Tricks': player1Tricks,

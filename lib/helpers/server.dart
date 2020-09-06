@@ -198,7 +198,7 @@ class Server {
             players = sortPlayers(key);
           } else {
             print('player is spectating');
-            players = gameController.players;
+            players = {'players': gameController.players};
           }
           print(key);
           value.add(json.encode({...message, ...players}));
