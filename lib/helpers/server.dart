@@ -121,9 +121,6 @@ class Server {
                             newVal['hasAcceptedNewGame'] = false;
                             return MapEntry(key, newVal);
                           });
-                          cardsController.player1Tricks = 0;
-                          cardsController.player2Tricks = 0;
-                          cardsController.player3Tricks = 0;
                           gameController.bidId = null;
                           gameController.bid = null;
                           final newCards = cardsController.randomize();

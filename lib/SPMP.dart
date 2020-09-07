@@ -15,6 +15,7 @@ class SPMP {
   static const finishRound = 'FINISHROUND';
   static const newRound = 'NEWROUND';
   static const acceptNewRound = 'ACCEPTNEWROUND';
+  static const startCollecting = 'STARTCOLLECTING';
 
   // cards
   static const spade = 0;
@@ -52,4 +53,5 @@ class SPMP {
   static const playing = 'PLAYING';
   static const showingScore = 'SHOWINGSCORE';
   static const notStarted = 'NOTSTARTED';
+  static const collectingWidow = 'COLLECTINGWIDOW';
 }

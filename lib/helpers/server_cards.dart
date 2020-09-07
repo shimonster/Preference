@@ -15,11 +15,11 @@ class CardsManagement {
   int player1Cards = 0;
   int player2Cards = 0;
   int player3Cards = 0;
-  int player1Tricks = 0;
-  int player2Tricks = 0;
-  int player3Tricks = 0;
+  Map<String, int> playerTricks;
 
   List<Map<String, dynamic>> randomize() {
+    playerTricks = server.gameController.allPlayers.entries.fold(
+        {}, (previousValue, element) => {...previousValue, element.key: 0});
     List<Map<String, dynamic>> addCard = [];
     for (var i = 0; i < 32; i++) {
       addCard.add({
@@ -135,13 +135,7 @@ class CardsManagement {
       print(pIdx);
       final isP1 = pIdx == 0;
       final isP2 = pIdx == 1;
-      if (isP1) {
-        player1Tricks += 1;
-      } else if (isP2) {
-        player2Tricks += 1;
-      } else {
-        player3Tricks += 1;
-      }
+      playerTricks[collectUid] += 1;
       for (var i in placed) {
         move(i['rank'], i['suit'],
             isP1 ? SPMP.trick1 : isP2 ? SPMP.trick2 : SPMP.trick3);
@@ -153,13 +147,15 @@ class CardsManagement {
       });
       if (player1Cards == 0) {
         final last = server.gameController.allPlayers.entries.last;
-        server.gameController.allPlayers.removeWhere((key, value) => key == last.key);
-        server.gameController.allPlayers = {last.key: last.value, ...server.gameController.allPlayers}
+        server.gameController.allPlayers
+            .removeWhere((key, value) => key == last.key);
+        server.gameController.allPlayers = {
+          last.key: last.value,
+          ...server.gameController.allPlayers
+        };
         sendMessage({
           'method': SPMP.finishRound,
-          'p1Tricks': player1Tricks,
-          'p2Tricks': player2Tricks,
-          'p3Tricks': player3Tricks,
+          'playerTricks': playerTricks,
         });
       }
     }

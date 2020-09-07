@@ -134,11 +134,11 @@ class Client extends ChangeNotifier {
             context: context,
             builder: (ctx) => m.AlertDialog(
               content: m.Column(
-                children: [
-                  m.Text('${event['p1Tricks']}     '
-                      '${event['p2Tricks']}     '
-                      '${event['p3Tricks']}'),
-                ],
+                mainAxisSize: m.MainAxisSize.min,
+                children: Map<String, int>.from(event['playerTricks'])
+                    .entries
+                    .map((value) => m.Text('$value'))
+                    .toList(),
               ),
             ),
           )
@@ -150,8 +150,8 @@ class Client extends ChangeNotifier {
             sendMessage({'method': SPMP.acceptNewRound, 'uid': uid});
           });
         }
-        // new-round new-round new-round new-round new-round new-round new-round
-        if (event['method'] == SPMP.newRound) {}
+        // collecting-widow collecting-widow collecting-widow collecting-widow
+        if (event['method'] == SPMP.collectingWidow) {}
       },
       onDone: () {
         sendMessage({'method': SPMP.playerLeave, 'uid': uid});
