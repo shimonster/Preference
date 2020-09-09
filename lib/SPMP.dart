@@ -16,6 +16,7 @@ class SPMP {
   static const newRound = 'NEWROUND';
   static const acceptNewRound = 'ACCEPTNEWROUND';
   static const startCollecting = 'STARTCOLLECTING';
+  static const collectSingleWidow = 'COLLECTSINGLEWIDOW';
 
   // cards
   static const spade = 0;

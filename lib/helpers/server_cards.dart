@@ -105,59 +105,86 @@ class CardsManagement {
     }
   }
 
+  String findBiggestCard(
+      List<Map<String, dynamic>> placed, bool isCollectingWidow) {
+    String collectUid;
+    Map<String, dynamic> biggestCard;
+    // determines the biggest card
+    for (var i in placed) {
+      print(i);
+      final condish = (i['rank'] > biggestCard['rank'] &&
+              i['suit'] >= biggestCard['suit']) ||
+          i['suit'] > biggestCard['suit'];
+      if (biggestCard == null || isCollectingWidow ? !condish : condish) {
+        biggestCard = i;
+        collectUid = cards.firstWhere((element) =>
+            element['suit'] == biggestCard['suit'] &&
+            element['rank'] == biggestCard['rank'])['uid'];
+      }
+    }
+    return collectUid;
+  }
+
+  void moveCollectedTrick(bool isCollectingWidow, String collectUid,
+      List<Map<String, dynamic>> placed) {
+    final pIdx =
+        server.gameController.players.keys.toList().indexOf(collectUid);
+    print(pIdx);
+    final isP1 = pIdx == 0;
+    final isP2 = pIdx == 1;
+    playerTricks[collectUid] += 1;
+    for (var i in placed) {
+      move(i['rank'], i['suit'],
+          isP1 ? SPMP.trick1 : isP2 ? SPMP.trick2 : SPMP.trick3);
+    }
+    if (isCollectingWidow) {
+      final widow =
+          cards.firstWhere((element) => element['place'] == SPMP.widow);
+      move(widow['rank'], widow['suit'],
+          isP1 ? SPMP.player1 : isP2 ? SPMP.player2 : SPMP.player3);
+    }
+  }
+
+  void endGame() {
+    if (player1Cards == 0) {
+      final last = server.gameController.allPlayers.entries.last;
+      server.gameController.allPlayers
+          .removeWhere((key, value) => key == last.key);
+      server.gameController.allPlayers = {
+        last.key: last.value,
+        ...server.gameController.allPlayers
+      };
+      sendMessage({
+        'method': SPMP.finishRound,
+        'playerTricks': playerTricks,
+      });
+    }
+  }
+
   void collectTrick(int place) {
     if (player1Cards == player2Cards &&
         player2Cards == player3Cards &&
-        server.gameController.gameState == SPMP.playing) {
-      print('collect trick server');
-      String collectUid;
-      Map<String, dynamic> biggestCard;
-      // finds cards that were placed
-      final placed = cards.where((element) =>
-          element['place'] == SPMP.center1 ||
-          element['place'] == SPMP.center2 ||
-          element['place'] == SPMP.center3);
-      // determines the biggest card
-      for (var i in placed) {
-        print(i);
-        if (biggestCard == null ||
-            (i['rank'] > biggestCard['rank'] &&
-                i['suit'] >= biggestCard['suit']) ||
-            i['suit'] > biggestCard['suit']) {
-          biggestCard = i;
-          collectUid = cards.firstWhere((element) =>
-              element['suit'] == biggestCard['suit'] &&
-              element['rank'] == biggestCard['rank'])['uid'];
-        }
-      }
-      final pIdx =
-          server.gameController.players.keys.toList().indexOf(collectUid);
-      print(pIdx);
-      final isP1 = pIdx == 0;
-      final isP2 = pIdx == 1;
-      playerTricks[collectUid] += 1;
-      for (var i in placed) {
-        move(i['rank'], i['suit'],
-            isP1 ? SPMP.trick1 : isP2 ? SPMP.trick2 : SPMP.trick3);
-      }
+        (server.gameController.gameState == SPMP.playing ||
+            server.gameController.gameState == SPMP.collectingWidow)) {
+      final isCollectingWidow =
+          server.gameController.gameState == SPMP.collectingWidow;
+      final placed = cards
+          .where((element) =>
+              element['place'] == SPMP.center1 ||
+              element['place'] == SPMP.center2 ||
+              element['place'] == SPMP.center3)
+          .toList();
+      final collectUid = findBiggestCard(placed, isCollectingWidow);
+      moveCollectedTrick(isCollectingWidow, collectUid, placed);
+      final widow =
+          cards.firstWhere((element) => element['place'] == SPMP.widow);
       sendMessage({
         'method': SPMP.trickCollected,
         'turn': turn,
         'uid': collectUid,
+        'widow rank': isCollectingWidow ? widow['rank'] : null,
+        'widow suit': isCollectingWidow ? widow['suit'] : null,
       });
-      if (player1Cards == 0) {
-        final last = server.gameController.allPlayers.entries.last;
-        server.gameController.allPlayers
-            .removeWhere((key, value) => key == last.key);
-        server.gameController.allPlayers = {
-          last.key: last.value,
-          ...server.gameController.allPlayers
-        };
-        sendMessage({
-          'method': SPMP.finishRound,
-          'playerTricks': playerTricks,
-        });
-      }
     }
   }
 }

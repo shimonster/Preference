@@ -120,7 +120,9 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                               Text('my turn!')
                             else
                               Text(client.game.cards.turn),
-                          if (client.game.gameState == SPMP.playing &&
+                          if ((client.game.gameState == SPMP.playing ||
+                                  client.game.gameState ==
+                                      SPMP.collectingWidow) &&
                               client.game.cards.turn == client.uid)
                             Center(child: PlaceTarget()),
                           // ---------------------------------

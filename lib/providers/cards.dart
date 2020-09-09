@@ -55,6 +55,14 @@ class Card {
   String toString() {
     return '$rank, $suit, $place';
   }
+
+  @override
+  int get hashCode => int.parse('$rank$suit');
+
+  @override
+  bool operator ==(Object other) {
+    return hashCode == other.hashCode;
+  }
 }
 
 class Cards extends ChangeNotifier {
@@ -141,6 +149,23 @@ class Cards extends ChangeNotifier {
     }
   }
 
+  void collectSingleTrick(int rank, int suit, String uid) {
+    final playerIdx = client.game.players.keys.toList().indexOf(uid);
+    final isP1 = playerIdx == 0;
+    final isP2 = playerIdx == 1;
+    final collectingCard = _cards.firstWhere(
+        (element) => element.rank.index == rank && element.suit.index == suit);
+    move(
+        [collectingCard.rank.index],
+        [collectingCard.suit.index],
+        isP1 ? SPMP.player1 : isP2 ? SPMP.player2 : SPMP.player3,
+        SPMP.collectSingleWidow,
+        false,
+        uid);
+    final newCards = _getLocationCards(playerIdx);
+    CardMoveExtension.alignCards(newCards, isP1, isP2, this);
+  }
+
   void placeCard(int rank, int suit, [String nTurn]) {
     final turnIdx = client.game.players.keys.toList().indexOf(turn);
     print(turnIdx);
@@ -177,20 +202,14 @@ class Cards extends ChangeNotifier {
     print(turn);
     move([rank], [suit], turnIdx + 5, SPMP.place, turn == client.uid,
         client.uid);
-    final newCards = _getLocationCards(
-      places.values[turnIdx],
-      isP1 ? 30 : null,
-      isP1 ? null : 0,
-      isP1 ? 0 : isP2 ? null : 30,
-      isP2 ? 30 : null,
-    );
-    // moves cards that haven't been collected to new place
-    CardMoveExtension.alignCards(newCards, isP1, isP2, this);
-    turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];
+    final newCards = _getLocationCards(turnIdx);
     // updates my cards if my turn
     if (turn == client.uid) {
       p1Cards.forEach((element) => element.rotationStream.add('my turn'));
     }
+    // moves cards that haven't been collected to new place
+    CardMoveExtension.alignCards(newCards, isP1, isP2, this);
+    turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];
     print('before add to card stream');
     cardStream.add('placed');
     print('after add to card stream');
@@ -265,12 +284,7 @@ class Cards extends ChangeNotifier {
     final isP1 = place == 0;
     final isP2 = place == 1;
     print((isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).length);
-    final newCards = _getLocationCards(
-        places.values[place],
-        place == 0 ? 30 : null,
-        place == 0 ? null : 0,
-        place == 0 ? 0 : place == 1 ? null : 30,
-        place == 1 ? 30 : null);
+    final newCards = _getLocationCards(place);
     CardMoveExtension.alignCards(newCards, isP1, isP2, this);
     client.game.gameState = SPMP.declaring;
     cardStream.add('diposed');
@@ -278,10 +292,10 @@ class Cards extends ChangeNotifier {
 
   void setCards(List<Card> newCards) {
     _cards = newCards;
-    p1Cards = _getLocationCards(places.player1, 30, null, 0, null);
-    p2Cards = _getLocationCards(places.player2, null, 0, null, 30);
-    p3Cards = _getLocationCards(places.player3, null, 0, 30, null);
-    widows = _getLocationCards(places.widow, null, 30, 0, null);
+    p1Cards = _createPlayerCards(SPMP.player1);
+    p2Cards = _createPlayerCards(SPMP.player2);
+    p3Cards = _createPlayerCards(SPMP.player3);
+    widows = _createPlayerCards(SPMP.widow);
   }
 
   List<T> sortCards<T>(List crds) {
@@ -307,12 +321,7 @@ class Cards extends ChangeNotifier {
     if (place == 0) {
       p1Cards = sortCards(p1Cards);
     }
-    final newCards = _getLocationCards(
-        places.values[place],
-        place == 0 ? 30 : null,
-        place == 0 ? null : 0,
-        place == 0 ? 0 : place == 1 ? null : 30,
-        place == 1 ? 30 : null);
+    final newCards = _getLocationCards(place);
     CardMoveExtension.alignCards(
       newCards,
       isP1,
@@ -334,30 +343,41 @@ class Cards extends ChangeNotifier {
     return start + offset;
   }
 
-  List<PlayingCard> _getLocationCards(
-      places place, double bottom, double top, double right, double left) {
+  List<Map<String, dynamic>> _getLocationCards(int place) {
     var thisCards = [
-      ..._cards.where((element) => element.place == place).toList()
+      ..._cards.where((element) => element.place.index == place).toList()
     ];
     int i = -1;
     thisCards = sortCards(thisCards);
     final l = thisCards.length;
     return thisCards.map((e) {
       i++;
-      return PlayingCard(
-        e.suit,
-        e.rank,
-        top: top == 0
-            ? findSideLocation(
-                l, i, true, width * PlayingCard.multiplySizeHeight)
-            : top,
-        right: right == 0
+      return {
+        'suit': e.suit,
+        'rank': e.rank,
+        'top': place == 0
+            ? null
+            : findSideLocation(
+                l, i, true, width * PlayingCard.multiplySizeHeight),
+        'right': place == 0
             ? findSideLocation(
                 l, i, false, width * PlayingCard.multiplySizeWidth)
-            : right,
-        bottom: bottom,
-        left: left,
-      );
+            : place == 1 ? null : 30,
+        'bottom': place == 0 ? 30 : null,
+        'left': place == 1 ? 30 : null,
+      };
     }).toList();
+  }
+
+  List<PlayingCard> _createPlayerCards(int player) {
+    final newCards = _getLocationCards(player);
+    final newPlayingCards = newCards
+        .map((e) => PlayingCard(e['suit'], e['rank'],
+            top: e['top'],
+            bottom: e['bottom'],
+            right: e['right'],
+            left: e['left']))
+        .toList();
+    return newPlayingCards;
   }
 }

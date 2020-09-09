@@ -31,6 +31,8 @@ class PlayingCard extends StatefulWidget with CardMoveExtension {
 class PlayingCardState extends State<PlayingCard>
     with SingleTickerProviderStateMixin {
   c.Card get thisCard {
+    print(widget.rank);
+    print(widget.suit);
     final card = Provider.of<Client>(context, listen: false)
         .game
         .cards
@@ -69,7 +71,7 @@ class PlayingCardState extends State<PlayingCard>
     return StreamBuilder(
       stream: widget.positionStream.stream,
       builder: (context, snapshot) {
-        print('position builder was run');
+        print('position builder was run: $thisCard');
         return Positioned(
 //          duration: Duration(seconds: 1),
 //          curve: Curves.easeInOut,

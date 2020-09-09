@@ -151,7 +151,10 @@ class Client extends ChangeNotifier {
           });
         }
         // collecting-widow collecting-widow collecting-widow collecting-widow
-        if (event['method'] == SPMP.collectingWidow) {}
+        if (event['method'] == SPMP.collectingWidow) {
+          game.gameState = SPMP.collectingWidow;
+          game.cards.turn = event['turn'];
+        }
       },
       onDone: () {
         sendMessage({'method': SPMP.playerLeave, 'uid': uid});

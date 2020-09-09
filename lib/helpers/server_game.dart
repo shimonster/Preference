@@ -44,7 +44,7 @@ class GameManagement {
       } else {
         gameState = SPMP.collectingWidow;
         sendMessage(
-            {'method': SPMP.collectWidow, 'uid': players.keys.toList()[0]});
+            {'method': SPMP.startCollecting, 'uid': players.keys.toList()[0]});
       }
     }
   }

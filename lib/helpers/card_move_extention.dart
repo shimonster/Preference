@@ -165,7 +165,7 @@ class CardMoveExtension {
   }
 
   static Future<void> alignCards(
-      List<PlayingCard> newCards, bool isP1, bool isP2, Cards cards,
+      List<Map<String, dynamic>> newCards, bool isP1, bool isP2, Cards cards,
       {rotation sRotation,
       rotation eRotation,
       angle sAngle,
@@ -174,14 +174,14 @@ class CardMoveExtension {
     print('align cards was run');
     (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)
         .forEach((element) {
-      final newCard = newCards
-          .firstWhere((e) => e.rank == element.rank && e.suit == element.suit);
+      final newCard = newCards.firstWhere(
+          (e) => e['rank'] == element.rank && e['suit'] == element.suit);
       element.moveAndTwist(
         Duration(milliseconds: 200),
-        eBottom: newCard.bottom,
-        eTop: newCard.top,
-        eRight: newCard.right,
-        eLeft: newCard.left,
+        eBottom: newCard['bottom'],
+        eTop: newCard['top'],
+        eRight: newCard['right'],
+        eLeft: newCard['left'],
         sAngle: sAngle,
         eAngle: eAngle,
         axis: axis,
