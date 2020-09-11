@@ -64,6 +64,7 @@ class Server {
                       }
                       // place place place place place place place place place
                       if (event['method'] == SPMP.place) {
+                        print(cardsController.turn);
                         cardsController.move(
                           event['rank'],
                           event['suit'],
@@ -179,7 +180,7 @@ class Server {
     }
 
     sort();
-    print('$newPlayers  $uid');
+//    print('$newPlayers  $uid');
     return {'players': newPlayers};
   }
 
@@ -197,6 +198,7 @@ class Server {
             print('player is spectating');
             players = {'players': gameController.players};
           }
+          print(players);
           print(key);
           value.add(json.encode({...message, ...players}));
         } else {

@@ -136,8 +136,9 @@ class Cards extends ChangeNotifier {
   void collectTrick(int pNum) {
     final isP1 = pNum == 0;
     final isP2 = pNum == 1;
-    for (var i = 0; i < 3; i++) {
-      placed[i]
+    for (var i in placed) {
+      placed
+          .firstWhere((element) => element == i)
           .move(
             Duration(milliseconds: 200),
             eTop: isP1 ? null : height / 2,
@@ -147,23 +148,9 @@ class Cards extends ChangeNotifier {
           )
           .then((value) => placed = []);
     }
-  }
-
-  void collectSingleTrick(int rank, int suit, String uid) {
-    final playerIdx = client.game.players.keys.toList().indexOf(uid);
-    final isP1 = playerIdx == 0;
-    final isP2 = playerIdx == 1;
-    final collectingCard = _cards.firstWhere(
-        (element) => element.rank.index == rank && element.suit.index == suit);
-    move(
-        [collectingCard.rank.index],
-        [collectingCard.suit.index],
-        isP1 ? SPMP.player1 : isP2 ? SPMP.player2 : SPMP.player3,
-        SPMP.collectSingleWidow,
-        false,
-        uid);
-    final newCards = _getLocationCards(playerIdx);
-    CardMoveExtension.alignCards(newCards, isP1, isP2, this);
+    if (widows.isNotEmpty && client.game.bidId == null) {
+      placeWidowInMiddle(widows[0].suit.index, widows[0].rank.index);
+    }
   }
 
   void placeCard(int rank, int suit, [String nTurn]) {
@@ -311,6 +298,23 @@ class Cards extends ChangeNotifier {
     return sortedCards;
   }
 
+  void placeWidowInMiddle(int suit, int rank) {
+    final moveWidow = widows.firstWhere(
+        (element) => element.suit.index == suit && element.rank.index == rank);
+    placed.add(moveWidow);
+    widows.remove(moveWidow);
+    placed
+        .firstWhere((element) =>
+            element.suit.index == suit && element.rank.index == rank)
+        .moveAndTwist(
+          Duration(milliseconds: 200),
+          eTop: height / 2,
+          eRight: (width / 2) - (width * PlayingCard.multiplySizeWidth / 2),
+          sRotation: rotation.back,
+          eRotation: rotation.face,
+        );
+  }
+
   void collectWidow(int place) {
     client.game.gameState = SPMP.discarding;
     final isP1 = place == 0;
@@ -357,9 +361,11 @@ class Cards extends ChangeNotifier {
         'rank': e.rank,
         'top': place == 0
             ? null
-            : findSideLocation(
-                l, i, true, width * PlayingCard.multiplySizeHeight),
-        'right': place == 0
+            : place == 3
+                ? 30
+                : findSideLocation(
+                    l, i, true, width * PlayingCard.multiplySizeHeight),
+        'right': place == 0 || place == 3
             ? findSideLocation(
                 l, i, false, width * PlayingCard.multiplySizeWidth)
             : place == 1 ? null : 30,

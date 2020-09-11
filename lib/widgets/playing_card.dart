@@ -31,8 +31,6 @@ class PlayingCard extends StatefulWidget with CardMoveExtension {
 class PlayingCardState extends State<PlayingCard>
     with SingleTickerProviderStateMixin {
   c.Card get thisCard {
-    print(widget.rank);
-    print(widget.suit);
     final card = Provider.of<Client>(context, listen: false)
         .game
         .cards

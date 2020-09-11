@@ -43,8 +43,15 @@ class GameManagement {
         sendMessage({'method': SPMP.collectWidow, 'uid': bidId});
       } else {
         gameState = SPMP.collectingWidow;
-        sendMessage(
-            {'method': SPMP.startCollecting, 'uid': players.keys.toList()[0]});
+        cardsController.turn = players.keys.toList().first;
+        final widow = cardsController.cards
+            .firstWhere((element) => element['uid'] == SPMP.widow);
+        sendMessage({
+          'method': SPMP.startCollecting,
+          'turn': players.keys.toList()[0],
+          'widow rank': widow['rank'],
+          'widow suit': widow['suit']
+        });
       }
     }
   }

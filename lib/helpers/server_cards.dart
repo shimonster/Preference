@@ -18,6 +18,8 @@ class CardsManagement {
   Map<String, int> playerTricks;
 
   List<Map<String, dynamic>> randomize() {
+    playerTricks =
+        server.gameController.players.map((key, value) => MapEntry(key, 0));
     playerTricks = server.gameController.allPlayers.entries.fold(
         {}, (previousValue, element) => {...previousValue, element.key: 0});
     List<Map<String, dynamic>> addCard = [];
@@ -112,10 +114,12 @@ class CardsManagement {
     // determines the biggest card
     for (var i in placed) {
       print(i);
-      final condish = (i['rank'] > biggestCard['rank'] &&
+      bool condish() =>
+          (i['rank'] > biggestCard['rank'] &&
               i['suit'] >= biggestCard['suit']) ||
           i['suit'] > biggestCard['suit'];
-      if (biggestCard == null || isCollectingWidow ? !condish : condish) {
+      if (biggestCard == null || isCollectingWidow ? !condish() : condish()) {
+        print('new biggest card');
         biggestCard = i;
         collectUid = cards.firstWhere((element) =>
             element['suit'] == biggestCard['suit'] &&
@@ -129,7 +133,8 @@ class CardsManagement {
       List<Map<String, dynamic>> placed) {
     final pIdx =
         server.gameController.players.keys.toList().indexOf(collectUid);
-    print(pIdx);
+    print(collectUid);
+    print(playerTricks);
     final isP1 = pIdx == 0;
     final isP2 = pIdx == 1;
     playerTricks[collectUid] += 1;

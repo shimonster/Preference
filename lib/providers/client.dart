@@ -150,10 +150,13 @@ class Client extends ChangeNotifier {
             sendMessage({'method': SPMP.acceptNewRound, 'uid': uid});
           });
         }
-        // collecting-widow collecting-widow collecting-widow collecting-widow
-        if (event['method'] == SPMP.collectingWidow) {
-          game.gameState = SPMP.collectingWidow;
+        // start-collecting start-collecting start-collecting start-collecting
+        if (event['method'] == SPMP.startCollecting) {
+          game.gameState = SPMP.playing;
           game.cards.turn = event['turn'];
+          game.cards
+              .placeWidowInMiddle(event['widow suit'], event['widow rank']);
+          game.cards.cardStream.add('collecting widow');
         }
       },
       onDone: () {
