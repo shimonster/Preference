@@ -85,6 +85,7 @@ class CardsManagement {
   void collectWidow(int place, String uid) {
     // if the new place is someones cards
     if (place < 3) {
+      print('widow collected');
       cards = cards
           .map((e) =>
               e..update('uid', (value) => value == SPMP.widow ? uid : value))
@@ -112,18 +113,24 @@ class CardsManagement {
     String collectUid;
     Map<String, dynamic> biggestCard;
     // determines the biggest card
+    void makeBiggest(Map<String, dynamic> i) {
+      print('new biggest card');
+      biggestCard = i;
+      collectUid = cards.firstWhere((element) =>
+          element['suit'] == biggestCard['suit'] &&
+          element['rank'] == biggestCard['rank'])['uid'];
+    }
+
     for (var i in placed) {
       print(i);
       bool condish() =>
           (i['rank'] > biggestCard['rank'] &&
               i['suit'] >= biggestCard['suit']) ||
           i['suit'] > biggestCard['suit'];
-      if (biggestCard == null || isCollectingWidow ? !condish() : condish()) {
-        print('new biggest card');
-        biggestCard = i;
-        collectUid = cards.firstWhere((element) =>
-            element['suit'] == biggestCard['suit'] &&
-            element['rank'] == biggestCard['rank'])['uid'];
+      if (biggestCard == null) {
+        makeBiggest(i);
+      } else if (isCollectingWidow ? !condish() : condish()) {
+        makeBiggest(i);
       }
     }
     return collectUid;
@@ -142,11 +149,44 @@ class CardsManagement {
       move(i['rank'], i['suit'],
           isP1 ? SPMP.trick1 : isP2 ? SPMP.trick2 : SPMP.trick3);
     }
-    if (isCollectingWidow) {
-      final widow =
-          cards.firstWhere((element) => element['place'] == SPMP.widow);
-      move(widow['rank'], widow['suit'],
-          isP1 ? SPMP.player1 : isP2 ? SPMP.player2 : SPMP.player3);
+//    if (isCollectingWidow) {
+//      final widow = cards.firstWhere((element) => element['uid'] == SPMP.widow);
+//      move(widow['rank'], widow['suit'],
+//          isP1 ? SPMP.player1 : isP2 ? SPMP.player2 : SPMP.player3);
+//    }
+  }
+
+  void collectTrick(int place) {
+    print(player1Cards);
+    print(player2Cards);
+    print(player3Cards);
+    if (player1Cards == player2Cards &&
+        player2Cards == player3Cards &&
+        (server.gameController.gameState == SPMP.playing ||
+            server.gameController.gameState == SPMP.collectingWidow)) {
+      final isCollectingWidow =
+          server.gameController.gameState == SPMP.collectingWidow;
+      final placed = cards
+          .where((element) =>
+              element['place'] == SPMP.center1 ||
+              element['place'] == SPMP.center2 ||
+              element['place'] == SPMP.center3 ||
+              element['place'] == SPMP.centerWidow)
+          .toList();
+      final collectUid = findBiggestCard(placed, isCollectingWidow);
+      Map<String, dynamic> widow;
+      if (isCollectingWidow) {
+        widow = cards.firstWhere((element) => element['uid'] == SPMP.widow);
+      }
+      moveCollectedTrick(isCollectingWidow, collectUid, placed);
+      sendMessage({
+        'method': SPMP.trickCollected,
+        'turn': turn,
+        'uid': collectUid,
+        'widow rank': isCollectingWidow ? widow['rank'] : null,
+        'widow suit': isCollectingWidow ? widow['suit'] : null,
+      });
+      endGame();
     }
   }
 
@@ -166,29 +206,25 @@ class CardsManagement {
     }
   }
 
-  void collectTrick(int place) {
-    if (player1Cards == player2Cards &&
-        player2Cards == player3Cards &&
-        (server.gameController.gameState == SPMP.playing ||
-            server.gameController.gameState == SPMP.collectingWidow)) {
-      final isCollectingWidow =
-          server.gameController.gameState == SPMP.collectingWidow;
-      final placed = cards
-          .where((element) =>
-              element['place'] == SPMP.center1 ||
-              element['place'] == SPMP.center2 ||
-              element['place'] == SPMP.center3)
-          .toList();
-      final collectUid = findBiggestCard(placed, isCollectingWidow);
-      moveCollectedTrick(isCollectingWidow, collectUid, placed);
-      final widow =
-          cards.firstWhere((element) => element['place'] == SPMP.widow);
+  void acceptNewRound(String uid) {
+    server.gameController.allPlayers[uid]['hasAcceptedNewGame'] = true;
+    if (server.gameController.players.values
+        .toList()
+        .every((element) => element['hasAcceptedNewGame'])) {
+      server.gameController.allPlayers =
+          server.gameController.allPlayers.map((key, value) {
+        final newVal = value;
+        newVal['hasAcceptedNewGame'] = false;
+        newVal['hasBid'] = false;
+        return MapEntry(key, newVal);
+      });
+      server.gameController.bidId = null;
+      server.gameController.bid = null;
+      final newCards = randomize();
       sendMessage({
-        'method': SPMP.trickCollected,
-        'turn': turn,
-        'uid': collectUid,
-        'widow rank': isCollectingWidow ? widow['rank'] : null,
-        'widow suit': isCollectingWidow ? widow['suit'] : null,
+        'method': SPMP.startPlaying,
+        'cards': newCards,
+        'biddingId': server.gameController.biddingId,
       });
     }
   }

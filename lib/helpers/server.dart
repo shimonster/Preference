@@ -112,25 +112,7 @@ class Server {
                       }
                       // accept-new-game accept-new-game accept-new-game accept-new-game
                       if (event['method'] == SPMP.acceptNewRound) {
-                        gameController.allPlayers[event['uid']]
-                            ['hasAcceptedNewGame'] = true;
-                        if (gameController.players.values.toList().every(
-                            (element) => element['hasAcceptedNewGame'])) {
-                          gameController.allPlayers =
-                              gameController.allPlayers.map((key, value) {
-                            final newVal = value;
-                            newVal['hasAcceptedNewGame'] = false;
-                            return MapEntry(key, newVal);
-                          });
-                          gameController.bidId = null;
-                          gameController.bid = null;
-                          final newCards = cardsController.randomize();
-                          sendMessage({
-                            'method': SPMP.startPlaying,
-                            'cards': newCards,
-                            'biddingId': gameController.biddingId,
-                          });
-                        }
+                        cardsController.acceptNewRound(event['uid']);
                       }
                     },
                     onDone: () {

@@ -46,6 +46,7 @@ class SPMP {
   static const trick2 = 9;
   static const trick3 = 10;
   static const disposing = 11;
+  static const centerWidow = 12;
 
   // game stages
   static const bidding = 'BIDDING';

@@ -42,6 +42,7 @@ enum places {
   trick2,
   trick3,
   disposing,
+  centerWidow
 }
 
 class Card {
@@ -91,15 +92,6 @@ class Cards extends ChangeNotifier {
 
   void move(List<int> rank, List<int> suit, int place, String method,
       bool shouldSend, String uid) {
-    if (place == SPMP.trick1) {
-      collectTrick(0);
-    }
-    if (place == SPMP.trick2) {
-      collectTrick(1);
-    }
-    if (place == SPMP.trick3) {
-      collectTrick(2);
-    }
     if (place == SPMP.disposed) {
       disposeCards(shouldSend ? null : rank, shouldSend ? null : suit);
     }
@@ -122,6 +114,15 @@ class Cards extends ChangeNotifier {
       });
     }
     // =======================================
+    if (place == SPMP.trick1) {
+      collectTrick(0);
+    }
+    if (place == SPMP.trick2) {
+      collectTrick(1);
+    }
+    if (place == SPMP.trick3) {
+      collectTrick(2);
+    }
     if (method == SPMP.collectWidow) {
       collectWidow(place);
     }
@@ -133,22 +134,24 @@ class Cards extends ChangeNotifier {
     }
   }
 
-  void collectTrick(int pNum) {
+  void collectTrick(int pNum) async {
+    print('trick collected');
     final isP1 = pNum == 0;
     final isP2 = pNum == 1;
     for (var i in placed) {
-      placed
-          .firstWhere((element) => element == i)
-          .move(
+      print('collected card: $i');
+      await placed.firstWhere((element) => element.equals(i)).move(
             Duration(milliseconds: 200),
             eTop: isP1 ? null : height / 2,
             eBottom: isP1 ? -200 : null,
             eRight: isP1 ? width / 2 : isP2 ? null : -200,
             eLeft: isP2 ? -200 : null,
-          )
-          .then((value) => placed = []);
+          );
     }
+    print('after moved placed');
+    placed = [];
     if (widows.isNotEmpty && client.game.bidId == null) {
+      print('placing widow in middle');
       placeWidowInMiddle(widows[0].suit.index, widows[0].rank.index);
     }
   }
@@ -190,13 +193,13 @@ class Cards extends ChangeNotifier {
     move([rank], [suit], turnIdx + 5, SPMP.place, turn == client.uid,
         client.uid);
     final newCards = _getLocationCards(turnIdx);
+    // moves cards that haven't been collected to new place
+    CardMoveExtension.alignCards(newCards, isP1, isP2, this);
+    turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];
     // updates my cards if my turn
     if (turn == client.uid) {
       p1Cards.forEach((element) => element.rotationStream.add('my turn'));
     }
-    // moves cards that haven't been collected to new place
-    CardMoveExtension.alignCards(newCards, isP1, isP2, this);
-    turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];
     print('before add to card stream');
     cardStream.add('placed');
     print('after add to card stream');
@@ -277,39 +280,24 @@ class Cards extends ChangeNotifier {
     cardStream.add('diposed');
   }
 
-  void setCards(List<Card> newCards) {
-    _cards = newCards;
-    p1Cards = _createPlayerCards(SPMP.player1);
-    p2Cards = _createPlayerCards(SPMP.player2);
-    p3Cards = _createPlayerCards(SPMP.player3);
-    widows = _createPlayerCards(SPMP.widow);
-  }
-
-  List<T> sortCards<T>(List crds) {
-    List<T> sortedCards = [];
-    crds.sort((a, b) => a.suit.index > b.suit.index ? -1 : 1);
-    for (var i = 0; i < 4; i++) {
-      final List<T> list = crds
-          .where((element) => element.suit == suits.values[i])
-          .toList()
-            ..sort((a, b) => a.rank.index > b.rank.index ? -1 : 1);
-      sortedCards.addAll(list);
-    }
-    return sortedCards;
-  }
-
   void placeWidowInMiddle(int suit, int rank) {
+    print('placing widow in middle');
     final moveWidow = widows.firstWhere(
         (element) => element.suit.index == suit && element.rank.index == rank);
+    move([rank], [suit], SPMP.centerWidow, SPMP.startCollecting, false,
+        client.uid);
     placed.add(moveWidow);
     widows.remove(moveWidow);
+    cardStream.add('added widow to placed');
     placed
         .firstWhere((element) =>
             element.suit.index == suit && element.rank.index == rank)
         .moveAndTwist(
           Duration(milliseconds: 200),
-          eTop: height / 2,
-          eRight: (width / 2) - (width * PlayingCard.multiplySizeWidth / 2),
+//          eTop: height / 2,
+//          eRight: (width / 2) - (width * PlayingCard.multiplySizeWidth / 2),
+          eTop: 20,
+          eRight: 20,
           sRotation: rotation.back,
           eRotation: rotation.face,
         );
@@ -337,6 +325,27 @@ class Cards extends ChangeNotifier {
       sAngle: !isP1 ? angle.up : null,
       eAngle: !isP1 ? isP2 ? angle.right : angle.left : null,
     );
+  }
+
+  void setCards(List<Card> newCards) {
+    _cards = newCards;
+    p1Cards = _createPlayerCards(SPMP.player1);
+    p2Cards = _createPlayerCards(SPMP.player2);
+    p3Cards = _createPlayerCards(SPMP.player3);
+    widows = _createPlayerCards(SPMP.widow);
+  }
+
+  List<T> sortCards<T>(List crds) {
+    List<T> sortedCards = [];
+    crds.sort((a, b) => a.suit.index > b.suit.index ? -1 : 1);
+    for (var i = 0; i < 4; i++) {
+      final List<T> list = crds
+          .where((element) => element.suit == suits.values[i])
+          .toList()
+            ..sort((a, b) => a.rank.index > b.rank.index ? -1 : 1);
+      sortedCards.addAll(list);
+    }
+    return sortedCards;
   }
 
   double findSideLocation(int amnt, int i, bool isVert, double unitLength) {

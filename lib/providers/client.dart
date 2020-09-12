@@ -117,7 +117,8 @@ class Client extends ChangeNotifier {
               .where((element) =>
                   element.place == places.center1 ||
                   element.place == places.center2 ||
-                  element.place == places.center3)
+                  element.place == places.center3 ||
+                  element.place == places.centerWidow)
               .toList();
           game.cards.move(
               placedCards.map((e) => e.rank.index).toList(),
