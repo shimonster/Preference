@@ -73,9 +73,7 @@ class CardMoveExtension {
     if (sAngle != null && eAngle != null) {
       angleAnimation.addListener(() {
         currentRotationZ = angleAnimation.value;
-        try {
-          rotationStream.add('rotation');
-        } catch (error) {}
+        rotationStream.add('rotation');
       });
     }
     if (sRotation != null && eRotation != null) {
@@ -89,9 +87,7 @@ class CardMoveExtension {
         axis == Axis.horizontal
             ? currentRotationX = rotationAnimation.value
             : currentRotationY = rotationAnimation.value;
-        try {
-          rotationStream.add('rotation');
-        } catch (error) {}
+        rotationStream.add('rotation');
       });
     }
     await animationController.forward().then((value) {
@@ -102,18 +98,55 @@ class CardMoveExtension {
 
   Future<void> move(Duration duration,
       {double eBottom, double eTop, double eRight, double eLeft}) async {
-    print('move card was run: $isFace');
-    moveDuration = duration;
-    currentTop = eTop;
-    currentBottom = eBottom;
-    currentRight = eRight;
-    currentLeft = eLeft;
-    try {
-      positionStream.add('position');
-    } catch (error) {}
-    print('after move add to position stream');
-    await Future.delayed(duration);
-    print('after move card future');
+
+    // sets up animation controller and other stuff
+    final animController = AnimationController(
+      duration: duration,
+      vsync: PlayingCardState(),
+    );
+    Map<int, Animation> anims = {};
+    final start = [currentBottom, currentTop, currentRight, currentLeft];
+    final end = [eBottom, eTop, eRight, eLeft];
+    print(start);
+    // sets up animations for things that aren't null
+    for (var i = 0; i < 4; i++) {
+      if (end[i] != null) {
+        print(start[i]);
+        final anim = Tween<double>(
+          begin: start[i],
+          end: end[i],
+        ).animate(
+            CurvedAnimation(curve: Curves.easeInOut, parent: animController));
+        anims.putIfAbsent(i, () => anim);
+      }
+    }
+    // sets the corresponding side to the new value of the animation every time
+    // the animation updates
+    anims.forEach((i, anim) {
+      anim.addListener(() {
+        final value = anim.value;
+        if (i == 0) {
+          currentBottom = value;
+        } else if (i == 1) {
+          currentTop = value;
+        } else if (i == 2) {
+          currentRight = value;
+        } else {
+          currentLeft = value;
+        }
+      });
+    });
+    // adds listener to controller to update UI when new card position
+    animController.addListener(() => positionStream.add('moved'));
+    // runs the animation and waits for it to play before resolving
+    await animController.forward().then(
+      (value) {
+        animController.removeListener(() {});
+        anims.forEach((i, anim) {
+          anim.removeListener(() {});
+        });
+      },
+    );
   }
 
   Future<void> moveAndTwist(Duration duration,
@@ -132,18 +165,74 @@ class CardMoveExtension {
     await Future.delayed(duration);
   }
 
+  static void setPositionValues(int suit, int rank, Cards cards,
+      {double right, double left, double top, double bottom}) {
+    int findCardIdx(int idx) {
+      return (idx == 0
+              ? cards.p1Cards
+              : idx == 1
+                  ? cards.p2Cards
+                  : idx == 2 ? cards.p3Cards : cards.widows)
+          .indexWhere((element) =>
+              element.rank.index == rank && element.suit.index == suit);
+    }
+
+    final p1Idx = findCardIdx(0);
+    final p2Idx = findCardIdx(1);
+    final p3Idx = findCardIdx(2);
+    final widowIdx = findCardIdx(3);
+
+    final idxs = [p1Idx, p2Idx, p3Idx, widowIdx];
+    final i = idxs.firstWhere((element) => element != -1);
+    final pIdx = idxs.firstWhere((element) => element != -1);
+    final isP1 = pIdx == 0;
+    final isP2 = pIdx == 1;
+    final isP3 = pIdx == 2;
+    (isP1
+            ? cards.p1Cards
+            : isP2 ? cards.p2Cards : isP3 ? cards.p3Cards : cards.widows)[i]
+        .currentRight = right;
+    (isP1
+            ? cards.p1Cards
+            : isP2 ? cards.p2Cards : isP3 ? cards.p3Cards : cards.widows)[i]
+        .currentLeft = left;
+    (isP1
+            ? cards.p1Cards
+            : isP2 ? cards.p2Cards : isP3 ? cards.p3Cards : cards.widows)[i]
+        .currentTop = top;
+    (isP1
+            ? cards.p1Cards
+            : isP2 ? cards.p2Cards : isP3 ? cards.p3Cards : cards.widows)[i]
+        .currentBottom = bottom;
+  }
+
   static Future<void> animateDistribute(
       Cards cards, BuildContext context) async {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
     await Future.forEach(
         [...cards.p2Cards, ...cards.p1Cards, ...cards.p3Cards, ...cards.widows],
         (PlayingCard playingCard) async {
+      print('about to distribute card');
       final thisCard = cards.cards.firstWhere((element) =>
           element.rank == playingCard.rank && element.suit == playingCard.suit);
-      playingCard.move(
-        Duration(),
-        eTop: -100,
-        eRight: MediaQuery.of(context).size.width / 2,
-      );
+      final isP1 = thisCard.place == places.player1;
+      final isP2 = thisCard.place == places.player2;
+      final isP3 = thisCard.place == places.player3;
+      if (isP1) {
+        playingCard.currentBottom = 0;
+        playingCard.currentRight = 0;
+      } else if (isP2) {
+        playingCard.currentLeft = 0;
+        playingCard.currentTop = 0;
+      } else if (isP3) {
+        playingCard.currentRight = 0;
+        playingCard.currentTop = 0;
+      } else {
+        playingCard.currentTop = 0;
+        playingCard.currentRight = 0;
+      }
+      print('after asigning values to positions');
       playingCard.moveAndTwist(
         Duration(milliseconds: 1000),
         eTop: playingCard.top,
@@ -160,6 +249,7 @@ class CardMoveExtension {
                 : thisCard.place == places.player2 ? angle.right : angle.left,
         axis: Axis.vertical,
       );
+
       await Future.delayed(Duration(milliseconds: 100));
     });
   }

@@ -307,6 +307,17 @@ class Cards extends ChangeNotifier {
     client.game.gameState = SPMP.discarding;
     final isP1 = place == 0;
     final isP2 = place == 1;
+    for (var i = 0; i < 2; i++) {
+      CardMoveExtension.setPositionValues(
+        widows[i].suit.index,
+        widows[i].rank.index,
+        this,
+        right: !isP2 ? 0 : null,
+        left: isP2 ? 0 : null,
+        top: !isP1 ? 0 : null,
+        bottom: isP1 ? 0 : null,
+      );
+    }
     (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).addAll(widows);
     widows = [];
     cardStream.add('collected widow');

@@ -45,6 +45,7 @@ class PlayingCardState extends State<PlayingCard>
     super.initState();
     widget.positionStream.stream.listen((event) {
       print('position stream: ${widget.suit.index}  ${widget.rank.index}');
+      setState(() {});
     });
 //    widget.rotationStream.stream.listen((event) {
 //      print('position stream');
@@ -66,55 +67,54 @@ class PlayingCardState extends State<PlayingCard>
   Widget build(BuildContext context) {
     final client = Provider.of<Client>(context, listen: false);
     final width = MediaQuery.of(context).size.width;
-    return StreamBuilder(
-      stream: widget.positionStream.stream,
-      builder: (context, snapshot) {
-        print('position builder was run: $thisCard');
-        return Positioned(
-//          duration: Duration(seconds: 1),
-//          curve: Curves.easeInOut,
-          top: widget.currentTop,
-          bottom: widget.currentBottom,
-          right: widget.currentRight,
-          left: widget.currentLeft,
-          child: StreamBuilder(
-            stream: widget.rotationStream.stream,
-            builder: (context, snap) {
-              print('rotation builder was run: $thisCard');
-              final card = Transform(
-                transform: Matrix4.rotationY(widget.currentRotationY)
-                  ..rotateX(widget.currentRotationX)
-                  ..rotateZ(widget.currentRotationZ),
-                alignment: Alignment.center,
-                child: Container(
-                  width: width * PlayingCard.multiplySizeWidth,
-                  height: width * PlayingCard.multiplySizeHeight,
-                  decoration: BoxDecoration(
-                    color: widget.isFace ? Colors.orange : Colors.blue,
-                    border: Border.all(width: 5),
+
+    // defines how the card will look
+    final card = Transform(
+      transform: Matrix4.rotationY(widget.currentRotationY)
+        ..rotateX(widget.currentRotationX)
+        ..rotateZ(widget.currentRotationZ),
+      alignment: Alignment.center,
+      child: Container(
+        width: width * PlayingCard.multiplySizeWidth,
+        height: width * PlayingCard.multiplySizeHeight,
+        decoration: BoxDecoration(
+          color: widget.isFace ? Colors.orange : Colors.blue,
+          border: Border.all(width: 5),
+        ),
+        child: Center(
+          child:
+              Text('${thisCard.suit}   ${thisCard.rank}    ${thisCard.place}'),
+        ),
+      ),
+    );
+    // builds the card
+    return Positioned(
+      right: widget.currentRight,
+      left: widget.currentLeft,
+      bottom: widget.currentBottom,
+      top: widget.currentTop,
+      child: StreamBuilder(
+        stream: widget.rotationStream.stream,
+        builder: (context, snap) {
+          print('rotation builder was run: $thisCard');
+          return thisCard.place == c.places.player1 &&
+                  ((client.game.gameState == SPMP.playing &&
+                          client.game.cards.turn == client.uid) ||
+                      (client.game.gameState == SPMP.discarding &&
+                          client.game.bidId == client.uid))
+              ? Draggable(
+                  feedback: card,
+                  childWhenDragging: Container(
+                    width: width * PlayingCard.multiplySizeWidth,
+                    height: width * PlayingCard.multiplySizeHeight,
+                    color: Colors.black54,
                   ),
-                  child: Center(
-                    child: Text(
-                        '${thisCard.suit}   ${thisCard.rank}    ${thisCard.place}'),
-                  ),
-                ),
-              );
-              return thisCard.place == c.places.player1 &&
-                      ((client.game.gameState == SPMP.playing &&
-                              client.game.cards.turn == client.uid) ||
-                          (client.game.gameState == SPMP.discarding &&
-                              client.game.bidId == client.uid))
-                  ? Draggable(
-                      feedback: card,
-                      childWhenDragging: Container(),
-                      data: thisCard,
-                      child: card,
-                    )
-                  : card;
-            },
-          ),
-        );
-      },
+                  data: thisCard,
+                  child: card,
+                )
+              : card;
+        },
+      ),
     );
   }
 }
