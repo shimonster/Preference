@@ -42,6 +42,7 @@ class CardMoveExtension {
       vsync: PlayingCardState(),
       duration: duration,
     );
+    // define animations
     final Animation<double> rotationAnimation = Tween<double>(
             begin: sRotation == rotation.face ? 0 : pi,
             end: eRotation == rotation.face
@@ -70,6 +71,7 @@ class CardMoveExtension {
         parent: animationController,
       ),
     );
+    // adds listeners to animations
     if (sAngle != null && eAngle != null) {
       angleAnimation.addListener(() {
         currentRotationZ = angleAnimation.value;
@@ -78,12 +80,8 @@ class CardMoveExtension {
     }
     if (sRotation != null && eRotation != null) {
       rotationAnimation.addListener(() {
-        if (rotationAnimation.value < pi * 1 / 2 ||
-            rotationAnimation.value > pi * 3 / 2) {
-          isFace = true;
-        } else {
-          isFace = false;
-        }
+        isFace = rotationAnimation.value < pi * 1 / 2 ||
+            rotationAnimation.value > pi * 3 / 2;
         axis == Axis.horizontal
             ? currentRotationX = rotationAnimation.value
             : currentRotationY = rotationAnimation.value;
@@ -98,7 +96,6 @@ class CardMoveExtension {
 
   Future<void> move(Duration duration,
       {double eBottom, double eTop, double eRight, double eLeft}) async {
-
     // sets up animation controller and other stuff
     final animController = AnimationController(
       duration: duration,
@@ -107,6 +104,10 @@ class CardMoveExtension {
     Map<int, Animation> anims = {};
     final start = [currentBottom, currentTop, currentRight, currentLeft];
     final end = [eBottom, eTop, eRight, eLeft];
+    currentBottom = eBottom;
+    currentTop = eTop;
+    currentRight = eRight;
+    currentLeft = eLeft;
     print(start);
     // sets up animations for things that aren't null
     for (var i = 0; i < 4; i++) {
@@ -170,9 +171,7 @@ class CardMoveExtension {
     int findCardIdx(int idx) {
       return (idx == 0
               ? cards.p1Cards
-              : idx == 1
-                  ? cards.p2Cards
-                  : idx == 2 ? cards.p3Cards : cards.widows)
+              : idx == 1 ? cards.p2Cards : cards.p3Cards)
           .indexWhere((element) =>
               element.rank.index == rank && element.suit.index == suit);
     }
@@ -180,29 +179,25 @@ class CardMoveExtension {
     final p1Idx = findCardIdx(0);
     final p2Idx = findCardIdx(1);
     final p3Idx = findCardIdx(2);
-    final widowIdx = findCardIdx(3);
 
-    final idxs = [p1Idx, p2Idx, p3Idx, widowIdx];
+    print(p1Idx);
+    print(p2Idx);
+    print(p3Idx);
+
+    final idxs = [p1Idx, p2Idx, p3Idx];
     final i = idxs.firstWhere((element) => element != -1);
-    final pIdx = idxs.firstWhere((element) => element != -1);
+    print(i);
+    final pIdx = idxs.indexWhere((element) => element != -1);
+    print(pIdx);
     final isP1 = pIdx == 0;
     final isP2 = pIdx == 1;
-    final isP3 = pIdx == 2;
-    (isP1
-            ? cards.p1Cards
-            : isP2 ? cards.p2Cards : isP3 ? cards.p3Cards : cards.widows)[i]
+    (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)[i]
         .currentRight = right;
-    (isP1
-            ? cards.p1Cards
-            : isP2 ? cards.p2Cards : isP3 ? cards.p3Cards : cards.widows)[i]
+    (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)[i]
         .currentLeft = left;
-    (isP1
-            ? cards.p1Cards
-            : isP2 ? cards.p2Cards : isP3 ? cards.p3Cards : cards.widows)[i]
+    (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)[i]
         .currentTop = top;
-    (isP1
-            ? cards.p1Cards
-            : isP2 ? cards.p2Cards : isP3 ? cards.p3Cards : cards.widows)[i]
+    (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)[i]
         .currentBottom = bottom;
   }
 
