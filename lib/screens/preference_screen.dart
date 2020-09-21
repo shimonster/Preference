@@ -146,7 +146,9 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                           if (client.game.isPlaying) ...cards.p2Cards,
                           if (client.game.isPlaying) ...cards.p1Cards,
                           if (client.game.isPlaying) ...cards.p3Cards,
-                          if (client.game.isPlaying) ...cards.widows,
+                          if (client.game.isPlaying &&
+                              client.game.gameState != SPMP.discarding)
+                            ...cards.widows,
                           if (client.game.gameState == SPMP.playing)
                             ...cards.placed,
                           // ---------------------------------

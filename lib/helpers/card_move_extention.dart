@@ -38,6 +38,7 @@ class CardMoveExtension {
 
   Future<void> rotate(rotation sRotation, rotation eRotation, angle sAngle,
       angle eAngle, Duration duration, Axis axis) async {
+    print('rotation was run');
     final animationController = AnimationController(
       vsync: PlayingCardState(),
       duration: duration,
@@ -108,7 +109,6 @@ class CardMoveExtension {
     currentTop = eTop;
     currentRight = eRight;
     currentLeft = eLeft;
-    print(start);
     // sets up animations for things that aren't null
     for (var i = 0; i < 4; i++) {
       if (end[i] != null) {
@@ -146,6 +146,7 @@ class CardMoveExtension {
         anims.forEach((i, anim) {
           anim.removeListener(() {});
         });
+        print([currentBottom, currentTop, currentRight, currentLeft]);
       },
     );
   }
@@ -164,6 +165,7 @@ class CardMoveExtension {
     move(duration, eTop: eTop, eBottom: eBottom, eRight: eRight, eLeft: eLeft);
     rotate(sRotation, eRotation, sAngle, eAngle, duration, axis);
     await Future.delayed(duration);
+    print('after move and twist');
   }
 
   static void setPositionValues(int suit, int rank, Cards cards,
@@ -257,8 +259,9 @@ class CardMoveExtension {
       angle eAngle,
       Axis axis}) async {
     print('align cards was run');
-    (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)
-        .forEach((element) {
+    await Future.forEach(
+        (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards),
+        (element) async {
       final newCard = newCards.firstWhere(
           (e) => e['rank'] == element.rank && e['suit'] == element.suit);
       element.moveAndTwist(
@@ -274,6 +277,5 @@ class CardMoveExtension {
         eRotation: eRotation,
       );
     });
-    await Future.delayed(Duration(milliseconds: 200));
   }
 }

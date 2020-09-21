@@ -310,6 +310,7 @@ class Cards extends ChangeNotifier {
     final oldWidows = [...widows];
     (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).addAll(widows);
     widows = [];
+    // sets dependant widow sides to collector
     for (var i = 0; i < 2; i++) {
       CardMoveExtension.setPositionValues(
         oldWidows[i].suit.index,
@@ -321,22 +322,27 @@ class Cards extends ChangeNotifier {
         bottom: isP1 ? 0 : null,
       );
     }
-    cardStream.add('collected widow');
     if (place == 0) {
       p1Cards = sortCards(p1Cards);
     }
+    // moves cards
     final newCards = _getLocationCards(place);
+    print(isP1);
     CardMoveExtension.alignCards(
       newCards,
       isP1,
       isP2,
       this,
       axis: isP1 ? Axis.vertical : null,
-      sRotation: isP1 ? rotation.back : null,
-      eRotation: isP1 ? rotation.face : null,
-      sAngle: !isP1 ? angle.up : null,
+      sRotation: isP1 ? rotation.face : null,
+      eRotation: isP1 ? rotation.back : null,
+      sAngle: !isP1 ? isP2 ? angle.up : angle.up : null,
       eAngle: !isP1 ? isP2 ? angle.right : angle.left : null,
     );
+    Future.delayed(Duration(milliseconds: 200)).then((value) {
+      print('about to add to card stream for widow');
+      cardStream.add('aligned widow player');
+    });
   }
 
   void setCards(List<Card> newCards) {

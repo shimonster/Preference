@@ -63,13 +63,10 @@ class PlayingCardState extends State<PlayingCard>
     widget.rotationStream.close();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final client = Provider.of<Client>(context, listen: false);
+  // defines how the card will look
+  Widget get card {
     final width = MediaQuery.of(context).size.width;
-
-    // defines how the card will look
-    final card = Transform(
+    return Transform(
       transform: Matrix4.rotationY(widget.currentRotationY)
         ..rotateX(widget.currentRotationX)
         ..rotateZ(widget.currentRotationZ),
@@ -87,6 +84,13 @@ class PlayingCardState extends State<PlayingCard>
         ),
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final client = Provider.of<Client>(context, listen: false);
+    final width = MediaQuery.of(context).size.width;
+    final newCard = card;
     // builds the card
     return Positioned(
       right: widget.currentRight,
@@ -96,23 +100,28 @@ class PlayingCardState extends State<PlayingCard>
       child: StreamBuilder(
         stream: widget.rotationStream.stream,
         builder: (context, snap) {
-          print('rotation builder was run: $thisCard');
+          print('rotation builder was run: $thisCard  ${[
+            widget.currentBottom,
+            widget.currentTop,
+            widget.currentRight,
+            widget.currentLeft
+          ]}');
           return thisCard.place == c.places.player1 &&
                   ((client.game.gameState == SPMP.playing &&
                           client.game.cards.turn == client.uid) ||
                       (client.game.gameState == SPMP.discarding &&
                           client.game.bidId == client.uid))
               ? Draggable(
-                  feedback: card,
+                  feedback: newCard,
                   childWhenDragging: Container(
                     width: width * PlayingCard.multiplySizeWidth,
                     height: width * PlayingCard.multiplySizeHeight,
                     color: Colors.black54,
                   ),
                   data: thisCard,
-                  child: card,
+                  child: newCard,
                 )
-              : card;
+              : newCard;
         },
       ),
     );
