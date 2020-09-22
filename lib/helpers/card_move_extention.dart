@@ -30,9 +30,10 @@ class CardMoveExtension {
   double currentLeft;
   double currentTop;
   double currentBottom;
-  Duration moveDuration;
   final positionStream = StreamController.broadcast();
   final rotationStream = StreamController.broadcast();
+  double width;
+  double height;
 
   // e is for end and s is for start
 
@@ -103,12 +104,16 @@ class CardMoveExtension {
       vsync: PlayingCardState(),
     );
     Map<int, Animation> anims = {};
+    final oldBottom = currentBottom;
+    final oldRight = currentRight;
+    currentBottom =
+        eBottom != null ? currentBottom ?? height - currentTop : eBottom;
+    currentTop = eTop != null ? currentTop ?? height - oldBottom : eTop;
+    currentRight =
+        eRight != null ? currentRight ?? height - currentLeft : eRight;
+    currentLeft = eLeft != null ? currentLeft ?? height - oldRight : eLeft;
     final start = [currentBottom, currentTop, currentRight, currentLeft];
     final end = [eBottom, eTop, eRight, eLeft];
-    currentBottom = eBottom;
-    currentTop = eTop;
-    currentRight = eRight;
-    currentLeft = eLeft;
     // sets up animations for things that aren't null
     for (var i = 0; i < 4; i++) {
       if (end[i] != null) {
@@ -161,52 +166,13 @@ class CardMoveExtension {
       angle sAngle,
       angle eAngle,
       Axis axis}) async {
-    moveDuration = duration;
     move(duration, eTop: eTop, eBottom: eBottom, eRight: eRight, eLeft: eLeft);
-    rotate(sRotation, eRotation, sAngle, eAngle, duration, axis);
-    await Future.delayed(duration);
+    await rotate(sRotation, eRotation, sAngle, eAngle, duration, axis);
     print('after move and twist');
-  }
-
-  static void setPositionValues(int suit, int rank, Cards cards,
-      {double right, double left, double top, double bottom}) {
-    int findCardIdx(int idx) {
-      return (idx == 0
-              ? cards.p1Cards
-              : idx == 1 ? cards.p2Cards : cards.p3Cards)
-          .indexWhere((element) =>
-              element.rank.index == rank && element.suit.index == suit);
-    }
-
-    final p1Idx = findCardIdx(0);
-    final p2Idx = findCardIdx(1);
-    final p3Idx = findCardIdx(2);
-
-    print(p1Idx);
-    print(p2Idx);
-    print(p3Idx);
-
-    final idxs = [p1Idx, p2Idx, p3Idx];
-    final i = idxs.firstWhere((element) => element != -1);
-    print(i);
-    final pIdx = idxs.indexWhere((element) => element != -1);
-    print(pIdx);
-    final isP1 = pIdx == 0;
-    final isP2 = pIdx == 1;
-    (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)[i]
-        .currentRight = right;
-    (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)[i]
-        .currentLeft = left;
-    (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)[i]
-        .currentTop = top;
-    (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards)[i]
-        .currentBottom = bottom;
   }
 
   static Future<void> animateDistribute(
       Cards cards, BuildContext context) async {
-    final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
     await Future.forEach(
         [...cards.p2Cards, ...cards.p1Cards, ...cards.p3Cards, ...cards.widows],
         (PlayingCard playingCard) async {
@@ -259,23 +225,29 @@ class CardMoveExtension {
       angle eAngle,
       Axis axis}) async {
     print('align cards was run');
+    bool isFirst = false;
     await Future.forEach(
         (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards),
         (element) async {
       final newCard = newCards.firstWhere(
           (e) => e['rank'] == element.rank && e['suit'] == element.suit);
-      element.moveAndTwist(
-        Duration(milliseconds: 200),
-        eBottom: newCard['bottom'],
-        eTop: newCard['top'],
-        eRight: newCard['right'],
-        eLeft: newCard['left'],
-        sAngle: sAngle,
-        eAngle: eAngle,
-        axis: axis,
-        sRotation: sRotation,
-        eRotation: eRotation,
-      );
+      final move = () => element.moveAndTwist(
+            Duration(milliseconds: 200),
+            eBottom: newCard['bottom'],
+            eTop: newCard['top'],
+            eRight: newCard['right'],
+            eLeft: newCard['left'],
+            sAngle: sAngle,
+            eAngle: eAngle,
+            axis: axis,
+            sRotation: sRotation,
+            eRotation: eRotation,
+          );
+      if (isFirst) {
+        await move();
+      } else {
+        move();
+      }
     });
   }
 }

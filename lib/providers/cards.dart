@@ -307,21 +307,8 @@ class Cards extends ChangeNotifier {
     client.game.gameState = SPMP.discarding;
     final isP1 = place == 0;
     final isP2 = place == 1;
-    final oldWidows = [...widows];
     (isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).addAll(widows);
     widows = [];
-    // sets dependant widow sides to collector
-    for (var i = 0; i < 2; i++) {
-      CardMoveExtension.setPositionValues(
-        oldWidows[i].suit.index,
-        oldWidows[i].rank.index,
-        this,
-        right: !isP2 ? 0 : null,
-        left: isP2 ? 0 : null,
-        top: !isP1 ? 0 : null,
-        bottom: isP1 ? 0 : null,
-      );
-    }
     if (place == 0) {
       p1Cards = sortCards(p1Cards);
     }
@@ -338,8 +325,7 @@ class Cards extends ChangeNotifier {
       eRotation: isP1 ? rotation.back : null,
       sAngle: !isP1 ? isP2 ? angle.up : angle.up : null,
       eAngle: !isP1 ? isP2 ? angle.right : angle.left : null,
-    );
-    Future.delayed(Duration(milliseconds: 200)).then((value) {
+    ).then((value) {
       print('about to add to card stream for widow');
       cardStream.add('aligned widow player');
     });

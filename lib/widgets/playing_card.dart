@@ -30,6 +30,8 @@ class PlayingCard extends StatefulWidget with CardMoveExtension {
 
 class PlayingCardState extends State<PlayingCard>
     with SingleTickerProviderStateMixin {
+  bool _isInit = false;
+
   c.Card get thisCard {
     final card = Provider.of<Client>(context, listen: false)
         .game
@@ -41,19 +43,24 @@ class PlayingCardState extends State<PlayingCard>
   }
 
   @override
-  void initState() {
-    super.initState();
-    widget.positionStream.stream.listen((event) {
-      print('position stream: ${widget.suit.index}  ${widget.rank.index}');
-      setState(() {});
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    widget.width = MediaQuery.of(context).size.width;
+    widget.height = MediaQuery.of(context).size.height;
+    if (!_isInit) {
+      widget.positionStream.stream.listen((event) {
+        print('position stream: ${widget.suit.index}  ${widget.rank.index}');
+        setState(() {});
+      });
 //    widget.rotationStream.stream.listen((event) {
 //      print('position stream');
 //    });
-    widget.positionStream.done.then((value) => print(
-        'position stream done: ${widget.suit.index}  ${widget.rank.index}'));
-    widget.rotationStream.done.then((value) => print(
-        'ROTATION stream done: ${widget.suit.index}  ${widget.rank.index}'));
+      widget.positionStream.done.then((value) => print(
+          'position stream done: ${widget.suit.index}  ${widget.rank.index}'));
+      widget.rotationStream.done.then((value) => print(
+          'ROTATION stream done: ${widget.suit.index}  ${widget.rank.index}'));
+      _isInit = true;
+    }
   }
 
   @override
