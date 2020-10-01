@@ -274,10 +274,9 @@ class Cards extends ChangeNotifier {
     final isP1 = place == 0;
     final isP2 = place == 1;
     print((isP1 ? p1Cards : isP2 ? p2Cards : p3Cards).length);
+    client.game.gameState = SPMP.declaring;
     final newCards = _getLocationCards(place);
     CardMoveExtension.alignCards(newCards, isP1, isP2, this);
-    client.game.gameState = SPMP.declaring;
-    cardStream.add('diposed');
   }
 
   void placeWidowInMiddle(int suit, int rank) {
@@ -311,6 +310,10 @@ class Cards extends ChangeNotifier {
     widows = [];
     if (place == 0) {
       p1Cards = sortCards(p1Cards);
+    } else if (place == 1) {
+      p2Cards = sortCards(p2Cards);
+    } else if (place == 2) {
+      p3Cards = sortCards(p3Cards);
     }
     // moves cards
     final newCards = _getLocationCards(place);
@@ -325,10 +328,7 @@ class Cards extends ChangeNotifier {
       eRotation: isP1 ? rotation.back : null,
       sAngle: !isP1 ? isP2 ? angle.up : angle.up : null,
       eAngle: !isP1 ? isP2 ? angle.right : angle.left : null,
-    ).then((value) {
-      print('about to add to card stream for widow');
-      cardStream.add('aligned widow player');
-    });
+    );
   }
 
   void setCards(List<Card> newCards) {

@@ -147,11 +147,11 @@ class CardMoveExtension {
     // runs the animation and waits for it to play before resolving
     await animController.forward().then(
       (value) {
-        animController.removeListener(() {});
         anims.forEach((i, anim) {
           anim.removeListener(() {});
         });
         print([currentBottom, currentTop, currentRight, currentLeft]);
+        animController.removeListener(() {});
       },
     );
   }
@@ -225,12 +225,16 @@ class CardMoveExtension {
       angle eAngle,
       Axis axis}) async {
     print('align cards was run');
-    bool isFirst = false;
+    final alignCards =
+        (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards);
+    final length = alignCards.length;
     await Future.forEach(
         (isP1 ? cards.p1Cards : isP2 ? cards.p2Cards : cards.p3Cards),
         (element) async {
       final newCard = newCards.firstWhere(
           (e) => e['rank'] == element.rank && e['suit'] == element.suit);
+      final idx = alignCards.indexWhere(
+          (e) => e.rank == newCard['rank'] && e.suit == newCard['suit']);
       final move = () => element.moveAndTwist(
             Duration(milliseconds: 200),
             eBottom: newCard['bottom'],
@@ -243,11 +247,12 @@ class CardMoveExtension {
             sRotation: sRotation,
             eRotation: eRotation,
           );
-      if (isFirst) {
+      if (idx == length - 1) {
         await move();
       } else {
         move();
       }
     });
+    cards.cardStream.add('aligned widow player');
   }
 }
