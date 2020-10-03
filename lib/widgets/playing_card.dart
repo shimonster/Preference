@@ -20,6 +20,22 @@ class PlayingCard extends StatefulWidget with CardMoveExtension {
   static const multiplySizeWidth = 0.06;
   static const multiplySizeHeight = 0.06 * 23 / 16;
 
+  double get currentRight {
+    return pCurrentRight;
+  }
+
+  double get currentLeft {
+    return pCurrentLeft;
+  }
+
+  double get currentTop {
+    return pCurrentTop;
+  }
+
+  double get currentBottom {
+    return pCurrentBottom;
+  }
+
   bool equals(PlayingCard other) {
     return other.rank == rank && other.suit == suit;
   }
@@ -49,12 +65,14 @@ class PlayingCardState extends State<PlayingCard>
     widget.height = MediaQuery.of(context).size.height;
     if (!_isInit) {
       widget.positionStream.stream.listen((event) {
-        print('position stream: ${widget.suit.index}  ${widget.rank.index}');
+        print('position stream  ${[
+          widget.currentBottom,
+          widget.currentTop,
+          widget.currentRight,
+          widget.currentLeft
+        ]}');
         setState(() {});
       });
-//    widget.rotationStream.stream.listen((event) {
-//      print('position stream');
-//    });
       widget.positionStream.done.then((value) => print(
           'position stream done: ${widget.suit.index}  ${widget.rank.index}'));
       widget.rotationStream.done.then((value) => print(
@@ -72,15 +90,14 @@ class PlayingCardState extends State<PlayingCard>
 
   // defines how the card will look
   Widget get card {
-    final width = MediaQuery.of(context).size.width;
     return Transform(
       transform: Matrix4.rotationY(widget.currentRotationY)
         ..rotateX(widget.currentRotationX)
         ..rotateZ(widget.currentRotationZ),
       alignment: Alignment.center,
       child: Container(
-        width: width * PlayingCard.multiplySizeWidth,
-        height: width * PlayingCard.multiplySizeHeight,
+        width: widget.width * PlayingCard.multiplySizeWidth,
+        height: widget.width * PlayingCard.multiplySizeHeight,
         decoration: BoxDecoration(
           color: widget.isFace ? Colors.orange : Colors.blue,
           border: Border.all(width: 5),
@@ -95,8 +112,13 @@ class PlayingCardState extends State<PlayingCard>
 
   @override
   Widget build(BuildContext context) {
+    print('position builder:  ${[
+      widget.currentBottom,
+      widget.currentTop,
+      widget.currentRight,
+      widget.currentLeft
+    ]}');
     final client = Provider.of<Client>(context, listen: false);
-    final width = MediaQuery.of(context).size.width;
     final newCard = card;
     // builds the card
     return Positioned(
@@ -113,6 +135,7 @@ class PlayingCardState extends State<PlayingCard>
             widget.currentRight,
             widget.currentLeft
           ]}');
+          print('');
           return thisCard.place == c.places.player1 &&
                   ((client.game.gameState == SPMP.playing &&
                           client.game.cards.turn == client.uid) ||
@@ -121,8 +144,8 @@ class PlayingCardState extends State<PlayingCard>
               ? Draggable(
                   feedback: newCard,
                   childWhenDragging: Container(
-                    width: width * PlayingCard.multiplySizeWidth,
-                    height: width * PlayingCard.multiplySizeHeight,
+                    width: widget.width * PlayingCard.multiplySizeWidth,
+                    height: widget.width * PlayingCard.multiplySizeHeight,
                     color: Colors.black54,
                   ),
                   data: thisCard,
