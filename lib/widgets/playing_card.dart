@@ -64,15 +64,6 @@ class PlayingCardState extends State<PlayingCard>
     widget.width = MediaQuery.of(context).size.width;
     widget.height = MediaQuery.of(context).size.height;
     if (!_isInit) {
-      widget.positionStream.stream.listen((event) {
-        print('position stream  ${[
-          widget.currentBottom,
-          widget.currentTop,
-          widget.currentRight,
-          widget.currentLeft
-        ]}');
-        setState(() {});
-      });
       widget.positionStream.done.then((value) => print(
           'position stream done: ${widget.suit.index}  ${widget.rank.index}'));
       widget.rotationStream.done.then((value) => print(
@@ -112,48 +103,52 @@ class PlayingCardState extends State<PlayingCard>
 
   @override
   Widget build(BuildContext context) {
-    print('position builder:  ${[
-      widget.currentBottom,
-      widget.currentTop,
-      widget.currentRight,
-      widget.currentLeft
-    ]}');
     final client = Provider.of<Client>(context, listen: false);
-    final newCard = card;
     // builds the card
-    return Positioned(
-      right: widget.currentRight,
-      left: widget.currentLeft,
-      bottom: widget.currentBottom,
-      top: widget.currentTop,
-      child: StreamBuilder(
-        stream: widget.rotationStream.stream,
-        builder: (context, snap) {
-          print('rotation builder was run: $thisCard  ${[
+    return StreamBuilder(
+        stream: widget.positionStream.stream,
+        builder: (context, snapshot) {
+          print('position builder:  ${[
             widget.currentBottom,
             widget.currentTop,
             widget.currentRight,
             widget.currentLeft
           ]}');
-          print('');
-          return thisCard.place == c.places.player1 &&
-                  ((client.game.gameState == SPMP.playing &&
-                          client.game.cards.turn == client.uid) ||
-                      (client.game.gameState == SPMP.discarding &&
-                          client.game.bidId == client.uid))
-              ? Draggable(
-                  feedback: newCard,
-                  childWhenDragging: Container(
-                    width: widget.width * PlayingCard.multiplySizeWidth,
-                    height: widget.width * PlayingCard.multiplySizeHeight,
-                    color: Colors.black54,
-                  ),
-                  data: thisCard,
-                  child: newCard,
-                )
-              : newCard;
-        },
-      ),
-    );
+          return Positioned(
+            right: widget.currentRight,
+            left: widget.currentLeft,
+            bottom: widget.currentBottom,
+            top: widget.currentTop,
+            child: StreamBuilder(
+              stream: widget.rotationStream.stream,
+              builder: (context, snap) {
+                print('rotation builder was run: $thisCard  ${[
+                  widget.currentBottom,
+                  widget.currentTop,
+                  widget.currentRight,
+                  widget.currentLeft
+                ]}');
+                print('');
+                final newCard = card;
+                return thisCard.place == c.places.player1 &&
+                        ((client.game.gameState == SPMP.playing &&
+                                client.game.cards.turn == client.uid) ||
+                            (client.game.gameState == SPMP.discarding &&
+                                client.game.bidId == client.uid))
+                    ? Draggable(
+                        feedback: newCard,
+                        childWhenDragging: Container(
+                          width: widget.width * PlayingCard.multiplySizeWidth,
+                          height: widget.width * PlayingCard.multiplySizeHeight,
+                          color: Colors.black54,
+                        ),
+                        data: thisCard,
+                        child: newCard,
+                      )
+                    : newCard;
+              },
+            ),
+          );
+        });
   }
 }

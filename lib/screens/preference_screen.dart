@@ -15,6 +15,7 @@ import '../widgets/dispose_target.dart';
 import '../widgets/dispose_button.dart';
 import '../widgets/select_button.dart';
 import '../widgets/place_target.dart';
+import '../widgets/ooga_booga.dart';
 
 class PreferenceScreen extends StatefulWidget {
   static const routeName = '/preference';
@@ -151,6 +152,8 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                             ...cards.widows,
                           if (client.game.gameState == SPMP.playing)
                             ...cards.placed,
+                          // ---------------------------------
+                          OogaBooga(),
                           // ---------------------------------
                           if (client.game.isPlaying)
                             Center(

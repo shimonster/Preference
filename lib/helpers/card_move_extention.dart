@@ -103,7 +103,14 @@ class CardMoveExtension {
   }
 
   Future<void> move(Duration duration, Cards cards,
-      {double eBottom, double eTop, double eRight, double eLeft}) async {
+      {double eBottom,
+      double eTop,
+      double eRight,
+      double eLeft,
+      double sBottom,
+      double sTop,
+      double sRight,
+      double sLeft}) async {
     // sets up animation controller and other stuff
     final animController = AnimationController(
       duration: duration,
@@ -121,12 +128,25 @@ class CardMoveExtension {
       oldBottom,
       oldRight
     ]);
-    pCurrentBottom =
+    final bool isCustomStart =
+        [sBottom, sTop, sRight, sLeft].every((element) => element != null);
+    final newBottom =
         eBottom != null ? pCurrentBottom ?? height - pCurrentTop : eBottom;
-    pCurrentTop = eTop != null ? pCurrentTop ?? height - oldBottom : eTop;
-    pCurrentRight =
+    final newTop = eTop != null ? pCurrentTop ?? height - oldBottom : eTop;
+    final newRight =
         eRight != null ? pCurrentRight ?? height - pCurrentLeft : eRight;
-    pCurrentLeft = eLeft != null ? pCurrentLeft ?? height - oldRight : eLeft;
+    final newLeft = eLeft != null ? pCurrentLeft ?? height - oldRight : eLeft;
+    if (isCustomStart) {
+      sBottom = newBottom;
+      sTop = newTop;
+      sRight = newRight;
+      sLeft = newLeft;
+    } else {
+      pCurrentBottom = newBottom;
+      pCurrentTop = newTop;
+      pCurrentRight = newRight;
+      pCurrentLeft = newLeft;
+    }
     print([
       pCurrentBottom,
       pCurrentTop,
@@ -136,7 +156,9 @@ class CardMoveExtension {
       oldBottom,
       oldRight
     ]);
-    final start = [pCurrentBottom, pCurrentTop, pCurrentRight, pCurrentLeft];
+    final start = isCustomStart
+        ? [sBottom, sTop, sRight, sLeft]
+        : [pCurrentBottom, pCurrentTop, pCurrentRight, pCurrentLeft];
     final end = [eBottom, eTop, eRight, eLeft];
     // sets up animations for things that aren't null
     for (var i = 0; i < 4; i++) {
@@ -177,9 +199,7 @@ class CardMoveExtension {
           pCurrentRight,
           pCurrentLeft
         ]}');
-        if (i == anims.keys.toList()[1]) {
-          positionStream.add('moved');
-        }
+        positionStream.add('moved');
       });
     });
     print('after adding in move:  ${[
@@ -196,7 +216,6 @@ class CardMoveExtension {
         });
         print([pCurrentBottom, pCurrentTop, pCurrentRight, pCurrentLeft]);
         cards.cardStream.add('finished moving cards.');
-        animController.removeListener(() {});
       },
     );
   }
@@ -210,9 +229,20 @@ class CardMoveExtension {
       rotation eRotation,
       angle sAngle,
       angle eAngle,
-      Axis axis}) async {
+      Axis axis,
+      double sBottom,
+      double sTop,
+      double sRight,
+      double sLeft}) async {
     move(duration, cards,
-        eTop: eTop, eBottom: eBottom, eRight: eRight, eLeft: eLeft);
+        eTop: eTop,
+        eBottom: eBottom,
+        eRight: eRight,
+        eLeft: eLeft,
+        sBottom: sBottom,
+        sTop: sTop,
+        sRight: sRight,
+        sLeft: sLeft);
     await rotate(sRotation, eRotation, sAngle, eAngle, duration, axis);
     print('after move and twist');
   }

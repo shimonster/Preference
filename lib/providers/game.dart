@@ -43,12 +43,12 @@ class Game extends ChangeNotifier {
   }
 
   Future<void> getCurrentGame() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (prefs.containsKey('currentGame')) {
-      final id = prefs.getInt('currentGame');
-      gameId = id;
-    }
-    print('prefs: $gameId');
+//    final prefs = await SharedPreferences.getInstance();
+//    if (prefs.containsKey('currentGame')) {
+//      final id = prefs.getInt('currentGame');
+//      gameId = id;
+//    }
+//    print('prefs: $gameId');
   }
 
   void placeBid(int num, int suit, String id, [String turn]) {
