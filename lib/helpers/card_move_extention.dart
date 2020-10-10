@@ -26,14 +26,12 @@ class CardMoveExtension {
   bool isFace = false;
 
   // position
-  double pCurrentRight;
+  double pCurrentRight = -500;
   double pCurrentLeft;
-  double pCurrentTop;
+  double pCurrentTop = -500;
   double pCurrentBottom;
   final positionStream = StreamController.broadcast();
   final rotationStream = StreamController.broadcast();
-  double width;
-  double height;
 
   // e is for end and s is for start
 
@@ -117,8 +115,12 @@ class CardMoveExtension {
       vsync: PlayingCardState(),
     );
     Map<int, Animation> anims = {};
-    final oldBottom = pCurrentBottom;
-    final oldRight = pCurrentRight;
+    final curRight = sRight ?? pCurrentRight;
+    final curLeft = sLeft ?? pCurrentLeft;
+    final curTop = sTop ?? pCurrentTop;
+    final curBottom = sBottom ?? pCurrentBottom;
+    final oldBottom = curBottom;
+    final oldRight = curRight;
     print([
       pCurrentBottom,
       pCurrentTop,
@@ -128,25 +130,12 @@ class CardMoveExtension {
       oldBottom,
       oldRight
     ]);
-    final bool isCustomStart =
-        [sBottom, sTop, sRight, sLeft].every((element) => element != null);
-    final newBottom =
-        eBottom != null ? pCurrentBottom ?? height - pCurrentTop : eBottom;
-    final newTop = eTop != null ? pCurrentTop ?? height - oldBottom : eTop;
-    final newRight =
-        eRight != null ? pCurrentRight ?? height - pCurrentLeft : eRight;
-    final newLeft = eLeft != null ? pCurrentLeft ?? height - oldRight : eLeft;
-    if (isCustomStart) {
-      sBottom = newBottom;
-      sTop = newTop;
-      sRight = newRight;
-      sLeft = newLeft;
-    } else {
-      pCurrentBottom = newBottom;
-      pCurrentTop = newTop;
-      pCurrentRight = newRight;
-      pCurrentLeft = newLeft;
-    }
+    print([cards.height, cards.width]);
+    pCurrentBottom =
+        eBottom != null ? curBottom ?? cards.height - curTop : null;
+    pCurrentTop = eTop != null ? curTop ?? cards.height - oldBottom : null;
+    pCurrentRight = eRight != null ? curRight ?? cards.width - curLeft : null;
+    pCurrentLeft = eLeft != null ? curLeft ?? cards.width - oldRight : null;
     print([
       pCurrentBottom,
       pCurrentTop,
@@ -156,9 +145,7 @@ class CardMoveExtension {
       oldBottom,
       oldRight
     ]);
-    final start = isCustomStart
-        ? [sBottom, sTop, sRight, sLeft]
-        : [pCurrentBottom, pCurrentTop, pCurrentRight, pCurrentLeft];
+    final start = [pCurrentBottom, pCurrentTop, pCurrentRight, pCurrentLeft];
     final end = [eBottom, eTop, eRight, eLeft];
     // sets up animations for things that aren't null
     for (var i = 0; i < 4; i++) {
@@ -179,26 +166,15 @@ class CardMoveExtension {
     anims.forEach((i, anim) {
       anim.addListener(() {
         final value = anims[i].value;
-        print('$i: $value');
         if (i == 0) {
-          print('bottom');
           pCurrentBottom = value;
         } else if (i == 1) {
-          print('top');
           pCurrentTop = value;
         } else if (i == 2) {
-          print('right');
           pCurrentRight = value;
         } else {
-          print('left');
           pCurrentLeft = value;
         }
-        print('adding in move:  ${[
-          pCurrentBottom,
-          pCurrentTop,
-          pCurrentRight,
-          pCurrentLeft
-        ]}');
         positionStream.add('moved');
       });
     });
@@ -234,6 +210,7 @@ class CardMoveExtension {
       double sTop,
       double sRight,
       double sLeft}) async {
+    print('move run');
     move(duration, cards,
         eTop: eTop,
         eBottom: eBottom,
@@ -249,32 +226,18 @@ class CardMoveExtension {
 
   static Future<void> animateDistribute(
       Cards cards, BuildContext context) async {
+    final size = MediaQuery.of(context).size;
     await Future.forEach(
         [...cards.p2Cards, ...cards.p1Cards, ...cards.p3Cards, ...cards.widows],
         (PlayingCard playingCard) async {
       print('about to distribute card');
       final thisCard = cards.cards.firstWhere((element) =>
           element.rank == playingCard.rank && element.suit == playingCard.suit);
-      final isP1 = thisCard.place == places.player1;
-      final isP2 = thisCard.place == places.player2;
-      final isP3 = thisCard.place == places.player3;
-      if (isP1) {
-        playingCard.pCurrentBottom = 0;
-        playingCard.pCurrentRight = 0;
-      } else if (isP2) {
-        playingCard.pCurrentLeft = 0;
-        playingCard.pCurrentTop = 0;
-      } else if (isP3) {
-        playingCard.pCurrentRight = 0;
-        playingCard.pCurrentTop = 0;
-      } else {
-        playingCard.pCurrentTop = 0;
-        playingCard.pCurrentRight = 0;
-      }
-      print('after asigning values to positions');
       playingCard.moveAndTwist(
-        Duration(milliseconds: 1000),
+        Duration(milliseconds: 500),
         cards,
+        sTop: -(PlayingCard.multiplySizeHeight * size.height) - 50,
+        sRight: size.width / 2,
         eTop: playingCard.top,
         eRight: playingCard.right,
         eLeft: playingCard.left,
@@ -289,10 +252,10 @@ class CardMoveExtension {
                 : thisCard.place == places.player2
                     ? angle.right
                     : angle.left,
-        axis: Axis.vertical,
+        axis: Axis.horizontal,
       );
 
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future.delayed(Duration(milliseconds: 50));
     });
   }
 

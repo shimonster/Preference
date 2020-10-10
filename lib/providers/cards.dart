@@ -74,8 +74,8 @@ class Cards extends ChangeNotifier {
 
   String turn;
   final Client client;
-  double width = html.window.innerWidth.toDouble();
-  double height = html.window.innerHeight.toDouble();
+  double width;
+  double height;
   final cardStream = StreamController.broadcast();
   final disposeStream = StreamController.broadcast();
 
@@ -136,6 +136,7 @@ class Cards extends ChangeNotifier {
 
   void collectTrick(int pNum) async {
     print('trick collected');
+    await Future.delayed(Duration(milliseconds: 500));
     final isP1 = pNum == 0;
     final isP2 = pNum == 1;
     for (var i in placed) {
@@ -310,6 +311,23 @@ class Cards extends ChangeNotifier {
     client.game.gameState = SPMP.declaring;
     final newCards = _getLocationCards(place);
     CardMoveExtension.alignCards(newCards, isP1, isP2, this);
+    if (isP1) {
+      flipOtherCards();
+    }
+  }
+
+  void flipOtherCards() {
+    for (var i = 0; i < 2; i++) {
+      (i == 0 ? p2Cards : p3Cards).forEach((element) {
+        element.rotate(
+            rotation.back,
+            rotation.face,
+            i == 0 ? angle.right : angle.left,
+            angle.up,
+            Duration(milliseconds: 200),
+            Axis.vertical);
+      });
+    }
   }
 
   void placeWidowInMiddle(int suit, int rank) {
@@ -327,10 +345,8 @@ class Cards extends ChangeNotifier {
         .moveAndTwist(
           Duration(milliseconds: 200),
           this,
-//          eTop: height / 2,
-//          eRight: (width / 2) - (width * PlayingCard.multiplySizeWidth / 2),
-          eTop: 20,
-          eRight: 20,
+          eTop: height / 2,
+          eRight: (width / 2) - (width * PlayingCard.multiplySizeWidth / 2),
           sRotation: rotation.back,
           eRotation: rotation.face,
         );

@@ -84,19 +84,27 @@ class _AuthCardState extends State<AuthCard> {
                     child: Text('Play'),
                     onPressed: () async {
                       if (form.currentState.validate()) {
-                        form.currentState.save();
-                        final client =
-                            Provider.of<Client>(context, listen: false);
-                        setState(() {
-                          _isLoading = true;
-                        });
-                        client.init();
                         try {
+                          form.currentState.save();
+                          final client =
+                              Provider.of<Client>(context, listen: false);
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          client.init();
                           if (isCreating) {
                             await client.game.createGame(_nickname);
                           } else {
                             await client.game.joinGame(_gameCode, _nickname);
                           }
+                          print('set dimention values');
+                          print(client.game.cards);
+                          final cards = client.game.cards;
+                          final size = MediaQuery.of(context).size;
+                          cards.height = size.height;
+                          cards.width = size.width;
+                          print(cards.width);
+                          print(cards.height);
                           setState(() {
                             _isLoading = false;
                           });

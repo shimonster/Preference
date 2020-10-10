@@ -24,10 +24,11 @@ class _OogaBoogaState extends State<OogaBooga> with TickerProviderStateMixin {
 
   List<double> heightInterp = [];
   List<double> widthInterp = [];
-  Animation<Offset> moveAnim;
+  Animation<double> moveAnim;
   AnimationController moveAnimController;
   bool isInit = false;
   bool shouldDisplay = true;
+  bool switchValue = true;
 
   @override
   void didChangeDependencies() {
@@ -38,9 +39,9 @@ class _OogaBoogaState extends State<OogaBooga> with TickerProviderStateMixin {
         vsync: this,
         duration: Duration(milliseconds: 100),
       );
-      moveAnim = Tween<Offset>(
-        begin: Offset(0, 0),
-        end: Offset(0, -1.5),
+      moveAnim = Tween<double>(
+        begin: 1,
+        end: 0,
       ).animate(moveAnimController);
       isInit = true;
     }
@@ -64,7 +65,7 @@ class _OogaBoogaState extends State<OogaBooga> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final animController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 400),
+      duration: Duration(milliseconds: 600),
     );
     final size = MediaQuery.of(context).size;
 
@@ -118,13 +119,13 @@ class _OogaBoogaState extends State<OogaBooga> with TickerProviderStateMixin {
       final int green = 0;
       final int blue = max(0, 255 - (moveAverage / 1.5).round());
 
-      return Center(
+      return Positioned(
+        left: xMove + (widthInterp.first / 2) - (width / 2),
+        top: yMove + (heightInterp.first / 2) - (height / 2),
         child: Transform(
           origin: Offset(width / 2, height / 2),
-          transform: Matrix4.translation(v.Vector3(xMove, yMove, 0))
-            ..rotateY(xNum > 0
-                ? min(pi / 3, xNum * 2 * c)
-                : max(-pi / 3, xNum * 2 * c))
+          transform: Matrix4.rotationY(
+              xNum > 0 ? min(pi / 3, xNum * 2 * c) : max(-pi / 3, xNum * 2 * c))
             ..rotateX(yNum > 0
                 ? -min(pi / 3, yNum * 2 * c)
                 : -max(-pi / 3, yNum * 2 * c)),
@@ -141,79 +142,58 @@ class _OogaBoogaState extends State<OogaBooga> with TickerProviderStateMixin {
       );
     }
 
-//    return Column(
-//      children: [
-//        SizedBox(
-//          height: 20,
-//        ),
-//        Slider(
-//          activeColor: Colors.red,
-//          inactiveColor: Colors.blue,
-//          max: 100,
-//          min: 0,
-//          value: boxes,
-//          divisions: 100,
-//          label: boxes.round().toString(),
-////          semanticFormatterCallback: (val) => val.round().toString(),
-//          onChanged: (input) {
-//            setState(() {
-//              boxes = input;
-//              heightInterp = List.generate(boxes.round(), (index) {
-//                final interp = (index + 1) / boxes;
-//                return lerpDouble(
-//                    size.height * 0.2, size.height * 0.04, interp);
-//              });
-//              widthInterp = List.generate(boxes.round(), (index) {
-//                final interp = (index + 1) / boxes;
-//                return lerpDouble(size.width * 0.2, size.width * 0.04, interp);
-//              });
-//            });
-//          },
-//        ),
-    return Positioned(
-      right: offset,
-      top: offset,
-      child: Column(
-        children: [
-          if (shouldDisplay)
-            SlideTransition(
-              position: moveAnim,
-              child: GestureDetector(
-                onPanUpdate: updatePosition,
-                onPanEnd: reset,
-                child: Container(
-                  width: widthInterp.first,
-                  height: heightInterp.first,
-                  child: Stack(
-                    children: [
-                      ...List.generate(boxes, (index) {
-                        final c = ((index + 1) / boxes);
-                        return rotationContainer(
-                            c, widthInterp[index], heightInterp[index]);
-                      }),
-                    ],
+    return AnimatedBuilder(
+      animation: moveAnim,
+      builder: (ctx, _) => Positioned(
+        right: offset,
+        top: offset - ((1 - moveAnim.value) * (heightInterp.first)),
+        width: widthInterp.first,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            shouldDisplay
+                ? Opacity(
+                    opacity: moveAnim.value,
+                    child: SizedBox(
+                      height: heightInterp.first,
+                      child: GestureDetector(
+                        onPanUpdate: updatePosition,
+                        onPanEnd: reset,
+                        child: Stack(
+                          overflow: Overflow.visible,
+                          children: [
+                            ...List.generate(boxes, (index) {
+                              final c = ((index + 1) / boxes);
+                              return rotationContainer(
+                                  c, widthInterp[index], heightInterp[index]);
+                            }),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : SizedBox(
+                    height: heightInterp.first,
                   ),
-                ),
-              ),
-            ),
-          Switch(
-              value: shouldDisplay,
-              onChanged: (val) {
+            Switch(
+              value: switchValue,
+              onChanged: (val) async {
                 if (!val) {
+                  setState(() => switchValue = false);
+                  await moveAnimController.forward();
                   setState(() => shouldDisplay = false);
-                  moveAnimController.forward();
                 } else {
-                  setState(() => shouldDisplay = true);
+                  setState(() {
+                    shouldDisplay = true;
+                    switchValue = true;
+                  });
                   moveAnimController.reverse();
                 }
-              })
-        ],
+              },
+            )
+          ],
+        ),
       ),
     );
-//            ],
-//          ),
-//        ),
-//      ],
-//    );
   }
 }

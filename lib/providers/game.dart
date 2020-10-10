@@ -33,12 +33,13 @@ class Game extends ChangeNotifier {
 
   Future<void> joinGame(int gId, String nickname) async {
     final uid = Uid().toString();
+    cards = c.Cards(client: client);
+    print('made cards');
     client.startClient(gId, nickname, uid);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('currentGame', gId);
     await prefs.setInt('currentPlayer', 0);
     gameId = gId;
-    cards = c.Cards(client: client);
     notifyListeners();
   }
 

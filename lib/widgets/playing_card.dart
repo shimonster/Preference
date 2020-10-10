@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -61,8 +62,6 @@ class PlayingCardState extends State<PlayingCard>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    widget.width = MediaQuery.of(context).size.width;
-    widget.height = MediaQuery.of(context).size.height;
     if (!_isInit) {
       widget.positionStream.done.then((value) => print(
           'position stream done: ${widget.suit.index}  ${widget.rank.index}'));
@@ -81,14 +80,15 @@ class PlayingCardState extends State<PlayingCard>
 
   // defines how the card will look
   Widget get card {
+    final size = MediaQuery.of(context).size;
     return Transform(
       transform: Matrix4.rotationY(widget.currentRotationY)
         ..rotateX(widget.currentRotationX)
         ..rotateZ(widget.currentRotationZ),
       alignment: Alignment.center,
       child: Container(
-        width: widget.width * PlayingCard.multiplySizeWidth,
-        height: widget.width * PlayingCard.multiplySizeHeight,
+        width: size.width * PlayingCard.multiplySizeWidth,
+        height: size.width * PlayingCard.multiplySizeHeight,
         decoration: BoxDecoration(
           color: widget.isFace ? Colors.orange : Colors.blue,
           border: Border.all(width: 5),
@@ -104,6 +104,7 @@ class PlayingCardState extends State<PlayingCard>
   @override
   Widget build(BuildContext context) {
     final client = Provider.of<Client>(context, listen: false);
+    final size = MediaQuery.of(context).size;
     // builds the card
     return StreamBuilder(
         stream: widget.positionStream.stream,
@@ -138,8 +139,8 @@ class PlayingCardState extends State<PlayingCard>
                     ? Draggable(
                         feedback: newCard,
                         childWhenDragging: Container(
-                          width: widget.width * PlayingCard.multiplySizeWidth,
-                          height: widget.width * PlayingCard.multiplySizeHeight,
+                          width: size.width * PlayingCard.multiplySizeWidth,
+                          height: size.width * PlayingCard.multiplySizeHeight,
                           color: Colors.black54,
                         ),
                         data: thisCard,
