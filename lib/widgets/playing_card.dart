@@ -74,6 +74,7 @@ class PlayingCardState extends State<PlayingCard>
   @override
   void dispose() {
     super.dispose();
+    print('playing card dispose: ${widget.rank.index}  ${widget.suit.index}');
     widget.positionStream.close();
     widget.rotationStream.close();
   }

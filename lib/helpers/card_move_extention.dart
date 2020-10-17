@@ -175,7 +175,10 @@ class CardMoveExtension {
         } else {
           pCurrentLeft = value;
         }
-        positionStream.add('moved');
+
+        print(
+            'position closed: ${positionStream.isClosed}, rotation closed: ${rotationStream.isClosed}');
+        if (!positionStream.isClosed) positionStream.add('moved');
       });
     });
     print('after adding in move:  ${[
@@ -191,7 +194,7 @@ class CardMoveExtension {
           anim.removeListener(() {});
         });
         print([pCurrentBottom, pCurrentTop, pCurrentRight, pCurrentLeft]);
-        cards.cardStream.add('finished moving cards.');
+//        cards.cardStream.add('finished moving cards.');
       },
     );
   }
@@ -296,11 +299,11 @@ class CardMoveExtension {
             sRotation: sRotation,
             eRotation: eRotation,
           );
-      if (idx == length - 1) {
-        await move();
-      } else {
-        move();
-      }
+//      if (idx == length - 1) {
+      await move();
+//      } else {
+//        move();
+//      }
     });
     cards.cardStream.add('aligned widow player');
   }

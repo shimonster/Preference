@@ -162,7 +162,7 @@ class Cards extends ChangeNotifier {
     }
   }
 
-  void placeCard(int rank, int suit, [String nTurn]) {
+  Future<void> placeCard(int rank, int suit, [String nTurn]) async {
     final turnIdx = client.game.players.keys.toList().indexOf(turn);
     print(turnIdx);
     print(suit);
@@ -180,16 +180,7 @@ class Cards extends ChangeNotifier {
         .firstWhere((element) =>
             element.rank.index == rank && element.suit.index == suit);
     print(card);
-    placed.add(card);
-    (isP1
-            ? p1Cards
-            : isP2
-                ? p2Cards
-                : p3Cards)
-        .removeWhere((element) => element.equals(card));
-    // moves cards that were placed
-    print(placed);
-    placed.last.moveAndTwist(
+    card.moveAndTwist(
       Duration(milliseconds: 200),
       this,
       eBottom: isP1 ? height * 7 / 12 : null,
@@ -209,20 +200,28 @@ class Cards extends ChangeNotifier {
       sRotation: isP1 ? null : rotation.back,
       eRotation: isP1 ? null : rotation.face,
     );
+    placed.add(card);
+    (isP1
+            ? p1Cards
+            : isP2
+                ? p2Cards
+                : p3Cards)
+        .removeWhere((element) => element.equals(card));
+    cardStream.add('added to placed');
+    // moves cards that were placed
+    print(placed);
     print(turn);
     move([rank], [suit], turnIdx + 5, SPMP.place, turn == client.uid,
         client.uid);
     final newCards = _getLocationCards(turnIdx);
     // moves cards that haven't been collected to new place
-    CardMoveExtension.alignCards(newCards, isP1, isP2, this);
-    turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];
+    await CardMoveExtension.alignCards(newCards, isP1, isP2, this);
     // updates my cards if my turn
     if (turn == client.uid) {
       p1Cards.forEach((element) => element.rotationStream.add('my turn'));
     }
-    print('before add to card stream');
-    cardStream.add('placed');
-    print('after add to card stream');
+    // changes turn
+    turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];
   }
 
   void disposingCards(int rank, int suit) {
