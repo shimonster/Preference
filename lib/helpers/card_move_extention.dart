@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../widgets/playing_card.dart';
-import '../providers/cards.dart';
+import '../providers/cards.dart' as c;
 
 enum rotation {
   face,
@@ -19,25 +19,34 @@ enum angle {
 }
 
 class CardMoveExtension {
-  // rotation
-  double currentRotationX = 0;
-  double currentRotationY = 0;
-  double currentRotationZ = 0;
-  bool isFace = false;
+  CardMoveExtension(this.cards, this.rank, this.suit);
 
-  // position
-  double pCurrentRight = -500;
-  double pCurrentLeft;
-  double pCurrentTop = -500;
-  double pCurrentBottom;
-  final positionStream = StreamController.broadcast();
-  final rotationStream = StreamController.broadcast();
+  bool isFace = false;
+  final int rank;
+  final int suit;
+  final c.Cards cards;
+  c.Card get thisCardElement {
+    return cards.cards.firstWhere(
+        (element) => element.suit.index == suit && element.rank.index == rank);
+  }
+
+  final positionStream = StreamController(
+      onListen: () => print('position stream listened to'),
+      onCancel: () => print('position stream cancelled'));
+  final rotationStream = StreamController(
+      onListen: () => print('rotation stream listened to'),
+      onCancel: () => print('rotation stream cancelled'));
 
   // e is for end and s is for start
 
   Future<void> rotate(rotation sRotation, rotation eRotation, angle sAngle,
       angle eAngle, Duration duration, Axis axis) async {
-    print('rotation was run');
+    print('rotation was run: $sRotation, $eRotation');
+    print(thisCardElement);
+//    final thisCardIdx = cards.cards.indexOf(thisCardElement);
+    final thisCardIdx = cards.cards.indexWhere((element) =>
+        element.suit == thisCardElement.suit &&
+        element.rank == thisCardElement.rank);
     final animationController = AnimationController(
       vsync: PlayingCardState(),
       duration: duration,
@@ -80,17 +89,30 @@ class CardMoveExtension {
     // adds listeners to animations
     if (sAngle != null && eAngle != null) {
       angleAnimation.addListener(() {
-        currentRotationZ = angleAnimation.value;
+        cards.cards[thisCardIdx].currentRotationZ = angleAnimation.value;
         rotationStream.add('rotation');
       });
     }
+    print(sRotation == rotation.face ? 0 : pi);
+    print(eRotation == rotation.face
+        ? 2 * pi
+        : sRotation == rotation.face
+            ? 0
+            : pi);
     if (sRotation != null && eRotation != null) {
       rotationAnimation.addListener(() {
+        print('about to add in rotation');
         isFace = rotationAnimation.value < pi * 1 / 2 ||
             rotationAnimation.value > pi * 3 / 2;
         axis == Axis.horizontal
-            ? currentRotationX = rotationAnimation.value
-            : currentRotationY = rotationAnimation.value;
+            ? cards.cards[thisCardIdx].currentRotationX =
+                rotationAnimation.value
+            : cards.cards[thisCardIdx].currentRotationY =
+                rotationAnimation.value;
+        print(axis == Axis.horizontal
+            ? cards.cards[thisCardIdx].currentRotationX
+            : cards.cards[thisCardIdx].currentRotationY);
+        print(rotationAnimation.value);
         rotationStream.add('rotation');
       });
     }
@@ -100,7 +122,7 @@ class CardMoveExtension {
     });
   }
 
-  Future<void> move(Duration duration, Cards cards,
+  Future<void> move(Duration duration, c.Cards cards,
       {double eBottom,
       double eTop,
       double eRight,
@@ -109,43 +131,51 @@ class CardMoveExtension {
       double sTop,
       double sRight,
       double sLeft}) async {
+    final thisCard = thisCardElement;
+    final thisCardIdx = cards.cards.indexWhere(
+        (element) => element.suit.index == suit && element.rank.index == rank);
     // sets up animation controller and other stuff
     final animController = AnimationController(
       duration: duration,
       vsync: PlayingCardState(),
     );
     Map<int, Animation> anims = {};
-    final curRight = sRight ?? pCurrentRight;
-    final curLeft = sLeft ?? pCurrentLeft;
-    final curTop = sTop ?? pCurrentTop;
-    final curBottom = sBottom ?? pCurrentBottom;
+    final curRight = sRight ?? thisCard.right;
+    final curLeft = sLeft ?? thisCard.left;
+    final curTop = sTop ?? thisCard.top;
+    final curBottom = sBottom ?? thisCard.bottom;
     final oldBottom = curBottom;
     final oldRight = curRight;
     print([
-      pCurrentBottom,
-      pCurrentTop,
-      pCurrentRight,
-      pCurrentLeft,
+      thisCard.bottom,
+      thisCard.top,
+      thisCard.right,
+      thisCard.left,
       'old:',
       oldBottom,
       oldRight
     ]);
     print([cards.height, cards.width]);
-    pCurrentBottom =
+    thisCard.bottom =
         eBottom != null ? curBottom ?? cards.height - curTop : null;
-    pCurrentTop = eTop != null ? curTop ?? cards.height - oldBottom : null;
-    pCurrentRight = eRight != null ? curRight ?? cards.width - curLeft : null;
-    pCurrentLeft = eLeft != null ? curLeft ?? cards.width - oldRight : null;
+    thisCard.top = eTop != null ? curTop ?? cards.height - oldBottom : null;
+    thisCard.right = eRight != null ? curRight ?? cards.width - curLeft : null;
+    thisCard.left = eLeft != null ? curLeft ?? cards.width - oldRight : null;
     print([
-      pCurrentBottom,
-      pCurrentTop,
-      pCurrentRight,
-      pCurrentLeft,
+      thisCard.bottom,
+      thisCard.top,
+      thisCard.right,
+      thisCard.left,
       'old:',
       oldBottom,
       oldRight
     ]);
-    final start = [pCurrentBottom, pCurrentTop, pCurrentRight, pCurrentLeft];
+    final start = [
+      thisCard.bottom,
+      thisCard.top,
+      thisCard.right,
+      thisCard.left
+    ];
     final end = [eBottom, eTop, eRight, eLeft];
     // sets up animations for things that aren't null
     for (var i = 0; i < 4; i++) {
@@ -167,25 +197,27 @@ class CardMoveExtension {
       anim.addListener(() {
         final value = anims[i].value;
         if (i == 0) {
-          pCurrentBottom = value;
+          cards.cards[thisCardIdx].bottom = value;
         } else if (i == 1) {
-          pCurrentTop = value;
+          cards.cards[thisCardIdx].top = value;
         } else if (i == 2) {
-          pCurrentRight = value;
+          cards.cards[thisCardIdx].right = value;
+          print(
+              'position closed: ${positionStream.isClosed}, rotation closed: ${rotationStream.isClosed}');
+          if (!positionStream.isClosed) positionStream.add('moved');
         } else {
-          pCurrentLeft = value;
+          cards.cards[thisCardIdx].left = value;
+          print(
+              'position closed: ${positionStream.isClosed}, rotation closed: ${rotationStream.isClosed}');
+          if (!positionStream.isClosed) positionStream.add('moved');
         }
-
-        print(
-            'position closed: ${positionStream.isClosed}, rotation closed: ${rotationStream.isClosed}');
-        if (!positionStream.isClosed) positionStream.add('moved');
       });
     });
     print('after adding in move:  ${[
-      pCurrentBottom,
-      pCurrentTop,
-      pCurrentRight,
-      pCurrentLeft
+      thisCard.bottom,
+      thisCard.top,
+      thisCard.right,
+      thisCard.left
     ]}');
     // runs the animation and waits for it to play before resolving
     await animController.forward().then(
@@ -193,13 +225,13 @@ class CardMoveExtension {
         anims.forEach((i, anim) {
           anim.removeListener(() {});
         });
-        print([pCurrentBottom, pCurrentTop, pCurrentRight, pCurrentLeft]);
+        print([thisCard.bottom, thisCard.top, thisCard.right, thisCard.left]);
 //        cards.cardStream.add('finished moving cards.');
       },
     );
   }
 
-  Future<void> moveAndTwist(Duration duration, Cards cards,
+  Future<void> moveAndTwist(Duration duration, c.Cards cards,
       {double eBottom,
       double eTop,
       double eRight,
@@ -228,15 +260,15 @@ class CardMoveExtension {
   }
 
   static Future<void> animateDistribute(
-      Cards cards, BuildContext context) async {
+      c.Cards cards, BuildContext context) async {
     final size = MediaQuery.of(context).size;
     await Future.forEach(
         [...cards.p2Cards, ...cards.p1Cards, ...cards.p3Cards, ...cards.widows],
-        (PlayingCard playingCard) async {
+        (playingCard) async {
       print('about to distribute card');
       final thisCard = cards.cards.firstWhere((element) =>
           element.rank == playingCard.rank && element.suit == playingCard.suit);
-      playingCard.moveAndTwist(
+      playingCard.cardMoveExtension.moveAndTwist(
         Duration(milliseconds: 500),
         cards,
         sTop: -(PlayingCard.multiplySizeHeight * size.height) - 50,
@@ -247,14 +279,14 @@ class CardMoveExtension {
         eBottom: playingCard.bottom,
         sRotation: rotation.back,
         eRotation:
-            thisCard.place == places.player1 ? rotation.face : rotation.back,
+            thisCard.place == c.places.player1 ? rotation.face : rotation.back,
         sAngle: angle.up,
-        eAngle:
-            thisCard.place == places.player1 || thisCard.place == places.widow
-                ? angle.up
-                : thisCard.place == places.player2
-                    ? angle.right
-                    : angle.left,
+        eAngle: thisCard.place == c.places.player1 ||
+                thisCard.place == c.places.widow
+            ? angle.up
+            : thisCard.place == c.places.player2
+                ? angle.right
+                : angle.left,
         axis: Axis.horizontal,
       );
 
@@ -263,7 +295,7 @@ class CardMoveExtension {
   }
 
   static Future<void> alignCards(
-      List<Map<String, dynamic>> newCards, bool isP1, bool isP2, Cards cards,
+      List<Map<String, dynamic>> newCards, bool isP1, bool isP2, c.Cards cards,
       {rotation sRotation,
       rotation eRotation,
       angle sAngle,
@@ -286,7 +318,7 @@ class CardMoveExtension {
           (e) => e['rank'] == element.rank && e['suit'] == element.suit);
       final idx = alignCards.indexWhere(
           (e) => e.rank == newCard['rank'] && e.suit == newCard['suit']);
-      final move = () => element.moveAndTwist(
+      final move = () => element.cardMoveExtension.moveAndTwist(
             Duration(milliseconds: 200),
             cards,
             eBottom: newCard['bottom'],
@@ -305,6 +337,5 @@ class CardMoveExtension {
 //        move();
 //      }
     });
-    cards.cardStream.add('aligned widow player');
   }
 }

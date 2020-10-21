@@ -95,7 +95,7 @@ class Game extends ChangeNotifier {
     gameState = SPMP.playing;
     cards.cardStream.add('declared');
     cards.p1Cards.forEach((element) {
-      element.positionStream.add('playing');
+      element.cardMoveExtension.positionStream.add('playing');
     });
     print('after add to card stream');
     print(bidId);
