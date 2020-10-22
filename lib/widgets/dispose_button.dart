@@ -22,21 +22,13 @@ class DisposeButton extends StatelessWidget {
                             .length ==
                         2
                     ? () {
-                        client.game.cards.move(
-                            cards.cards
-                                .where((element) =>
-                                    element.place == c.places.disposing)
-                                .map((e) => e.rank.index)
-                                .toList(),
-                            cards.cards
-                                .where((element) =>
-                                    element.place == c.places.disposing)
-                                .map((e) => e.suit.index)
-                                .toList(),
-                            SPMP.disposed,
-                            SPMP.dispose,
-                            true,
-                            client.uid);
+                        print('dispose cards was pressed');
+                        final disposeCrds = cards.cards.where(
+                            (element) => element.place == c.places.disposing);
+                        client.game.cards.disposeCards(
+                          disposeCrds.map((e) => e.rank.index).toList(),
+                          disposeCrds.map((e) => e.suit.index).toList(),
+                        );
                       }
                     : null,
               )

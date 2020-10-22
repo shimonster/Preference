@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../widgets/playing_card.dart';
 import '../providers/cards.dart' as c;
+import '../SPMP.dart';
 
 enum rotation {
   face,
@@ -12,9 +13,9 @@ enum rotation {
 }
 
 enum angle {
-  right,
   left,
   up,
+  right,
   down,
 }
 
@@ -131,7 +132,6 @@ class CardMoveExtension {
       double sTop,
       double sRight,
       double sLeft}) async {
-    final thisCard = thisCardElement;
     final thisCardIdx = cards.cards.indexWhere(
         (element) => element.suit.index == suit && element.rank.index == rank);
     // sets up animation controller and other stuff
@@ -140,41 +140,44 @@ class CardMoveExtension {
       vsync: PlayingCardState(),
     );
     Map<int, Animation> anims = {};
-    final curRight = sRight ?? thisCard.right;
-    final curLeft = sLeft ?? thisCard.left;
-    final curTop = sTop ?? thisCard.top;
-    final curBottom = sBottom ?? thisCard.bottom;
+    final curRight = sRight ?? thisCardElement.right;
+    final curLeft = sLeft ?? thisCardElement.left;
+    final curTop = sTop ?? thisCardElement.top;
+    final curBottom = sBottom ?? thisCardElement.bottom;
     final oldBottom = curBottom;
     final oldRight = curRight;
     print([
-      thisCard.bottom,
-      thisCard.top,
-      thisCard.right,
-      thisCard.left,
+      thisCardElement.bottom,
+      thisCardElement.top,
+      thisCardElement.right,
+      thisCardElement.left,
       'old:',
       oldBottom,
       oldRight
     ]);
     print([cards.height, cards.width]);
-    thisCard.bottom =
+    thisCardElement.bottom =
         eBottom != null ? curBottom ?? cards.height - curTop : null;
-    thisCard.top = eTop != null ? curTop ?? cards.height - oldBottom : null;
-    thisCard.right = eRight != null ? curRight ?? cards.width - curLeft : null;
-    thisCard.left = eLeft != null ? curLeft ?? cards.width - oldRight : null;
+    thisCardElement.top =
+        eTop != null ? curTop ?? cards.height - oldBottom : null;
+    thisCardElement.right =
+        eRight != null ? curRight ?? cards.width - curLeft : null;
+    thisCardElement.left =
+        eLeft != null ? curLeft ?? cards.width - oldRight : null;
     print([
-      thisCard.bottom,
-      thisCard.top,
-      thisCard.right,
-      thisCard.left,
+      thisCardElement.bottom,
+      thisCardElement.top,
+      thisCardElement.right,
+      thisCardElement.left,
       'old:',
       oldBottom,
       oldRight
     ]);
     final start = [
-      thisCard.bottom,
-      thisCard.top,
-      thisCard.right,
-      thisCard.left
+      thisCardElement.bottom,
+      thisCardElement.top,
+      thisCardElement.right,
+      thisCardElement.left
     ];
     final end = [eBottom, eTop, eRight, eLeft];
     // sets up animations for things that aren't null
@@ -214,10 +217,10 @@ class CardMoveExtension {
       });
     });
     print('after adding in move:  ${[
-      thisCard.bottom,
-      thisCard.top,
-      thisCard.right,
-      thisCard.left
+      thisCardElement.bottom,
+      thisCardElement.top,
+      thisCardElement.right,
+      thisCardElement.left
     ]}');
     // runs the animation and waits for it to play before resolving
     await animController.forward().then(
@@ -225,7 +228,12 @@ class CardMoveExtension {
         anims.forEach((i, anim) {
           anim.removeListener(() {});
         });
-        print([thisCard.bottom, thisCard.top, thisCard.right, thisCard.left]);
+        print([
+          thisCardElement.bottom,
+          thisCardElement.top,
+          thisCardElement.right,
+          thisCardElement.left
+        ]);
 //        cards.cardStream.add('finished moving cards.');
       },
     );
@@ -261,81 +269,99 @@ class CardMoveExtension {
 
   static Future<void> animateDistribute(
       c.Cards cards, BuildContext context) async {
-    final size = MediaQuery.of(context).size;
-    await Future.forEach(
-        [...cards.p2Cards, ...cards.p1Cards, ...cards.p3Cards, ...cards.widows],
-        (playingCard) async {
-      print('about to distribute card');
-      final thisCard = cards.cards.firstWhere((element) =>
-          element.rank == playingCard.rank && element.suit == playingCard.suit);
-      playingCard.cardMoveExtension.moveAndTwist(
-        Duration(milliseconds: 500),
+    final newCards1 = cards.getLocationCards(SPMP.player1);
+    final newCards2 = cards.getLocationCards(SPMP.player2);
+    final newCards3 = cards.getLocationCards(SPMP.player3);
+    final newCardsWidow = cards.getLocationCards(SPMP.widow);
+    final allNewCards = [newCards1, newCards2, newCards3, newCardsWidow];
+    for (var i = 0; i < 4; i++) {
+      final isP1 = i == 0;
+      final isP2 = i == 1;
+      final isP3 = i == 2;
+      final isWidow = i == 3;
+      await alignCards(
+        allNewCards[i],
+        isP1,
+        isP2,
+        isWidow,
         cards,
-        sTop: -(PlayingCard.multiplySizeHeight * size.height) - 50,
-        sRight: size.width / 2,
-        eTop: playingCard.top,
-        eRight: playingCard.right,
-        eLeft: playingCard.left,
-        eBottom: playingCard.bottom,
-        sRotation: rotation.back,
-        eRotation:
-            thisCard.place == c.places.player1 ? rotation.face : rotation.back,
-        sAngle: angle.up,
-        eAngle: thisCard.place == c.places.player1 ||
-                thisCard.place == c.places.widow
-            ? angle.up
-            : thisCard.place == c.places.player2
-                ? angle.right
-                : angle.left,
-        axis: Axis.horizontal,
+        sAngle: isP2 || isP3 ? angle.up : null,
+        eAngle: isP2
+            ? angle.right
+            : isP3
+                ? angle.left
+                : null,
+        sRotation: isP1 ? rotation.back : null,
+        eRotation: isP1 ? rotation.face : null,
       );
-
-      await Future.delayed(Duration(milliseconds: 50));
-    });
+    }
+//    await Future.forEach(cards.cards, (card) async {
+//      print('about to distribute card');
+//      card.cardMoveExtension.moveAndTwist(
+//        Duration(milliseconds: 500),
+//        cards,
+//        sTop: -(PlayingCard.multiplySizeHeight * size.height) - 50,
+//        sRight: size.width / 2,
+//        eTop: card.top,
+//        eRight: card.right,
+//        eLeft: card.left,
+//        eBottom: card.bottom,
+//        sRotation: rotation.back,
+//        eRotation:
+//            card.place == c.places.player1 ? rotation.face : rotation.back,
+//        sAngle: angle.up,
+//        eAngle: card.place == c.places.player1 || card.place == c.places.widow
+//            ? angle.up
+//            : card.place == c.places.player2
+//                ? angle.right
+//                : angle.left,
+//        axis: Axis.horizontal,
+//      );
+//
+//      await Future.delayed(Duration(milliseconds: 500));
+//    });
   }
 
-  static Future<void> alignCards(
-      List<Map<String, dynamic>> newCards, bool isP1, bool isP2, c.Cards cards,
+  static Future<void> alignCards(List<Map<String, dynamic>> newCards, bool isP1,
+      bool isP2, bool isWidow, c.Cards cards,
       {rotation sRotation,
       rotation eRotation,
       angle sAngle,
       angle eAngle,
       Axis axis}) async {
     print('align cards was run');
-    final alignCards = (isP1
-        ? cards.p1Cards
-        : isP2
-            ? cards.p2Cards
-            : cards.p3Cards);
-    final length = alignCards.length;
-    await Future.forEach(
-        (isP1
-            ? cards.p1Cards
-            : isP2
-                ? cards.p2Cards
-                : cards.p3Cards), (element) async {
+    final alignCards = cards.cards
+        .where((element) =>
+            element.place.index ==
+            (isP1
+                ? SPMP.player1
+                : isP2
+                    ? SPMP.player2
+                    : isWidow
+                        ? SPMP.widow
+                        : SPMP.player3))
+        .toList();
+    await Future.forEach(alignCards, (c.Card element) async {
       final newCard = newCards.firstWhere(
           (e) => e['rank'] == element.rank && e['suit'] == element.suit);
-      final idx = alignCards.indexWhere(
-          (e) => e.rank == newCard['rank'] && e.suit == newCard['suit']);
-      final move = () => element.cardMoveExtension.moveAndTwist(
-            Duration(milliseconds: 200),
-            cards,
-            eBottom: newCard['bottom'],
-            eTop: newCard['top'],
-            eRight: newCard['right'],
-            eLeft: newCard['left'],
-            sAngle: sAngle,
-            eAngle: eAngle,
-            axis: axis,
-            sRotation: sRotation,
-            eRotation: eRotation,
-          );
-//      if (idx == length - 1) {
-      await move();
-//      } else {
-//        move();
-//      }
+      print((element.currentRotationZ / pi) + 1);
+      final isAlreadyAngle =
+          angle.values[((element.currentRotationZ / (pi / 2)) + 1).round()] ==
+              eAngle;
+      element.cardMoveExtension.moveAndTwist(
+        Duration(milliseconds: 400),
+        cards,
+        eBottom: newCard['bottom'],
+        eTop: newCard['top'],
+        eRight: newCard['right'],
+        eLeft: newCard['left'],
+        sAngle: isAlreadyAngle ? null : sAngle,
+        eAngle: isAlreadyAngle ? null : eAngle,
+        axis: axis,
+        sRotation: sRotation,
+        eRotation: eRotation,
+      );
+      await Future.delayed(Duration(milliseconds: 100));
     });
   }
 }

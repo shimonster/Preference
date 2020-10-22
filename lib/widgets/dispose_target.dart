@@ -21,8 +21,7 @@ class DisposeTarget extends StatelessWidget {
         },
         onAccept: (data) {
           print('accepted data');
-          cards.move([data.rank.index], [data.suit.index], SPMP.disposing,
-              SPMP.dispose, false, client.uid);
+          cards.disposingCards(data.rank.index, data.suit.index);
         },
         onWillAccept: (value) {
           if (cards.cards

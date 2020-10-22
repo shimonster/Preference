@@ -58,15 +58,8 @@ class Client extends ChangeNotifier {
         }
         // dispose dispose dispose dispose dispose dispose dispose dispose
         if (event['method'] == SPMP.dispose) {
-          game.gameState = SPMP.declaring;
-          print(List<int>.from(event['suit']).runtimeType);
-          game.cards.move(
-              List<int>.from(event['rank']),
-              List<int>.from(event['suit']),
-              SPMP.disposed,
-              SPMP.dispose,
-              false,
-              event['uid']);
+          game.cards.disposeCards(
+              List<int>.from(event['rank']), List<int>.from(event['suit']));
         }
         // collect-widow collect-widow collect-widow collect-widow collect-widow
         if (event['method'] == SPMP.collectWidow) {
@@ -74,13 +67,8 @@ class Client extends ChangeNotifier {
           final widow = game.cards.cards
               .where((element) => element.place == places.widow)
               .toList();
-          game.cards.move(
-              widow.map((e) => e.rank.index).toList(),
-              widow.map((e) => e.suit.index).toList(),
-              game.players.keys.toList().indexOf(event['uid']),
-              SPMP.collectWidow,
-              false,
-              event['uid']);
+          game.cards
+              .collectWidow(game.players.keys.toList().indexOf(event['uid']));
         }
         // start-playing start-playing start-playing start-playing start-playing
         if (event['method'] == SPMP.startPlaying) {
@@ -90,15 +78,20 @@ class Client extends ChangeNotifier {
           startGameStream.add(true);
           game.players = Map<String, Map<String, dynamic>>.from(
               event['players'] ?? game.players);
-          game.cards.setCards(List<Map>.from(event['cards'])
-              .map<Card>((e) => Card(
-                  ranks.values[e['rank']],
-                  suits.values[e['suit']],
-                  e['uid'] == SPMP.widow
-                      ? places.widow
-                      : places.values[
-                          game.players.keys.toList().indexOf(e['uid'])]))
-              .toList());
+          game.cards.setCards(
+            List<Map>.from(event['cards'])
+                .map<Card>(
+                  (e) => Card(
+                      ranks.values[e['rank']],
+                      suits.values[e['suit']],
+                      e['uid'] == SPMP.widow
+                          ? places.widow
+                          : places.values[
+                              game.players.keys.toList().indexOf(e['uid'])],
+                      game.cards),
+                )
+                .toList(),
+          );
           print(game.players);
         }
         // finish-bidding finish-bidding finish-bidding finish-bidding finish-bidding
