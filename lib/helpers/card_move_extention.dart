@@ -228,12 +228,12 @@ class CardMoveExtension {
         anims.forEach((i, anim) {
           anim.removeListener(() {});
         });
-        print([
-          thisCardElement.bottom,
-          thisCardElement.top,
-          thisCardElement.right,
-          thisCardElement.left
-        ]);
+//        print([
+//          thisCardElement.bottom,
+//          thisCardElement.top,
+//          thisCardElement.right,
+//          thisCardElement.left
+//        ]);
 //        cards.cardStream.add('finished moving cards.');
       },
     );

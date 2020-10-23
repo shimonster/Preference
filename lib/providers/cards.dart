@@ -272,6 +272,8 @@ class Cards extends ChangeNotifier {
 
   Future<void> disposeCards(List<int> rank, List<int> suit) async {
     print('disposed cards was run');
+//    client.game.gameState = SPMP.declaring;
+//    cardStream.add('changed game state to declaring');
     if (client.game.bidId == client.uid) {
       client.sendMessage({
         'method': SPMP.dispose,
@@ -291,7 +293,7 @@ class Cards extends ChangeNotifier {
     for (var i = 0; i < 2; i++) {
       print('loop was run');
       print(disposing.length);
-      _cards
+      final Function move = () => _cards
           .firstWhere((element) {
             print(element.hashCode);
             print(int.parse('${rank[i]}${suit[i]}'));
@@ -301,20 +303,27 @@ class Cards extends ChangeNotifier {
           .cardMoveExtension
           .move(Duration(milliseconds: 200), this,
               eTop: -500, eRight: width / 2);
+      print('i value: $i');
+      if (i == 0) {
+        move();
+      } else {
+        await move();
+        if (i == 1) {
+          print('in if statement');
+          for (var ind = 0; ind < 2; ind++) {
+            print('loop to remove');
+            _cards.removeWhere((element) =>
+                element.rank.index == rank[ind] &&
+                element.suit.index == suit[ind]);
+          }
+          print('after deleting cards');
+          moveNotDisposed();
+        }
+      }
     }
-    await Future.delayed(Duration(milliseconds: 200));
-    print(disposing);
-    // removes cards that were disposed from screen
-    for (var i = 0; i < 2; i++) {
-      _cards.removeWhere((element) =>
-          element.rank.index == rank[i] && element.suit.index == suit[i]);
-    }
-    cardStream.add('removed disposed from screen');
-    // aligns other cards
-    moveNotDisposed();
   }
 
-  void moveNotDisposed() {
+  Future<void> moveNotDisposed() async {
     final place = client.game.players.keys.toList().indexOf(client.game.bidId);
     final isP1 = place == 0;
     final isP2 = place == 1;
@@ -327,7 +336,7 @@ class Cards extends ChangeNotifier {
     client.game.gameState = SPMP.declaring;
     final newCards = getLocationCards(place);
     print(newCards);
-    CardMoveExtension.alignCards(newCards, isP1, isP2, false, this);
+    await CardMoveExtension.alignCards(newCards, isP1, isP2, false, this);
     if (isP1) {
       flipOtherCards();
     }
@@ -344,8 +353,10 @@ class Cards extends ChangeNotifier {
       element.cardMoveExtension.rotate(
           rotation.back,
           rotation.face,
-          element.place == places.player2 ? angle.right : angle.left,
-          angle.up,
+          null,
+          null,
+//          element.place == places.player2 ? angle.right : angle.left,
+//          angle.up,
           Duration(milliseconds: 200),
           Axis.vertical);
     });

@@ -64,9 +64,9 @@ class Client extends ChangeNotifier {
         // collect-widow collect-widow collect-widow collect-widow collect-widow
         if (event['method'] == SPMP.collectWidow) {
           game.gameState = SPMP.discarding;
-          final widow = game.cards.cards
-              .where((element) => element.place == places.widow)
-              .toList();
+//          final widow = game.cards.cards
+//              .where((element) => element.place == places.widow)
+//              .toList();
           game.cards
               .collectWidow(game.players.keys.toList().indexOf(event['uid']));
         }
@@ -97,6 +97,7 @@ class Client extends ChangeNotifier {
         // finish-bidding finish-bidding finish-bidding finish-bidding finish-bidding
         if (event['method'] == SPMP.finishBidding) {
           game.gameState = SPMP.declaring;
+          game.cards.cardStream.add('game state is declaring');
         }
         // player-leave/player-join player-leave/player-join player-leave/player-join
         if (event['method'] == SPMP.playerJoin ||
