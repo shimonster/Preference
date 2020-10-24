@@ -2,11 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'providers/game.dart';
 import './screens/preference_screen.dart';
 import './widgets/auth_card.dart';
 import './screens/auth_screen.dart';
 import './providers/client.dart';
+import './screens/waiting_for_others_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -37,6 +37,7 @@ class _MyAppState extends State<MyApp> {
           routes: {
             AuthCard.routeName: (ctx) => AuthCard(),
             PreferenceScreen.routeName: (ctx) => PreferenceScreen(),
+            WaitingForOthersScreen.routeName: (ctx) => WaitingForOthersScreen(),
           },
         );
       },

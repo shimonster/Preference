@@ -9,6 +9,7 @@ import 'package:flutter/material.dart' as m;
 import '../SPMP.dart';
 import './game.dart';
 import './cards.dart';
+import '../helpers/card_move_extention.dart';
 
 class Client extends ChangeNotifier {
   String username;
@@ -17,7 +18,6 @@ class Client extends ChangeNotifier {
   WebSocket ws;
   Game game;
   m.BuildContext context;
-  final startGameStream = StreamController.broadcast();
   final bidStream = StreamController.broadcast();
   bool isSpectating = false;
 
@@ -72,12 +72,11 @@ class Client extends ChangeNotifier {
         }
         // start-playing start-playing start-playing start-playing start-playing
         if (event['method'] == SPMP.startPlaying) {
-          game.isPlaying = true;
-          game.biddingId = event['biddingId'];
-          game.gameState = SPMP.bidding;
-          startGameStream.add(true);
           game.players = Map<String, Map<String, dynamic>>.from(
               event['players'] ?? game.players);
+          if (game.players.containsKey(uid)) {
+            game.players = game.sortPlayers(uid);
+          }
           game.cards.setCards(
             List<Map>.from(event['cards'])
                 .map<Card>(
@@ -92,12 +91,17 @@ class Client extends ChangeNotifier {
                 )
                 .toList(),
           );
+          game.isPlaying = true;
+          game.biddingId = event['biddingId'];
+          game.gameState = SPMP.bidding;
+          game.cards.componentStream.add('start');
+          CardMoveExtension.animateDistribute(game.cards);
           print(game.players);
         }
         // finish-bidding finish-bidding finish-bidding finish-bidding finish-bidding
         if (event['method'] == SPMP.finishBidding) {
-          game.gameState = SPMP.declaring;
-          game.cards.cardStream.add('game state is declaring');
+//          game.gameState = SPMP.declaring;
+//          game.cards.cardStream.add('game state is declaring');
         }
         // player-leave/player-join player-leave/player-join player-leave/player-join
         if (event['method'] == SPMP.playerJoin ||
@@ -107,43 +111,11 @@ class Client extends ChangeNotifier {
         }
         // trick-collected trick-collected trick-collected trick-collected
         if (event['method'] == SPMP.trickCollected) {
-          final placedCards = game.cards.cards
-              .where((element) =>
-                  element.place == places.center1 ||
-                  element.place == places.center2 ||
-                  element.place == places.center3 ||
-                  element.place == places.centerWidow)
-              .toList();
-          game.cards.move(
-              placedCards.map((e) => e.rank.index).toList(),
-              placedCards.map((e) => e.suit.index).toList(),
-              game.players.keys.toList().indexOf(event['uid']) + 8,
-              event['method'],
-              false,
-              event['uid']);
+          game.cards.collectTrick(event['uid']);
         }
         // finish-round finish-round finish-round finish-round finish-round
         if (event['method'] == SPMP.finishRound) {
-          m
-              .showDialog(
-            context: context,
-            builder: (ctx) => m.AlertDialog(
-              content: m.Column(
-                mainAxisSize: m.MainAxisSize.min,
-                children: Map<String, int>.from(event['playerTricks'])
-                    .entries
-                    .map((value) => m.Text('$value'))
-                    .toList(),
-              ),
-            ),
-          )
-              .then((value) {
-            game.bidId = null;
-            game.bid = null;
-            game.isPlaying = false;
-            startGameStream.add('about to start new round');
-            sendMessage({'method': SPMP.acceptNewRound, 'uid': uid});
-          });
+          game.finishRound(context, event['playerTricks']);
         }
         // start-collecting start-collecting start-collecting start-collecting
         if (event['method'] == SPMP.startCollecting) {
@@ -151,7 +123,7 @@ class Client extends ChangeNotifier {
           game.cards.turn = event['turn'];
           game.cards
               .placeWidowInMiddle(event['widow suit'], event['widow rank']);
-          game.cards.cardStream.add('collecting widow');
+          game.cards.componentStream.add('collecting widow');
         }
       },
       onDone: () {
@@ -159,6 +131,8 @@ class Client extends ChangeNotifier {
         print('client done');
         bidStream.close();
         game.cards.disposeStream.close();
+        game.cards.cardStream.close();
+        game.cards.componentStream.close();
       },
       onError: (error) => print('client error listening to web socket: $error'),
       cancelOnError: true,

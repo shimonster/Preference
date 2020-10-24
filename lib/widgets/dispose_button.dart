@@ -23,6 +23,8 @@ class DisposeButton extends StatelessWidget {
                         2
                     ? () {
                         print('dispose cards was pressed');
+                        client.game.gameState = SPMP.declaring;
+                        cards.componentStream.add('declaring');
                         final disposeCrds = cards.cards.where(
                             (element) => element.place == c.places.disposing);
                         client.game.cards.disposeCards(

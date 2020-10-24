@@ -109,7 +109,7 @@ class GameManagement {
       'method': SPMP.declare,
       'rank': rank,
       'suit': suit,
-    });
+    }, bidId);
   }
 
   bool acceptPlay(String uid) {

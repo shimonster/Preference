@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../SPMP.dart';
 import './cards.dart' as c;
-import 'client.dart';
+import './client.dart';
 
 class Uid extends UniqueKey {
   @override
@@ -41,6 +41,30 @@ class Game extends ChangeNotifier {
     await prefs.setInt('currentPlayer', 0);
     gameId = gId;
     notifyListeners();
+  }
+
+  Map<String, dynamic> sortPlayers(String uid) {
+    Map<String, Map<String, dynamic>> newPlayers = {...players};
+    print('sort players was run');
+    void sort() {
+      if (newPlayers.keys.toList().first == uid) {
+        return;
+      }
+      final entries = newPlayers.entries.toList();
+      final first = entries[0];
+      entries.add(first);
+      entries.removeAt(0);
+      newPlayers = entries.fold<Map<String, Map<String, dynamic>>>(
+          {},
+          (previousValue, element) =>
+              {...previousValue, element.key: element.value});
+      if (newPlayers.keys.toList().first != uid) {
+        sort();
+      }
+    }
+
+    sort();
+    return newPlayers;
   }
 
   Future<void> getCurrentGame() async {
@@ -93,10 +117,14 @@ class Game extends ChangeNotifier {
   void declareGame(int rank, int suit, bool isMe) {
     bid = {'rank': rank, 'suit': suit};
     gameState = SPMP.playing;
-    cards.cardStream.add('declared');
-    cards.p1Cards.forEach((element) {
-      element.cardMoveExtension.positionStream.add('playing');
-    });
+    cards.componentStream.add('declared');
+    if (bidId == client.uid) {
+      cards.cards
+          .where((element) => element.place == c.places.player1)
+          .forEach((element) {
+        element.positionStream.add('playing');
+      });
+    }
     print('after add to card stream');
     print(bidId);
     cards.turn = bidId;
@@ -107,6 +135,25 @@ class Game extends ChangeNotifier {
         'suit': suit,
       });
     }
+  }
+
+  void finishRound(BuildContext context, Map<String, int> playerTricks) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children:
+              playerTricks.entries.map((value) => Text('$value')).toList(),
+        ),
+      ),
+    ).then((value) {
+      bidId = null;
+      bid = null;
+      isPlaying = false;
+      cards.cardStream.add('about to start new round');
+      client.sendMessage({'method': SPMP.acceptNewRound, 'uid': client.uid});
+    });
   }
 
   Future<void> leaveGame() async {

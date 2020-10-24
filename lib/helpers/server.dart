@@ -100,6 +100,7 @@ class Server {
                             'cards': cards,
                             'biddingId': gameController.biddingId,
                             'spectating': gameController.spectating,
+                            'players': gameController.players,
                           });
                         }
                       }
@@ -139,53 +140,12 @@ class Server {
     );
   }
 
-  Map<String, dynamic> sortPlayers(String uid) {
-    Map<String, Map<String, dynamic>> newPlayers = {...gameController.players};
-    print('sort players was run');
-    void sort() {
-      if (newPlayers.keys.toList().first == uid) {
-        return;
-      }
-//      print(
-//          'list not sorted correctly: $uid: ${newPlayers.keys.toList().first}, ${newPlayers.keys.toList()[1]}');
-      final entries = newPlayers.entries.toList();
-      final first = entries[0];
-      entries.add(first);
-      entries.removeAt(0);
-      newPlayers = entries.fold(
-          {},
-          (previousValue, element) =>
-              {...previousValue, element.key: element.value});
-      if (newPlayers.keys.toList().first != uid) {
-        sort();
-      }
-    }
-
-    sort();
-//    print('$newPlayers  $uid');
-    return {'players': newPlayers};
-  }
-
   void sendMessage(Map<String, dynamic> message, [String exclude]) {
     print('about to send server message: $message');
     print(clientSockets);
     clientSockets.forEach((key, value) {
       if (key != exclude) {
-        if (message['method'] == SPMP.startPlaying) {
-          Map<String, dynamic> players;
-          print(gameController.spectating);
-          if (!gameController.spectating.any((element) => element == key)) {
-            players = sortPlayers(key);
-          } else {
-            print('player is spectating');
-            players = {'players': gameController.players};
-          }
-          print(players);
-          print(key);
-          value.add(json.encode({...message, ...players}));
-        } else {
-          value.add(json.encode(message));
-        }
+        value.add(json.encode(message));
       }
     });
   }

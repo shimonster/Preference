@@ -9,7 +9,7 @@ import '../SPMP.dart';
 
 // ignore: must_be_immutable
 class PlayingCard extends StatefulWidget {
-  PlayingCard(this.suit, this.rank, this.cards);
+  PlayingCard(this.suit, this.rank, this.cards, key) : super(key: key);
 
   final c.suits suit;
   final c.ranks rank;
@@ -43,9 +43,9 @@ class PlayingCardState extends State<PlayingCard>
           .firstWhere((element) =>
               element.hashCode ==
               int.parse('${widget.rank.index}${widget.suit.index}'));
-      thisCard.cardMoveExtension.positionStream.done.then((value) => print(
+      thisCard.positionStream.done.then((value) => print(
           'position stream done: ${widget.suit.index}  ${widget.rank.index}'));
-      thisCard.cardMoveExtension.rotationStream.done.then((value) => print(
+      thisCard.rotationStream.done.then((value) => print(
           'ROTATION stream done: ${widget.suit.index}  ${widget.rank.index}'));
       _isInit = true;
     }
@@ -55,8 +55,9 @@ class PlayingCardState extends State<PlayingCard>
   void dispose() {
     super.dispose();
     print('playing card dispose: ${widget.rank.index}  ${widget.suit.index}');
-    thisCard.cardMoveExtension.positionStream.close();
-    thisCard.cardMoveExtension.rotationStream.close();
+    thisCard.positionStream.close();
+//    thisCard.positionStream.sink.close();
+    thisCard.rotationStream.close();
   }
 
   // defines how the card will look
@@ -89,7 +90,7 @@ class PlayingCardState extends State<PlayingCard>
     final size = MediaQuery.of(context).size;
     // builds the card
     return StreamBuilder(
-        stream: thisCard.cardMoveExtension.positionStream.stream,
+        stream: thisCard.positionStream.stream,
         builder: (context, snapshot) {
           print('position builder was run:    ${[
             thisCard.bottom,
@@ -103,7 +104,7 @@ class PlayingCardState extends State<PlayingCard>
             bottom: thisCard.bottom,
             top: thisCard.top,
             child: StreamBuilder(
-              stream: thisCard.cardMoveExtension.rotationStream.stream,
+              stream: thisCard.rotationStream.stream,
               builder: (context, snap) {
                 print('rotation builder was run:    ${[
                   thisCard.bottom,

@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../screens/preference_screen.dart';
-import '../providers/game.dart';
+import '../screens/waiting_for_others_screen.dart';
 import '../providers/client.dart';
 
 class AuthCard extends StatefulWidget {
@@ -24,6 +23,69 @@ class _AuthCardState extends State<AuthCard> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width * 1 / 3;
+
+    void showGameDialogue() {
+      final client = Provider.of<Client>(context, listen: false);
+
+      showDialog(
+          context: context,
+          builder: (ctx) {
+            final _idController =
+                TextEditingController(text: client.game.gameId.toString());
+            return AlertDialog(
+              title: Center(
+                child: Text('This is your game code'),
+              ),
+              content: TextField(
+                textAlign: TextAlign.center,
+                controller: _idController,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                ),
+                onChanged: (_) {
+                  _idController.text = client.game.gameId.toString();
+                },
+              ),
+            );
+          });
+    }
+
+    void authenticate(GlobalKey<FormState> form, bool isCreating) async {
+      if (form.currentState.validate()) {
+        try {
+          form.currentState.save();
+          final client = Provider.of<Client>(context, listen: false);
+          setState(() {
+            _isLoading = true;
+          });
+          client.init();
+          if (isCreating) {
+            await client.game.createGame(_nickname);
+          } else {
+            await client.game.joinGame(_gameCode, _nickname);
+          }
+          final cards = client.game.cards;
+          final size = MediaQuery.of(context).size;
+          cards.height = size.height;
+          cards.width = size.width;
+          print(cards.width);
+          print(cards.height);
+          setState(() {
+            _isLoading = false;
+          });
+          Navigator.of(context).pop();
+          Navigator.of(context)
+              .pushReplacementNamed(WaitingForOthersScreen.routeName);
+          showGameDialogue();
+        } catch (error) {
+          setState(() {
+            _isLoading = false;
+            _isError = true;
+          });
+          throw error;
+        }
+      }
+    }
 
     Widget _buildForm(bool isCreating) {
       final form = GlobalKey<FormState>();
@@ -81,68 +143,10 @@ class _AuthCardState extends State<AuthCard> {
                     height: 10,
                   ),
                   RaisedButton(
-                    child: Text('Play'),
-                    onPressed: () async {
-                      if (form.currentState.validate()) {
-                        try {
-                          form.currentState.save();
-                          final client =
-                              Provider.of<Client>(context, listen: false);
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          client.init();
-                          if (isCreating) {
-                            await client.game.createGame(_nickname);
-                          } else {
-                            await client.game.joinGame(_gameCode, _nickname);
-                          }
-                          print('set dimention values');
-                          print(client.game.cards);
-                          final cards = client.game.cards;
-                          final size = MediaQuery.of(context).size;
-                          cards.height = size.height;
-                          cards.width = size.width;
-                          print(cards.width);
-                          print(cards.height);
-                          setState(() {
-                            _isLoading = false;
-                          });
-                          Navigator.of(context).pop();
-                          Navigator.of(context)
-                              .pushReplacementNamed(PreferenceScreen.routeName);
-                          showDialog(
-                              context: context,
-                              builder: (ctx) {
-                                final _idController = TextEditingController(
-                                    text: client.game.gameId.toString());
-                                return AlertDialog(
-                                  title: Center(
-                                    child: Text('This is your game code'),
-                                  ),
-                                  content: TextField(
-                                    textAlign: TextAlign.center,
-                                    controller: _idController,
-                                    decoration: InputDecoration(
-                                      border: InputBorder.none,
-                                    ),
-                                    onChanged: (_) {
-                                      _idController.text =
-                                          client.game.gameId.toString();
-                                    },
-                                  ),
-                                );
-                              });
-                        } catch (error) {
-                          setState(() {
-                            _isLoading = false;
-                            _isError = true;
-                          });
-                          throw error;
-                        }
-                      }
-                    },
-                  ),
+                      child: Text('Play'),
+                      onPressed: () {
+                        authenticate(form, isCreating);
+                      }),
                   SizedBox(
                     height: 10,
                   ),
@@ -176,11 +180,11 @@ class _AuthCardState extends State<AuthCard> {
             unselectedItemColor: Theme.of(context).primaryColor,
             items: [
               BottomNavigationBarItem(
-                title: Text('Join game'),
+                label: 'Join game',
                 icon: Icon(Icons.input),
               ),
               BottomNavigationBarItem(
-                title: Text('Create game'),
+                label: 'Create game',
                 icon: Icon(Icons.create),
               ),
             ],

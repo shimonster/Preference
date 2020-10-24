@@ -16,6 +16,7 @@ import '../widgets/dispose_button.dart';
 import '../widgets/select_button.dart';
 import '../widgets/place_target.dart';
 import '../widgets/ooga_booga.dart';
+import '../providers/cards.dart' as c;
 
 class PreferenceScreen extends StatefulWidget {
   static const routeName = '/preference';
@@ -25,40 +26,29 @@ class PreferenceScreen extends StatefulWidget {
 }
 
 class _PreferenceScreenState extends State<PreferenceScreen> {
-  bool _hasAccepted = false;
   bool _isLoading = true;
   bool hasPopped = false;
   StreamSubscription sub;
 
-  void setHasAccepted(bool val) {
-    print('accepted');
-    setState(() {
-      _hasAccepted = val;
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    Provider.of<Client>(context, listen: false).context = context;
-    Provider.of<Client>(context, listen: false).game.getCurrentGame().then(
+    final client = Provider.of<Client>(context, listen: false);
+    client.context = context;
+    client.game.getCurrentGame().then(
           (_) => setState(() {
             _isLoading = false;
           }),
         );
     sub = html.window.onPopState.listen((event) {
       if (!hasPopped && event.type == 'popstate') {
-        Provider.of<Client>(context, listen: false).game.leaveGame();
+        client.game.leaveGame();
         sub.cancel();
         setState(() {
           _isLoading = true;
         });
         hasPopped = true;
-        Provider.of<Client>(context, listen: false)
-            .game
-            .cards
-            .cardStream
-            .close();
+        client.game.cards.componentStream.close();
         print('event: ${event.type}');
         Navigator.of(context).pushReplacementNamed('/');
       }
@@ -86,15 +76,12 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
             ? Center(
                 child: CircularProgressIndicator(),
               )
-            : StreamBuilder(
-                stream: client.startGameStream.stream,
-                builder: (context, snapshot) {
-                  print(client.game.gameState);
-                  return StreamBuilder(
-                    stream: client.game.cards.cardStream.stream,
+            : Stack(
+                children: [
+                  StreamBuilder(
+                    stream: client.game.cards.componentStream.stream,
                     builder: (context, snapshot) {
-                      print(
-                          'preference screen about to build stack: p1: ${cards.p1Cards}, p2: ${cards.p2Cards}, p3: ${cards.p3Cards}, cards: ${cards.cards.map((e) => e.place).toList()}');
+                      print('from components: ${client.game.gameState}');
                       return Stack(
                         fit: StackFit.loose,
                         children: [
@@ -121,6 +108,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                               Text('my turn!')
                             else
                               Text(client.game.cards.turn),
+                          // -------------------------------------------
                           if ((client.game.gameState == SPMP.playing ||
                                   client.game.gameState ==
                                       SPMP.collectingWidow) &&
@@ -129,29 +117,6 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                           // ---------------------------------
                           if (client.game.gameState == SPMP.bidding)
                             BiddingButtons(),
-                          // ---------------------------------
-                          if (!_hasAccepted)
-                            StartPlayingButton(setHasAccepted, context),
-                          // ---------------------------------
-                          if (_hasAccepted && !client.game.isPlaying)
-                            Center(
-                              child: Text(
-                                'Get Ready!',
-                                style: TextStyle(
-                                  fontSize: 30,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          // ---------------------------------
-                          if (client.game.isPlaying) ...cards.p2Cards,
-                          if (client.game.isPlaying) ...cards.p1Cards,
-                          if (client.game.isPlaying) ...cards.p3Cards,
-                          if (client.game.isPlaying &&
-                              client.game.gameState != SPMP.discarding)
-                            ...cards.widows,
-                          if (client.game.gameState == SPMP.playing)
-                            ...cards.placed,
                           // ---------------------------------
                           OogaBooga(),
                           // ---------------------------------
@@ -162,8 +127,30 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                         ],
                       );
                     },
-                  );
-                },
+                  ),
+                  StreamBuilder(
+                    stream: cards.cardStream.stream,
+                    builder: (context, snapshot) {
+                      print('cards built: p1: ${cards.p1Cards}, '
+                          'p2: ${cards.p2Cards}, '
+                          'p3: ${cards.p3Cards}, '
+                          'cards: ${cards.cards.map((e) => e.place).toList()}');
+                      print('from cards: ${client.game.gameState}');
+                      return Stack(
+                        children: [
+                          if (client.game.isPlaying) ...cards.p1Cards,
+                          if (client.game.isPlaying) ...cards.p2Cards,
+                          if (client.game.isPlaying) ...cards.p3Cards,
+                          if (client.game.isPlaying &&
+                              client.game.gameState != SPMP.discarding)
+                            ...cards.widows,
+                          if (client.game.gameState == SPMP.playing)
+                            ...cards.placed,
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startTop,

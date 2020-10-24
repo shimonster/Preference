@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/client.dart';
-import '../helpers/card_move_extention.dart';
 
 class StartPlayingButton extends StatelessWidget {
   const StartPlayingButton(this.setHasAccepted, this.ctx);
@@ -15,19 +14,12 @@ class StartPlayingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final client = Provider.of<Client>(context);
-    return Positioned(
-      bottom: 30,
-      child: RaisedButton(
-        onPressed: () async {
-          client.play();
-          setHasAccepted(true);
-          client.startGameStream.stream.listen((_) async {
-            await Future.delayed(Duration(milliseconds: 50));
-            CardMoveExtension.animateDistribute(client.game.cards, ctx);
-          });
-        },
-        child: Text('start'),
-      ),
+    return RaisedButton(
+      onPressed: () async {
+        client.play();
+        setHasAccepted(true);
+      },
+      child: Text('start'),
     );
   }
 }
