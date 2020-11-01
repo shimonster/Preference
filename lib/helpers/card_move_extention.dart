@@ -149,10 +149,30 @@ class CardMoveExtension {
       oldRight
     ]);
     print([cards.height, cards.width]);
-    crd.bottom = eBottom != null ? curBottom ?? cards.height - curTop : null;
-    crd.top = eTop != null ? curTop ?? cards.height - oldBottom : null;
-    crd.right = eRight != null ? curRight ?? cards.width - curLeft : null;
-    crd.left = eLeft != null ? curLeft ?? cards.width - oldRight : null;
+    crd.bottom = eBottom != null
+        ? curBottom ??
+            cards.height -
+                curTop -
+                (cards.height * PlayingCard.multiplySizeHeight)
+        : null;
+    crd.top = eTop != null
+        ? curTop ??
+            cards.height -
+                oldBottom -
+                (cards.height * PlayingCard.multiplySizeHeight)
+        : null;
+    crd.right = eRight != null
+        ? curRight ??
+            cards.width -
+                curLeft -
+                (cards.width * PlayingCard.multiplySizeWidth)
+        : null;
+    crd.left = eLeft != null
+        ? curLeft ??
+            cards.width -
+                oldRight -
+                (cards.width * PlayingCard.multiplySizeWidth)
+        : null;
     print([
       crd.bottom,
       crd.top,
@@ -210,13 +230,6 @@ class CardMoveExtension {
         anims.forEach((i, anim) {
           anim.removeListener(() {});
         });
-//        print([
-//          thisCardElement.bottom,
-//          thisCardElement.top,
-//          thisCardElement.right,
-//          thisCardElement.left
-//        ]);
-//        cards.cardStream.add('finished moving cards.');
       },
     );
   }
@@ -261,6 +274,8 @@ class CardMoveExtension {
       final isP2 = i == 1;
       final isP3 = i == 2;
       final isWidow = i == 3;
+      bool isMine =
+          isP1 && cards.client.game.players.keys.contains(cards.client.uid);
       await alignCards(
         allNewCards[i],
         isP1,
@@ -273,8 +288,8 @@ class CardMoveExtension {
             : isP3
                 ? angle.left
                 : null,
-        sRotation: isP1 ? rotation.back : null,
-        eRotation: isP1 ? rotation.face : null,
+        sRotation: isMine ? rotation.back : null,
+        eRotation: isMine ? rotation.face : null,
       );
     }
   }

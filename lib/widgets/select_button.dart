@@ -33,8 +33,8 @@ class SelectButton extends StatelessWidget {
                       height: 50,
                       child: RaisedButton(
                         child: Text('${suits[index]} ${i + 1}'),
-                        onPressed: condition(index, i)
-                            ? () => pressHandler(index, i)
+                        onPressed: condition(i, index)
+                            ? () => pressHandler(i, index)
                             : null,
                       ),
                     ),

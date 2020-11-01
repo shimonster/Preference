@@ -1,5 +1,3 @@
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
 import 'dart:async';
 import 'dart:math';
 
@@ -66,6 +64,8 @@ class Card {
   double currentRotationY = 0;
   double currentRotationZ = 0;
 
+  bool isFirstPlaced = false;
+
   final positionStream = StreamController(
       onListen: () => print('position stream listened to'),
       onCancel: () => print('position stream cancelled'));
@@ -116,10 +116,10 @@ class Cards extends ChangeNotifier {
             element.place == places.center2 ||
             element.place == places.center3)
         .toList();
-    return [...p1Cards, ...p2Cards, ...p3Cards]
-        .where((element) =>
-            crds.any((e) => e.rank == element.rank && e.suit == element.suit))
-        .toList();
+    return List.generate(
+        crds.length,
+        (i) => PlayingCard(crds[i].suit, crds[i].rank, this,
+            ValueKey('${crds[i].rank}${crds[i].suit}')));
   }
 
   List get p1Cards {
@@ -169,23 +169,21 @@ class Cards extends ChangeNotifier {
     final isP1 = pNum == 0;
     final isP2 = pNum == 1;
     print('placed from trick: $placed');
-    for (Card i in placed) {
+    for (PlayingCard i in placed) {
       print('collected card: $i');
-      await _cards
-          .firstWhere(
-              (element) => element.hashCode == int.parse('${i.rank}${i.suit}'))
+      _cards
+          .firstWhere((element) =>
+              element.hashCode == int.parse('${i.rank.index}${i.suit.index}'))
           .cardMoveExtension
           .move(
-            Duration(milliseconds: 200),
+            Duration(milliseconds: 400),
             this,
-            eTop: isP1 ? null : height / 2,
-            eBottom: isP1 ? -200 : null,
+            eTop: isP1 ? height : height / 2,
             eRight: isP1
                 ? width / 2
                 : isP2
-                    ? null
-                    : -200,
-            eLeft: isP2 ? -200 : null,
+                    ? width
+                    : -width * PlayingCard.multiplySizeWidth,
           )
           .then((_) {
         move(
@@ -197,7 +195,10 @@ class Cards extends ChangeNotifier {
           uid,
           true,
         );
+        _cards.firstWhere((element) => element.isFirstPlaced).isFirstPlaced =
+            false;
       });
+      await Future.delayed(Duration(milliseconds: 100));
     }
 
     print('after moved placed');
@@ -220,16 +221,17 @@ class Cards extends ChangeNotifier {
     final card = _cards.firstWhere(
         (element) => element.rank.index == rank && element.suit.index == suit);
     print(card);
-    await card.cardMoveExtension.moveAndTwist(
+    final middle = (width / 2) - (PlayingCard.multiplySizeWidth * width / 2);
+    card.cardMoveExtension.moveAndTwist(
       Duration(milliseconds: 200),
       this,
-      eBottom: isP1 ? height * 7 / 12 : null,
-      eTop: isP1 ? null : height / 3,
-      eRight: isP2
-          ? null
-          : (width / 2) -
-              (PlayingCard.multiplySizeWidth * width / (isP1 ? 2 : 1)),
-      eLeft: isP2 ? width / 2 : null,
+      eTop: height / (isP1 ? 2.5 : 3),
+      eRight: middle *
+          (isP1
+              ? 1
+              : isP2
+                  ? 1.075
+                  : 0.925),
       sAngle: isP1
           ? null
           : isP2
@@ -240,22 +242,24 @@ class Cards extends ChangeNotifier {
       sRotation: isP1 ? null : rotation.back,
       eRotation: isP1 ? null : rotation.face,
     );
-    // moves cards that were placed
+    // changes place cards that were placed
     print(placed);
     print(turn);
     move([rank], [suit], turnIdx + 5, SPMP.place, turn == client.uid,
         client.uid, true);
+    if (placed.length == 1) {
+      _cards[_cards.indexOf(card)].isFirstPlaced = true;
+    }
     print(_cards.map((e) => e.place).toList());
     print(sortCards<Card>(_cards
         .where((element) =>
-            element.place == places.player1 ||
-            element.place == places.player2 ||
-            element.place == places.player3)
+            element.place == places.center1 ||
+            element.place == places.center2 ||
+            element.place == places.center3)
         .toList()));
     print(placed);
-    print('');
-    final newCards = getLocationCards(turnIdx);
     // moves cards that haven't been collected to new place
+    final newCards = getLocationCards(turnIdx);
     await CardMoveExtension.alignCards(newCards, isP1, isP2, false, this);
     // changes turn
     turn = nTurn ?? client.game.players.keys.toList()[(turnIdx + 1) % 3];
@@ -273,15 +277,18 @@ class Cards extends ChangeNotifier {
     move([rank], [suit], SPMP.disposing, 'N/A', false, client.uid, false);
     final crdIdx = cards.indexWhere(
         (element) => element.rank.index == rank && element.suit.index == suit);
+    final middle = (width / 2) - (PlayingCard.multiplySizeWidth * width / 2);
     cards[crdIdx].cardMoveExtension.move(
           Duration(milliseconds: 1),
           this,
           eTop: height / 2,
-          eRight: (width / 2) -
-              (100 *
-                  _cards
-                      .where((element) => element.place == places.disposing)
-                      .length),
+          eRight: middle *
+              (cards
+                          .where((element) => element.place == places.disposing)
+                          .length ==
+                      1
+                  ? 1.075
+                  : 0.925),
         );
     print([
       cards[crdIdx].bottom,
@@ -500,7 +507,7 @@ class Cards extends ChangeNotifier {
   }
 
   void setCards(List<Card> newCards) {
-//    _cards = sortCards<Card>(newCards);
+    _cards.sort((a, b) => a.place.index > b.place.index ? 1 : -1);
     _cards = newCards;
   }
 }

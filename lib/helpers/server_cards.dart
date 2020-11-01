@@ -112,21 +112,22 @@ class CardsManagement {
       List<Map<String, dynamic>> placed, bool isCollectingWidow) {
     String collectUid;
     Map<String, dynamic> biggestCard;
+    final trump = server.gameController.bid['suit'];
     // determines the biggest card
     void makeBiggest(Map<String, dynamic> i) {
       print('new biggest card');
       biggestCard = i;
       collectUid = cards.firstWhere((element) =>
-          element['suit'] == biggestCard['suit'] &&
-          element['rank'] == biggestCard['rank'])['uid'];
+          (element['suit'] == biggestCard['suit']) &&
+          (element['rank'] == biggestCard['rank']))['uid'];
     }
 
     for (var i in placed) {
       print(i);
       bool condish() =>
-          (i['rank'] > biggestCard['rank'] &&
-              i['suit'] >= biggestCard['suit']) ||
-          i['suit'] > biggestCard['suit'];
+          (i['rank'] > biggestCard['rank'] ||
+              (biggestCard['suit'] != trump && i['suit'] == trump)) &&
+          (i['suit'] == biggestCard['suit'] || i['suit'] == trump);
       if (biggestCard == null) {
         makeBiggest(i);
       } else if (isCollectingWidow ? !condish() : condish()) {
@@ -146,8 +147,14 @@ class CardsManagement {
     final isP2 = pIdx == 1;
     playerTricks[collectUid] += 1;
     for (var i in placed) {
-      move(i['rank'], i['suit'],
-          isP1 ? SPMP.trick1 : isP2 ? SPMP.trick2 : SPMP.trick3);
+      move(
+          i['rank'],
+          i['suit'],
+          isP1
+              ? SPMP.trick1
+              : isP2
+                  ? SPMP.trick2
+                  : SPMP.trick3);
     }
 //    if (isCollectingWidow) {
 //      final widow = cards.firstWhere((element) => element['uid'] == SPMP.widow);
@@ -220,11 +227,15 @@ class CardsManagement {
       });
       server.gameController.bidId = null;
       server.gameController.bid = null;
+      final entries = server.gameController.allPlayers.entries.toList();
+      entries.add(entries[0]);
+      entries.removeAt(0);
       final newCards = randomize();
       sendMessage({
         'method': SPMP.startPlaying,
         'cards': newCards,
         'biddingId': server.gameController.biddingId,
+        'players': server.gameController.players,
       });
     }
   }

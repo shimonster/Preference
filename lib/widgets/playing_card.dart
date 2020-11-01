@@ -114,21 +114,46 @@ class PlayingCardState extends State<PlayingCard>
                 ]}');
                 print('');
                 final newCard = card;
+                final placed = client.game.cards.placed;
+                final firstSuit = placed.isNotEmpty
+                    ? client.game.cards.cards
+                        .firstWhere((element) => element.isFirstPlaced)
+                        .suit
+                    : null;
                 return thisCard.place == c.places.player1 &&
                         ((client.game.gameState == SPMP.playing &&
                                 client.game.cards.turn == client.uid) ||
                             (client.game.gameState == SPMP.discarding &&
                                 client.game.bidId == client.uid))
-                    ? Draggable(
-                        feedback: newCard,
-                        childWhenDragging: Container(
-                          width: size.width * PlayingCard.multiplySizeWidth,
-                          height: size.width * PlayingCard.multiplySizeHeight,
-                          color: Colors.black54,
-                        ),
-                        data: thisCard,
-                        child: newCard,
-                      )
+                    ? client.game.gameState == SPMP.discarding ||
+                            placed.isEmpty ||
+                            firstSuit == widget.suit ||
+                            client.game.bid['suit'] == widget.suit.index ||
+                            client.game.cards.p1Cards
+                                .every((element) => element.suit != firstSuit)
+                        ? Draggable(
+                            feedback: newCard,
+                            childWhenDragging: Container(
+                              width: size.width * PlayingCard.multiplySizeWidth,
+                              height:
+                                  size.width * PlayingCard.multiplySizeHeight,
+                              color: Colors.black54,
+                            ),
+                            data: thisCard,
+                            child: newCard,
+                          )
+                        : Stack(
+                            children: [
+                              newCard,
+                              Container(
+                                color: Colors.black54,
+                                width:
+                                    PlayingCard.multiplySizeWidth * size.width,
+                                height:
+                                    PlayingCard.multiplySizeHeight * size.width,
+                              ),
+                            ],
+                          )
                     : newCard;
               },
             ),

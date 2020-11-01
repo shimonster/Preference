@@ -97,9 +97,9 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                               client.game.declareGame(suit, rank, true);
                             },
                                 (int suit, int rank) =>
-                                    !((client.game.bid['suit'] > suit &&
-                                            client.game.bid['rank'] >= rank) ||
-                                        client.game.bid['rank'] > rank)),
+                                    (client.game.bid['suit'] == suit &&
+                                        rank >= client.game.bid['rank']) ||
+                                    suit > client.game.bid['suit']),
                           // ---------------------------------
                           if (client.game.bidId == client.uid) DisposeButton(),
                           // ---------------------------------

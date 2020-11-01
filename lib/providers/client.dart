@@ -95,6 +95,7 @@ class Client extends ChangeNotifier {
           game.biddingId = event['biddingId'];
           game.gameState = SPMP.bidding;
           game.cards.componentStream.add('start');
+          game.cards.cardStream.add('about to distribute new cards');
           CardMoveExtension.animateDistribute(game.cards);
           print(game.players);
         }
@@ -115,7 +116,8 @@ class Client extends ChangeNotifier {
         }
         // finish-round finish-round finish-round finish-round finish-round
         if (event['method'] == SPMP.finishRound) {
-          game.finishRound(context, event['playerTricks']);
+          game.finishRound(
+              context, Map<String, int>.from(event['playerTricks']));
         }
         // start-collecting start-collecting start-collecting start-collecting
         if (event['method'] == SPMP.startCollecting) {
