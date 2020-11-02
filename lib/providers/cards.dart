@@ -186,6 +186,8 @@ class Cards extends ChangeNotifier {
                     : -width * PlayingCard.multiplySizeWidth,
           )
           .then((_) {
+        _cards.firstWhere((element) => element.isFirstPlaced).isFirstPlaced =
+            false;
         move(
           [i.rank.index],
           [i.suit.index],
@@ -195,8 +197,6 @@ class Cards extends ChangeNotifier {
           uid,
           true,
         );
-        _cards.firstWhere((element) => element.isFirstPlaced).isFirstPlaced =
-            false;
       });
       await Future.delayed(Duration(milliseconds: 100));
     }
@@ -248,6 +248,7 @@ class Cards extends ChangeNotifier {
     move([rank], [suit], turnIdx + 5, SPMP.place, turn == client.uid,
         client.uid, true);
     if (placed.length == 1) {
+      print('made first');
       _cards[_cards.indexOf(card)].isFirstPlaced = true;
     }
     print(_cards.map((e) => e.place).toList());
